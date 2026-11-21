@@ -331,6 +331,7 @@ input,textarea{font:inherit;color:inherit}
 .toast.on{transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="effetti.css">
 </head>
 <body>
 <div id="splash">
@@ -409,9 +410,12 @@ input,textarea{font:inherit;color:inherit}
       <div class="stat"><b id="stMsg">0</b><span>messaggi</span></div>
       <div class="stat"><b id="stClue">0</b><span>indizi</span></div>
     </div>
+    <div class="sec-h" style="margin:24px 16px 0"><h2>🏅 Traguardi</h2><span class="bdgc" id="bdgCount"></span></div>
+    <div class="badges" id="badges"></div>
     <div class="list">
       <div class="li" id="optLen">✍️ Lunghezza risposte <span class="r" id="lenVal">Media</span></div>
       <div class="li" id="optQR">💡 Suggerimenti rapidi <span class="sw on" id="swQR"></span></div>
+      <div class="li" id="optFx">🎬 Animazioni <span class="r" id="fxVal">Complete</span></div>
       <div class="li" id="optBrain" style="display:none">🧠 Cervello AI <span class="r" id="brainVal">—</span></div>
       <div class="li" id="optCreate">✨ Crea la tua storia</div>
     </div>
@@ -478,6 +482,8 @@ input,textarea{font:inherit;color:inherit}
 
 <!-- ================= CHAT ================= -->
 <section class="view" id="v-chat">
+  <div class="amb" id="amb"></div>
+  <button class="toend" id="toEnd" aria-label="Vai all'ultimo messaggio">↓</button>
   <div class="bar">
     <button class="ico" data-back aria-label="Indietro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
     <div class="av" id="cAv">☕<i class="dot"></i></div>
@@ -538,11 +544,12 @@ input,textarea{font:inherit;color:inherit}
 <script src="storie_nuove.js"></script>
 <script src="storie_guerra.js"></script>
 <script src="storie_malavita.js"></script>
+<script src="effetti.js"></script>
 <script>
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const VERSION = "2.0";
+const VERSION = "2.4";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
@@ -557,7 +564,7 @@ const PERS_LABEL = { timida:["Timido","Timida"], sveglia:["Sveglio","Sveglia"], 
 const LOVE = "STORIA D'AMORE: nasce lentamente, con sguardi, battute, piccoli gesti e tensione. Segue SOLO le scelte dell'utente: può corteggiare chi vuole oppure nessuno. Al massimo baci e abbracci; ogni scena intima finisce con una dissolvenza, mai esplicita.";
 const REASONS = [["offensivo","Offensivo o d'odio"],["violento","Troppo violento"],["sessuale","Sessuale o inappropriato"],["pericoloso","Pericoloso"],["altro","Altro"]];
 
-let settings = { len:"media", qr:true };
+let settings = { len:"media", qr:true, fx:"full" };
 let custom = [];
 let sample = null, db = null, uid = null;
 let current = "home", stack = [];
@@ -595,7 +602,8 @@ function ago(ts){
   const h = Math.round(m / 60); if(h < 24) return h + (h === 1 ? " ora fa" : " ore fa");
   const d = Math.round(h / 24); return d + (d === 1 ? " giorno fa" : " giorni fa");
 }
-function toast(t){ const e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 3400); }
+function toast(t){ const e = $("toast"); e.textContent = t; e.classList.add("on"); e.classList.remove("tick"); void e.offsetWidth; e.classList.add("tick"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 3400); }
+window.__toast = toast;
 function avStyle(s){ const g = genre(s); return `background:linear-gradient(135deg,${g.c1},${g.c2});border:1px solid ${g.a}55`; }
 function emptyMemory(){ return { riassunto:"", fatti:[], personaggi:[], indizi:[], relazioni:"" }; }
 function lastLine(x){ if(!x || !x.messages || !x.messages.length) return ""; return x.messages[x.messages.length-1].t.replace(/\*/g, "").replace(/\s+/g, " ").slice(0, 90); }
@@ -953,6 +961,7 @@ function show(v, push = true){
   if(v === "profile") renderProfile();
   if(v === "setup") renderSetup();
   if(v === "detail") refreshDetailButtons();
+  if(window.FX) FX.onShow(v);
   syncBack();
 }
 function back(){ let p = stack.pop() || "home"; if(p === current) p = "home"; show(p, false); }
@@ -973,7 +982,7 @@ function confirmDlg(text, cb, yes){ $("dlgText").textContent = text; $("dlgYes")
 /* ===================== HOME ===================== */
 function card(s){
   const x = loadSave(s.id), sx = x ? x : { sex:s.sex === "m" ? "m" : "f" };
-  return `<div class="scard" data-story="${s.id}"><div class="cv">${coverSVG(s, 142, 190)}${s.custom ? '<span class="tagx">✨ Tua</span>' : ""}${x && x.messages && x.messages.length > 1 ? '<span class="tagx inprog">▶ In corso</span>' : ""}</div><b>${esc(resolve(s.t, sx))}</b><span class="c">${esc(s.city)}${s.era && s.era !== "Oggi" ? " · " + esc(s.era) : ""}</span></div>`;
+  return `<div class="scard" data-story="${s.id}" data-g="${s.g}"><div class="cv">${coverSVG(s, 142, 190)}${s.custom ? '<span class="tagx">✨ Tua</span>' : ""}${x && x.messages && x.messages.length > 1 ? '<span class="tagx inprog">▶ In corso</span>' : ""}</div><b>${esc(resolve(s.t, sx))}</b><span class="c">${esc(s.city)}${s.era && s.era !== "Oggi" ? " · " + esc(s.era) : ""}</span></div>`;
 }
 function featuredStory(){
   const f = BASE.filter(s => s.featured); if(!f.length) return BASE[0];
@@ -988,7 +997,7 @@ function renderHome(){
     h += `<div class="sec"><div class="resume" data-resume="${s.id}"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>Continua: ${esc(s.t)}</b><span>${esc(lastLine(last))}</span></div><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div></div></div>`;
   }
   h += `<div class="sec"><div class="sec-h"><h2>In evidenza oggi</h2></div>
-    <div class="feat" data-story="${f.id}"><div class="img">${coverSVG(f, 400, 210)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
+    <div class="feat" data-story="${f.id}" data-g="${f.g}"><div class="img">${coverSVG(f, 400, 210)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
     <div class="body"><p>${esc(resolve(f.hook, fx))}</p><span class="go">Gioca ›</span></div></div></div>`;
   h += `<div class="sec"><div class="chiprow">${GENRE_ORDER.map(k => `<button class="gchip" data-genre="${k}">${G[k].e} ${G[k].n}</button>`).join("")}</div></div>`;
   GENRE_ORDER.forEach(k => {
@@ -999,6 +1008,7 @@ function renderHome(){
   h += `<div class="sec"><div class="feat-grid"><div class="fg"><span class="e">🧠</span><b>Memoria</b><span>ricorda tutto</span></div><div class="fg"><span class="e">🇮🇹</span><b>${allStories().length} storie</b><span>in tutta Italia</span></div><div class="fg"><span class="e">💸</span><b>Gratis</b><span>${LOCAL ? "anche offline" : "per sempre"}</span></div></div></div>`;
   h += `<p class="foot">Storie di pura finzione. Personaggi, locali e organizzazioni sono inventati.<br>Le risposte sono generate dall'AI: puoi segnalare quelle inappropriate.</p>`;
   $("homeBody").innerHTML = h;
+  if(window.FX) FX.onHome();
 }
 
 /* ===================== ESPLORA ===================== */
@@ -1009,6 +1019,7 @@ function renderExplore(){
     (!q || [s.t, s.city, s.place, genre(s).n, s.hook, s.era].join(" ").toLowerCase().includes(q)));
   $("exCount").textContent = list.length === 1 ? "1 storia" : list.length + " storie";
   $("exGrid").innerHTML = list.length ? list.map(card).join("") : `<div class="emptyst" style="grid-column:1/-1"><span class="big">🔎</span>Nessuna storia trovata.<br>Prova a crearla tu, dal Profilo o dalla Home!</div>`;
+  if(window.FX) FX.onGrid();
 }
 
 /* ===================== LE MIE STORIE ===================== */
@@ -1027,6 +1038,12 @@ function countUp(el, to){
   requestAnimationFrame(step);
 }
 function reportsQ(){ return ls.get(K.reports) || []; }
+function statsNow(){
+  const saves = listSaves(), gen = new Set(), cities = new Set();
+  saves.forEach(x => { const s = story(x.sid); if(s){ gen.add(s.g); cities.add(s.city); } });
+  return { stories:saves.length, msgs:saves.reduce((a, x) => a + x.messages.length, 0), clues:saves.reduce((a, x) => a + ((x.memory && x.memory.indizi) || []).length, 0),
+           genres:gen.size, cities:cities.size, created:custom.length, longest:saves.reduce((a, x) => Math.max(a, x.messages.length), 0) };
+}
 function renderProfile(){
   const saves = listSaves(), last = saves[0];
   const n = last ? last.name : "Ospite";
@@ -1037,6 +1054,8 @@ function renderProfile(){
   countUp($("stClue"), saves.reduce((a, x) => a + ((x.memory && x.memory.indizi) || []).length, 0));
   $("lenVal").textContent = settings.len[0].toUpperCase() + settings.len.slice(1);
   $("swQR").classList.toggle("on", settings.qr);
+  $("fxVal").textContent = settings.fx === "low" ? "Ridotte" : "Complete";
+  if(window.FX) FX.badges(statsNow());
   const q = reportsQ(), waiting = q.filter(r => !r.sent).length;
   $("repVal").textContent = q.length ? `${q.length - waiting} inviate${waiting ? ", " + waiting + " in attesa" : ""}` : "nessuna";
   if(LOCAL){
@@ -1048,7 +1067,7 @@ function renderProfile(){
 }
 
 /* ===================== DETTAGLIO ===================== */
-function setSeg(id, v){ document.querySelectorAll("#" + id + " button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); }
+function setSeg(id, v){ document.querySelectorAll("#" + id + " button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); if(window.FX) FX.seg(id); }
 function segVal(id, def){ const b = document.querySelector("#" + id + " button.on"); return b ? b.dataset.v : def; }
 function face(c, i, size){
   const col = COLORS[i % COLORS.length];
@@ -1083,6 +1102,7 @@ function openDetail(id){
   fillDetailTexts();
   show("detail");
   $("v-detail").querySelector(".scroll").scrollTop = 0;
+  if(window.FX) FX.onDetail(s);
 }
 function refreshDetailButtons(){
   const s = story(detailId); if(!s) return;
@@ -1100,7 +1120,8 @@ function charSheet(i){
 function startStory(id, fresh){
   const s = story(id); if(!s) return;
   let x = loadSave(id);
-  if(fresh || !x || !x.messages || !x.messages.length){
+  const isNew = !!(fresh || !x || !x.messages || !x.messages.length);
+  if(isNew){
     const sex = s.sex === "x" ? pvSex : (s.sex === "m" ? "m" : "f");
     x = { sid:id, name:clean($("pname").value) || s.names[sex] || "Alex", sex,
           origin:s.origin != null ? (clean($("porig").value) || s.origin) : "",
@@ -1109,6 +1130,7 @@ function startStory(id, fresh){
   }
   st = x; persist();
   renderChat(); show("chat");
+  if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720) });
   if(!st.messages.length) generate("open");
   else warmup();
 }
@@ -1134,7 +1156,7 @@ function aiRow(text, i){
 }
 function meBubble(t){ const d = document.createElement("div"); d.className = "msg me"; d.innerHTML = fmt(t, story(st.sid)); return d; }
 function scrollEnd(){ const l = $("log"); l.scrollTop = l.scrollHeight; }
-function setStatus(t, typ){ const e = $("status"); e.textContent = t || (LOCAL ? "AI offline · pronta" : "online"); e.classList.toggle("typ", !!typ); }
+function setStatus(t, typ){ const e = $("status"); e.textContent = t || (LOCAL ? "AI offline · pronta" : "online"); e.classList.toggle("typ", !!typ); if(window.FX) FX.typing(typ); }
 function renderChat(){
   const s = story(st.sid), log = $("log");
   $("cAv").innerHTML = `${s.e}<i class="dot"></i>`; $("cAv").setAttribute("style", avStyle(s));
@@ -1188,14 +1210,15 @@ async function generate(mode = "chat"){
   let partial = "";
   const onText = ({ text }) => {
     if(!text || text === "Thinking...") return;
-    partial = text; setStatus("sta scrivendo…", true);
+    partial = text; setStatus("sta scrivendo…", true); bub.classList.add("streaming");
     bub.innerHTML = fmt(splitOptions(cleanOut(text)).text, s); scrollEnd();
   };
   const finish = raw => {
     const { text, opts } = splitOptions(cleanOut(raw));
     if(!text){ row.remove(); toast("Risposta vuota. Tocca ↻ per riprovare."); return; }
     x.messages.push({ r:"a", t:text }); x.opts = opts; x.turns = (x.turns || 0) + 1; storeObj(x);
-    if(x === st && current === "chat") row.replaceWith(aiRow(text, x.messages.length - 1)); else row.remove();
+    if(x === st && current === "chat"){ const nr = aiRow(text, x.messages.length - 1); nr.classList.add("still"); row.replaceWith(nr); } else row.remove();
+    if(window.FX) setTimeout(() => FX.check(statsNow()), 600);
     if(x.turns % (LOCAL ? 4 : 3) === 0) setTimeout(() => updateMemory(x), 50);
     else setTimeout(warmup, 50);
   };
@@ -1226,6 +1249,7 @@ async function send(){
   if(LOCAL && runningKind() === "warm"){ try{ AndroidAI.stop(); }catch(e){} }
   st.messages.push({ r:"u", t }); st.opts = []; persist();
   $("log").appendChild(meBubble(t)); scrollEnd();
+  if(window.FX) FX.sent();
   await generate("chat");
 }
 async function regen(){
@@ -1262,6 +1286,7 @@ async function updateMemory(x){
         const f = document.createElement("div"); f.className = "memflash";
         f.textContent = newClues ? "🔍 Nuovo indizio salvato in memoria" : "🧠 Memoria aggiornata";
         $("log").appendChild(f); scrollEnd();
+        if(window.FX) FX.memory(newClues);
       }
     }
   }catch(e){}
@@ -1330,7 +1355,7 @@ function saveCustom(){
     you:"{N}. " + you, world:city + ".", secret:$("cSecret").value.trim().replace(/[\[\]{}<>]/g, "").slice(0, 600), chars, open:"", opts:[] };
   custom.push(s); ls.set(K.custom, custom); if(db && uid) rset("custom", custom);
   ["cTitle","cCity","cYou","cChars","cSecret"].forEach(id => $(id).value = "");
-  toast("✨ Storia creata!"); stack = stack.filter(v => v !== "create");
+  toast("✨ Storia creata!"); stack = stack.filter(v => v !== "create"); if(window.FX){ FX.burstCenter(); setTimeout(() => FX.check(statsNow()), 1200); }
   openDetail(s.id);
 }
 
@@ -1397,7 +1422,7 @@ function pollDownload(){
     const d = s.download || {};
     if(!d.active){
       clearInterval(pollT);
-      if(d.state === "ok"){ toast("✅ Download completato! Accendo l'AI…"); selModel = d.model; loadModel(d.model); }
+      if(d.state === "ok"){ toast("✅ Download completato! Accendo l'AI…"); if(window.FX) FX.burstCenter(); selModel = d.model; loadModel(d.model); }
       else if(d.state === "error") toast("Download non riuscito. Controlla la connessione e riprova.");
     }
   }, 1000);
@@ -1438,6 +1463,7 @@ document.querySelectorAll("#sexSeg button").forEach(b => b.onclick = () => {
 });
 document.querySelectorAll("#persSeg button").forEach(b => b.onclick = () => setSeg("persSeg", b.dataset.v));
 $("startBtn").onclick = () => {
+  if(window.FX) FX.burstEl($("startBtn"), { n:22 });
   if(hasSave(detailId)) confirmDlg("Ricominciare da capo? La partita salvata e la sua memoria verranno cancellate.", () => startStory(detailId, true), "Ricomincia");
   else startStory(detailId, true);
 };
@@ -1448,6 +1474,11 @@ $("delCustomBtn").onclick = () => confirmDlg("Eliminare questa storia creata da 
 }, "Elimina");
 $("optLen").onclick = () => { const o = ["corta","media","lunga"]; settings.len = o[(o.indexOf(settings.len) + 1) % 3]; ls.set(K.settings, settings); renderProfile(); toast("Risposte: " + settings.len); };
 $("optQR").onclick = () => { settings.qr = !settings.qr; ls.set(K.settings, settings); renderProfile(); };
+$("optFx").onclick = () => {
+  settings.fx = settings.fx === "low" ? "full" : "low"; ls.set(K.settings, settings);
+  if(window.FX) FX.setLevel(settings.fx);
+  renderProfile(); toast(settings.fx === "low" ? "Animazioni ridotte: l'app consuma meno batteria" : "✨ Animazioni complete attivate");
+};
 $("optBrain").onclick = () => show("setup");
 $("optCreate").onclick = () => { renderCreate(); show("create"); };
 $("optPrivacy").onclick = () => openSheet(privacyHTML());
@@ -1480,13 +1511,13 @@ document.addEventListener("click", e => {
   const t = e.target.closest("[data-tab],[data-open],[data-back],[data-char],[data-story],[data-resume],[data-genre],[data-exg],[data-del],[data-flag],[data-show],[data-model],[data-cg]");
   if(!t) return;
   const ds = t.dataset;
-  if(ds.del){ e.stopPropagation(); const id = ds.del; confirmDlg(`Eliminare la partita "${story(id).t}"? Anche la memoria verrà cancellata.`, () => { ls.del(saveKey(id)); if(db && uid) rset("save-" + id, null); if(st && st.sid === id) st = null; renderStoryList(); toast("Partita eliminata"); }, "Elimina"); return; }
+  if(ds.del){ e.stopPropagation(); const id = ds.del; confirmDlg(`Eliminare la partita "${story(id).t}"? Anche la memoria verrà cancellata.`, () => { const done = () => { ls.del(saveKey(id)); if(db && uid) rset("save-" + id, null); if(st && st.sid === id) st = null; renderStoryList(); toast("Partita eliminata"); }; const row = t.closest(".story"); if(window.FX && row) FX.collapse(row, done); else done(); }, "Elimina"); return; }
   if(ds.tab){ stack = []; show(ds.tab, false); }
   else if(ds.open === "create"){ renderCreate(); show("create"); }
   else if(t.hasAttribute("data-back")) back();
   else if(ds.char !== undefined && t.classList.contains("ch")) charSheet(ds.char);
   else if(ds.resume){ detailId = ds.resume; const x = loadSave(ds.resume); if(x){ pvSex = x.sex; } startStory(ds.resume, false); }
-  else if(ds.story) openDetail(ds.story);
+  else if(ds.story){ if(window.FX) FX.zoomFrom(t); openDetail(ds.story); }
   else if(ds.genre){ exGenre = ds.genre; $("q").value = ""; stack = []; show("explore", false); renderExplore(); }
   else if(ds.exg){ exGenre = ds.exg; renderExplore(); }
   else if(ds.flag !== undefined) reportSheet(+ds.flag);
@@ -1501,6 +1532,7 @@ document.addEventListener("click", e => {
   for(let i = 0; i < 14; i++){ const m = document.createElement("i"); m.className = "mote"; m.style.left = (Math.random() * 100) + "%"; m.style.top = (55 + Math.random() * 40) + "%"; m.style.animationDelay = (Math.random() * 7) + "s"; m.style.animationDuration = (5 + Math.random() * 5) + "s"; box.appendChild(m); }
 })();
 settings = Object.assign(settings, ls.get(K.settings) || {});
+if(window.FX) FX.setLevel(settings.fx || "full");
 custom = (ls.get(K.custom) || []).filter(s => s && s.id && s.g && G[s.g]);
 (() => { const v1 = ls.get("storie-italia-milano-v1"); if(v1 && v1.messages && v1.messages.length && !loadSave("bar-ferrante")) ls.set(saveKey("bar-ferrante"), migrateV1(v1)); })();
 $("heroSub").textContent = `${allStories().length} storie in tutta Italia. Personaggi AI che ricordano tutto.`;
