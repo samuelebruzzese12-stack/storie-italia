@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Storie d'Italia – Chat AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d11; --panel:#17171d; --panel2:#202028; --line:#2b2b35;
+  --text:#ededf2; --muted:#9a9aab; --accent:#e0a83f; --accent2:#f3c873;
+  --green:#2f9e5b; --red:#c8423b; --me:#2b3b60; --ai:#1c1c24;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.app{position:relative;height:100%;max-width:720px;margin:0 auto;overflow:hidden;padding-top:env(safe-area-inset-top)}
+.serif{font-family:'Playfair Display',serif}
+
+/* ---------- SPLASH ---------- */
+#splash{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 40%,#2a1c10,#0d0d11 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s,visibility .6s}
+#splash.out{opacity:0;visibility:hidden}
+.sp-logo{font-family:'Playfair Display',serif;font-size:40px;opacity:0;transform:translateY(14px);animation:up .9s .2s var(--ease) forwards;text-align:center;line-height:1.05}
+.sp-logo span{display:block;font-size:14px;font-family:Inter;letter-spacing:.35em;color:var(--accent);margin-top:10px;text-transform:uppercase}
+.sp-bar{width:160px;height:4px;border-radius:9px;overflow:hidden;display:flex;background:#222;opacity:0;animation:up .6s .5s forwards}
+.sp-bar i{flex:1;transform:scaleX(0);transform-origin:left;animation:fill .5s var(--ease) forwards}
+.sp-bar i:nth-child(1){background:var(--green);animation-delay:.8s}
+.sp-bar i:nth-child(2){background:#f2f2f2;animation-delay:1.15s}
+.sp-bar i:nth-child(3){background:var(--red);animation-delay:1.5s}
+@keyframes fill{to{transform:scaleX(1)}}
+@keyframes up{to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ---------- VIEWS ---------- */
+.view{position:absolute;inset:env(safe-area-inset-top) 0 0 0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateX(24px);transition:opacity .35s var(--ease),transform .35s var(--ease)}
+.view.on{opacity:1;pointer-events:auto;transform:none}
+.view.back{transform:translateX(-24px)}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:90px}
+.stagger>*{opacity:0;animation:fadeUp .55s var(--ease) forwards}
+.stagger>*:nth-child(1){animation-delay:.05s}.stagger>*:nth-child(2){animation-delay:.12s}.stagger>*:nth-child(3){animation-delay:.19s}
+.stagger>*:nth-child(4){animation-delay:.26s}.stagger>*:nth-child(5){animation-delay:.33s}.stagger>*:nth-child(6){animation-delay:.4s}
+.stagger>*:nth-child(7){animation-delay:.47s}.stagger>*:nth-child(8){animation-delay:.54s}
+
+/* ---------- TAB BAR ---------- */
+.tabs{position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;background:rgba(13,13,17,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 6px calc(8px + env(safe-area-inset-bottom));transition:transform .35s var(--ease)}
+.tabs.hide{transform:translateY(110%)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--muted);font-size:11px;font-weight:500;position:relative}
+.tab svg{width:23px;height:23px;transition:transform .3s var(--ease)}
+.tab.on{color:var(--accent2)}
+.tab.on svg{transform:translateY(-2px) scale(1.08)}
+.tab .pill{position:absolute;top:2px;width:54px;height:30px;border-radius:99px;background:rgba(224,168,63,.13);transform:scale(0);transition:transform .3s var(--ease)}
+.tab.on .pill{transform:scale(1)}
+
+/* ---------- HOME ---------- */
+.hero{position:relative;height:300px;overflow:hidden}
+.hero svg.city{position:absolute;inset:0;width:100%;height:100%}
+.hero .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,13,17,0) 30%,var(--bg) 96%)}
+.hero .head{position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:10px}
+.flag{display:flex;height:16px;width:24px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.flag i{flex:1}.flag i:nth-child(1){background:var(--green)}.flag i:nth-child(2){background:#f2f2f2}.flag i:nth-child(3){background:var(--red)}
+.brand{font-family:'Playfair Display',serif;font-size:21px}
+.free{margin-left:auto;background:rgba(47,158,91,.18);color:#7fe0a6;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;border:1px solid rgba(47,158,91,.35)}
+.hero .copy{position:absolute;left:18px;right:18px;bottom:26px}
+.hero h1{font-family:'Playfair Display',serif;font-size:34px;line-height:1.05}
+.hero h1 em{color:var(--accent2);font-style:italic}
+.hero p{color:#c9c9d4;font-size:14px;margin-top:8px;line-height:1.45}
+.win{animation:flick 4s infinite}
+@keyframes flick{0%,100%{opacity:.9}45%{opacity:.25}55%{opacity:.85}}
+.mote{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--accent2);opacity:0;animation:mote 7s linear infinite}
+@keyframes mote{0%{opacity:0;transform:translateY(0)}15%{opacity:.8}100%{opacity:0;transform:translateY(-180px) translateX(30px)}}
+.tram{animation:tram 14s linear infinite}
+@keyframes tram{from{transform:translateX(-120px)}to{transform:translateX(520px)}}
+
+.sec{padding:0 16px;margin-top:22px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sec-h h2{font-size:17px;font-weight:700}
+.sec-h a{font-size:13px;color:var(--accent);cursor:pointer}
+
+.resume{display:flex;gap:12px;align-items:center;background:linear-gradient(120deg,#2a1e10,#1a1712);border:1px solid #4a3820;border-radius:18px;padding:14px;cursor:pointer;transition:transform .2s}
+.resume:active{transform:scale(.98)}
+.resume .t{flex:1;min-width:0}
+.resume b{display:block;font-size:15px}
+.resume span{display:block;font-size:12.5px;color:#cdbf9f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.play{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#1a1205;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(224,168,63,.5);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 12px rgba(224,168,63,0)}100%{box-shadow:0 0 0 0 rgba(224,168,63,0)}}
+
+.feat{position:relative;border-radius:22px;overflow:hidden;cursor:pointer;border:1px solid var(--line);transition:transform .25s var(--ease)}
+.feat:active{transform:scale(.985)}
+.feat .img{height:220px;position:relative;background:#140e08;overflow:hidden}
+.feat .img svg{position:absolute;inset:0;width:100%;height:100%;transform:scale(1.06);animation:kb 16s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.16) translateX(-10px)}}
+.feat .img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(13,13,17,.97))}
+.shine{position:absolute;inset:0;z-index:2;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.08) 45%,transparent 60%);transform:translateX(-100%);animation:shine 4.5s 1.5s infinite}
+@keyframes shine{40%,100%{transform:translateX(100%)}}
+.feat .ov{position:absolute;left:16px;right:16px;bottom:14px;z-index:3}
+.badge{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;background:var(--red);color:#fff;padding:4px 8px;border-radius:7px;margin-bottom:8px}
+.badge i{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.2}}
+.feat h3{font-family:'Playfair Display',serif;font-size:27px;line-height:1.08}
+.feat .meta{font-size:12.5px;color:#d9caa6;margin-top:5px}
+.feat .body{background:var(--panel);padding:13px 16px 15px;display:flex;align-items:center;gap:10px}
+.feat .body p{flex:1;font-size:13px;color:var(--muted);line-height:1.4}
+.go{background:var(--accent);color:#1a1205;font-weight:700;font-size:13px;padding:9px 14px;border-radius:12px;white-space:nowrap}
+
+.chars{display:flex;gap:12px;overflow-x:auto;padding:2px 16px 6px;margin:0 -16px;scrollbar-width:none}
+.chars::-webkit-scrollbar{display:none}
+.ch{flex:none;width:112px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 10px 12px;text-align:center;cursor:pointer;transition:transform .2s,border-color .2s}
+.ch:active{transform:scale(.95)}
+.ch .face{width:64px;height:64px;margin:0 auto 9px;border-radius:50%;display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:26px;position:relative}
+.ch .face::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);animation:spin 3s linear infinite;opacity:.6}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ch b{display:block;font-size:13.5px}
+.ch span{font-size:11px;color:var(--muted)}
+
+.cities{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.city{position:relative;height:110px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);padding:12px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer}
+.city .em{position:absolute;top:10px;right:12px;font-size:26px;filter:grayscale(.3);transition:transform .4s var(--ease)}
+.city:hover .em{transform:rotate(-10deg) scale(1.15)}
+.city b{font-size:15px}.city span{font-size:11.5px;color:var(--muted)}
+.lock{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;letter-spacing:.05em;background:rgba(255,255,255,.08);padding:3px 7px;border-radius:6px;color:var(--muted)}
+.city.wiggle{animation:wig .4s}
+@keyframes wig{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fg{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 10px;text-align:center}
+.fg .e{font-size:24px;display:block;margin-bottom:6px;animation:bob 3s ease-in-out infinite}
+.fg:nth-child(2) .e{animation-delay:.4s}.fg:nth-child(3) .e{animation-delay:.8s}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.fg b{font-size:12.5px;display:block}.fg span{font-size:11px;color:var(--muted)}
+.foot{font-size:11.5px;color:var(--muted);text-align:center;margin:26px 20px 0;line-height:1.5}
+
+/* ---------- SCENARIO DETAIL ---------- */
+.dtop{position:relative;height:280px;flex:none;overflow:hidden}
+.dtop svg{position:absolute;inset:0;width:100%;height:100%;animation:kb 18s ease-in-out infinite alternate}
+.dtop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 30%,var(--bg) 97%)}
+.backbtn{position:absolute;top:12px;left:12px;z-index:3;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);display:grid;place-items:center}
+.dtop .ov{position:absolute;left:18px;right:18px;bottom:10px;z-index:3}
+.dtop h2{font-family:'Playfair Display',serif;font-size:31px;line-height:1.05}
+.dtop .meta{font-size:13px;color:#d9caa6;margin-top:6px}
+.pad{padding:0 18px}
+.lead{font-size:15px;line-height:1.6;color:#d6d6de;margin-top:14px}
+.lead b{color:var(--accent2)}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.chip{font-size:12px;background:var(--panel2);padding:5px 10px;border-radius:99px;color:#c0c0cc;border:1px solid var(--line)}
+.secret{margin-top:16px;border:1px dashed #5a2a26;background:rgba(200,66,59,.07);border-radius:14px;padding:12px 14px;font-size:13px;color:#e3a9a4;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+.field input{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:12px 13px;border-radius:13px;font:inherit;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,168,63,.15)}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:3px}
+.seg button{flex:1;padding:9px 4px;border-radius:10px;font-size:13px;color:var(--muted);transition:.2s}
+.seg button.on{background:var(--accent);color:#1a1205;font-weight:700}
+.btn{width:100%;background:var(--accent);color:#1a1205;font-weight:800;padding:15px;border-radius:15px;font-size:15.5px;margin-top:18px;position:relative;overflow:hidden;transition:transform .15s}
+.btn:active{transform:scale(.98)}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);animation:shine 3.5s 1s infinite}
+.btn.ghost{background:var(--panel2);color:var(--text);font-weight:600;margin-top:10px}
+.btn.ghost::after{display:none}
+
+/* ---------- CHAT ---------- */
+.bar{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid var(--line);background:rgba(13,13,17,.95);flex:none}
+.av{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:18px;position:relative}
+.av .dot{position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#3ccf73;border:2px solid var(--bg)}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:15px}.who span{font-size:12px;color:var(--muted);transition:color .2s}
+.who span.typ{color:var(--accent2)}
+.ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--muted);transition:background .2s}
+.ico:active{background:var(--panel2)}
+.ico svg{width:20px;height:20px}
+#log{flex:1;overflow-y:auto;padding:14px 12px 10px;display:flex;flex-direction:column;gap:12px}
+.row-ai{display:flex;gap:8px;align-items:flex-end;align-self:flex-start;max-width:92%;animation:pop .35s var(--ease)}
+.row-ai .av{width:30px;height:30px;font-size:13px}
+.msg{padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.msg.ai{background:var(--ai);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.me{background:var(--me);border-bottom-right-radius:6px;align-self:flex-end;max-width:86%;animation:popR .3s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes popR{from{opacity:0;transform:translateX(14px) scale(.97)}to{opacity:1;transform:none}}
+.msg em{color:#a6a6b6;font-style:italic}
+.msg .sp{font-weight:700}
+.scene{align-self:center;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;padding:7px 12px;border:1px solid var(--line);border-radius:12px;background:#131318;animation:fadeUp .5s}
+.typing{display:inline-flex;gap:4px;padding:3px 0}.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:tb 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tb{0%,60%,100%{transform:none;opacity:.35}30%{transform:translateY(-4px);opacity:1}}
+.memflash{align-self:center;font-size:11.5px;color:var(--accent2);background:rgba(224,168,63,.1);border:1px solid rgba(224,168,63,.25);padding:5px 11px;border-radius:99px;animation:fadeUp .4s}
+.qr{display:flex;gap:7px;overflow-x:auto;padding:0 12px 8px;scrollbar-width:none;flex:none}
+.qr::-webkit-scrollbar{display:none}
+.qr button{flex:none;font-size:12.5px;color:#d0d0da;background:var(--panel);border:1px solid var(--line);padding:7px 12px;border-radius:99px;transition:transform .15s,border-color .2s}
+.qr button:active{transform:scale(.95);border-color:var(--accent)}
+.compose{display:flex;gap:8px;align-items:flex-end;padding:8px 10px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex:none}
+.compose textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:22px;padding:11px 15px;font:inherit;font-size:15px;max-height:140px;outline:none}
+.compose textarea:focus{border-color:#45455a}
+.act{width:44px;height:44px;border-radius:50%;background:var(--panel2);color:var(--muted);display:grid;place-items:center;flex:none;font-size:18px;font-weight:700}
+.send{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#1a1205;display:grid;place-items:center;flex:none;transition:transform .2s}
+.send:active{transform:scale(.9) rotate(-10deg)}
+.send:disabled{opacity:.4}
+
+/* ---------- STORIES & PROFILE ---------- */
+.ph{padding:20px 18px 6px}
+.ph h1{font-family:'Playfair Display',serif;font-size:30px}
+.ph p{color:var(--muted);font-size:13.5px;margin-top:4px}
+.story{display:flex;gap:12px;align-items:center;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:16px;cursor:pointer;margin-bottom:10px}
+.story .t{flex:1;min-width:0}.story b{font-size:15px;display:block}
+.story span{font-size:12.5px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.story small{font-size:11px;color:var(--muted)}
+.emptyst{text-align:center;padding:40px 20px;color:var(--muted)}
+.emptyst .big{font-size:48px;display:block;margin-bottom:10px;animation:bob 3s infinite}
+.pcard{margin:12px 16px 0;background:linear-gradient(135deg,#251b10,#16161c);border:1px solid #3d2f1c;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px}
+.pav{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8a5a17);display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:26px;color:#1a1205;flex:none}
+.pcard b{font-size:18px;display:block}.pcard span{font-size:12.5px;color:#cdbf9f}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 16px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
+.stat b{font-size:22px;display:block;color:var(--accent2)}
+.stat span{font-size:11px;color:var(--muted)}
+.list{margin:16px 16px 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--line);font-size:14.5px;cursor:pointer}
+.li:last-child{border:none}
+.li .r{margin-left:auto;color:var(--muted);font-size:13px}
+.li.red{color:#ef7b74}
+.sw{margin-left:auto;width:44px;height:26px;border-radius:99px;background:#33333f;position:relative;transition:.25s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s var(--ease)}
+.sw.on{background:var(--green)}.sw.on::after{transform:translateX(18px)}
+
+/* ---------- SHEETS ---------- */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s;z-index:40}
+.sheet-bg.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;max-height:82vh;overflow:auto;background:var(--panel);border-radius:22px 22px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .38s var(--ease);z-index:41;border-top:1px solid var(--line)}
+.sheet.on{transform:none}
+.grab{width:40px;height:5px;border-radius:9px;background:#3a3a46;margin:0 auto 14px}
+.sheet h4{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px}
+.sheet .sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.45}
+.mem-sec{margin-bottom:15px}
+.mem-sec b{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
+.mem-sec p,.mem-sec li{font-size:14px;line-height:1.5;color:#d6d6de;margin-top:5px}
+.mem-sec ul{padding-left:18px}
+.empty{color:var(--muted);font-size:13.5px}
+.cbig{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.cbig .face{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:30px;flex:none}
+.cbig b{font-size:20px;display:block}.cbig span{font-size:13px;color:var(--muted)}
+.cdesc{font-size:14.5px;line-height:1.6;color:#d6d6de}
+.dialog{position:fixed;inset:0;display:grid;place-items:center;z-index:60;background:rgba(0,0,0,.6);padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.dialog.on{opacity:1;pointer-events:auto}
+.dialog .box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:340px;width:100%;transform:scale(.92);transition:transform .3s var(--ease)}
+.dialog.on .box{transform:none}
+.dialog p{font-size:14.5px;line-height:1.5;margin-bottom:16px}
+.drow{display:flex;gap:8px}.drow button{flex:1;padding:12px;border-radius:12px;background:var(--panel2)}
+.drow .danger{background:var(--red);color:#fff;font-weight:700}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-80px);background:#2a2a34;border:1px solid var(--line);padding:10px 15px;border-radius:12px;font-size:13px;z-index:80;max-width:90%;transition:transform .35s var(--ease)}
+.toast.on{transform:translate(-50%,0)}
+/* ---------- SETUP AI OFFLINE ---------- */
+.brain{width:110px;height:110px;margin:26px auto 6px;position:relative;display:grid;place-items:center;font-size:52px}
+.brain::before,.brain::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(224,168,63,.35);animation:ring 2.6s ease-out infinite}
+.brain::after{animation-delay:1.3s}
+@keyframes ring{from{transform:scale(.6);opacity:1}to{transform:scale(1.35);opacity:0}}
+.brain span{animation:bob 3s ease-in-out infinite}
+.setup-h{text-align:center;padding:0 22px}
+.setup-h h1{font-family:'Playfair Display',serif;font-size:28px}
+.setup-h p{color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:8px}
+.ram{display:inline-block;margin-top:12px;font-size:12px;background:var(--panel2);border:1px solid var(--line);padding:5px 11px;border-radius:99px;color:#cfcfd8}
+.mcard{background:var(--panel);border:1.5px solid var(--line);border-radius:18px;padding:15px;margin-bottom:11px;cursor:pointer;transition:border-color .2s,transform .2s;position:relative}
+.mcard:active{transform:scale(.985)}
+.mcard.sel{border-color:var(--accent);background:linear-gradient(135deg,#231a0e,#17171d)}
+.mcard b{font-size:16px}
+.mcard p{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.mcard .tags{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.mcard .tg{font-size:11px;padding:3px 8px;border-radius:7px;background:var(--panel2);color:#c8c8d2}
+.mcard .tg.ok{background:rgba(47,158,91,.18);color:#7fe0a6}
+.mcard .tg.rec{background:rgba(224,168,63,.18);color:var(--accent2)}
+.mcard .tg.warn{background:rgba(200,66,59,.15);color:#ef8f88}
+.prog{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;display:none}
+.prog.on{display:block;animation:fadeUp .4s}
+.prog .track{height:10px;border-radius:9px;background:#26262f;overflow:hidden;margin-top:9px}
+.prog .fillbar{height:100%;width:0;background:linear-gradient(90deg,var(--green),#f2f2f2,var(--red));background-size:200% 100%;animation:flow 2s linear infinite;transition:width .5s}
+@keyframes flow{to{background-position:-200% 0}}
+.prog .row2{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:7px}
+.loadmsg{text-align:center;color:var(--accent2);font-size:13px;margin-top:14px;display:none}
+.loadmsg.on{display:block;animation:blink 1.4s infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-logo">Storie d'Italia<span>Chat AI · Gratis</span></div>
+  <div class="sp-bar"><i></i><i></i><i></i></div>
+</div>
+
+<div class="app">
+
+<!-- ================= HOME ================= -->
+<section class="view on" id="v-home">
+  <div class="scroll">
+    <div class="hero">
+      <svg class="city" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1430"/><stop offset=".55" stop-color="#4a2a1c"/><stop offset="1" stop-color="#d78a3a"/></linearGradient>
+        </defs>
+        <rect width="400" height="300" fill="url(#hsky)"/>
+        <circle cx="300" cy="150" r="40" fill="#f6c46a" opacity=".55"/>
+        <g fill="#140e10" opacity=".55">
+          <rect x="250" y="90" width="22" height="170"/><rect x="276" y="60" width="18" height="200"/><polygon points="276,60 285,40 294,60"/>
+          <rect x="300" y="110" width="40" height="150"/><rect x="345" y="80" width="24" height="180"/>
+        </g>
+        <g fill="#0b0809">
+          <rect x="30" y="190" width="170" height="110"/>
+          <polygon points="30,190 115,145 200,190"/>
+          <rect x="34" y="150" width="4" height="40"/><rect x="54" y="140" width="4" height="50"/><rect x="74" y="132" width="4" height="58"/>
+          <rect x="112" y="92" width="6" height="100"/><circle cx="115" cy="88" r="4" fill="#e0a83f"/>
+          <rect x="152" y="132" width="4" height="58"/><rect x="172" y="140" width="4" height="50"/><rect x="192" y="150" width="4" height="40"/>
+          <rect x="0" y="230" width="30" height="70"/><rect x="200" y="200" width="60" height="100"/><rect x="262" y="215" width="70" height="85"/><rect x="334" y="190" width="66" height="110"/>
+        </g>
+        <g fill="#ffd27a">
+          <rect class="win" x="210" y="215" width="6" height="8"/><rect class="win" x="228" y="235" width="6" height="8" style="animation-delay:1s"/>
+          <rect class="win" x="245" y="215" width="6" height="8" style="animation-delay:2s"/><rect class="win" x="280" y="232" width="6" height="8" style="animation-delay:.6s"/>
+          <rect class="win" x="300" y="250" width="6" height="8" style="animation-delay:1.7s"/><rect class="win" x="350" y="210" width="6" height="8" style="animation-delay:2.6s"/>
+          <rect class="win" x="372" y="240" width="6" height="8" style="animation-delay:.3s"/><rect class="win" x="10" y="250" width="6" height="8" style="animation-delay:1.3s"/>
+        </g>
+        <g class="tram"><rect x="0" y="282" width="80" height="16" rx="3" fill="#e2a134"/><rect x="6" y="285" width="10" height="6" fill="#fff6d6"/><rect x="22" y="285" width="10" height="6" fill="#fff6d6"/><rect x="38" y="285" width="10" height="6" fill="#fff6d6"/><rect x="54" y="285" width="10" height="6" fill="#fff6d6"/><line x1="40" y1="282" x2="48" y2="262" stroke="#222" stroke-width="1.5"/></g>
+        <line x1="0" y1="262" x2="400" y2="262" stroke="#222" stroke-width="1"/>
+      </svg>
+      <div id="motes"></div>
+      <div class="grad"></div>
+      <div class="head"><div class="flag"><i></i><i></i><i></i></div><div class="brand">Storie d'Italia</div><span class="free">100% GRATIS</span></div>
+      <div class="copy stagger">
+        <h1>Vivi l'Italia di <em>oggi</em>.<br>Una chat alla volta.</h1>
+        <p>Personaggi AI che ricordano tutto. Storie vere, città vere, segreti veri.</p>
+      </div>
+    </div>
+
+    <div class="stagger">
+      <div class="sec" id="resumeSec" style="display:none">
+        <div class="resume" id="resumeCard">
+          <div class="av" style="background:linear-gradient(135deg,#5a3a1e,#1e140c);color:var(--accent);border:1px solid #4a3520">R<i class="dot"></i></div>
+          <div class="t"><b>Continua: Il Bar di Via Lecco</b><span id="resumeLast">…</span></div>
+          <div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h"><h2>In evidenza</h2></div>
+        <div class="feat" data-open="detail">
+          <div class="img">
+            <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+              <rect width="400" height="220" fill="#1a110a"/>
+              <rect x="0" y="150" width="400" height="70" fill="#0e0905"/>
+              <rect x="40" y="40" width="320" height="120" fill="#22170d"/>
+              <rect x="70" y="58" width="260" height="30" rx="4" fill="#120c07" stroke="#e0a83f"/>
+              <text x="200" y="79" text-anchor="middle" font-family="Playfair Display,serif" font-size="17" fill="#f3c873" letter-spacing="3">BAR FERRANTE</text>
+              <rect x="70" y="98" width="110" height="62" fill="#f3c873" opacity=".22"/><rect x="220" y="98" width="110" height="62" fill="#f3c873" opacity=".22"/>
+              <rect x="186" y="98" width="28" height="62" fill="#0b0703"/>
+              <circle cx="125" cy="135" r="9" fill="#0b0703"/><rect x="117" y="143" width="16" height="17" fill="#0b0703"/>
+              <circle cx="270" cy="132" r="10" fill="#0b0703"/><rect x="260" y="141" width="20" height="19" fill="#0b0703"/>
+              <rect x="300" y="168" width="70" height="26" rx="6" fill="#050505"/><circle cx="314" cy="195" r="6" fill="#111"/><circle cx="356" cy="195" r="6" fill="#111"/>
+            </svg>
+          </div>
+          <div class="shine"></div>
+          <div class="ov">
+            <span class="badge"><i></i>NUOVO</span>
+            <h3>Il Bar di Via Lecco</h3>
+            <div class="meta">Milano · Porta Venezia · Drama / Mistero</div>
+          </div>
+          <div class="body"><p>Nuova città, nuovo lavoro. Il tuo capo è gentilissimo. Troppo.</p><span class="go">Gioca ›</span></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h"><h2>Personaggi</h2><a data-open="detail">Vedi storia</a></div>
+        <div class="chars" id="charRow"></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h"><h2>Città in arrivo</h2><a data-tab="explore">Esplora</a></div>
+        <div class="cities" id="cityHome"></div>
+      </div>
+
+      <div class="sec">
+        <div class="feat-grid">
+          <div class="fg"><span class="e">🧠</span><b>Memoria</b><span>ricorda tutto</span></div>
+          <div class="fg"><span class="e">🇮🇹</span><b>Italia vera</b><span>giorni nostri</span></div>
+          <div class="fg"><span class="e">💸</span><b>Gratis</b><span>niente abbonamenti</span></div>
+        </div>
+      </div>
+      <p class="foot">Storie di pura finzione. Personaggi, locali e organizzazioni sono inventati.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXPLORE ================= -->
+<section class="view" id="v-explore">
+  <div class="scroll">
+    <div class="ph stagger"><h1>Esplora</h1><p>Scegli una città. Ogni storia ha i suoi personaggi e i suoi segreti.</p></div>
+    <div class="sec stagger" id="exploreList"></div>
+  </div>
+</section>
+
+<!-- ================= STORIES ================= -->
+<section class="view" id="v-stories">
+  <div class="scroll">
+    <div class="ph"><h1>Le mie storie</h1><p>Le tue chat salvate, con la loro memoria.</p></div>
+    <div class="sec" id="storyList"></div>
+  </div>
+</section>
+
+<!-- ================= PROFILE ================= -->
+<section class="view" id="v-profile">
+  <div class="scroll stagger">
+    <div class="ph"><h1>Profilo</h1></div>
+    <div class="pcard"><div class="pav" id="pAv">G</div><div><b id="pName">Giulia</b><span id="pSub">Nuova a Milano</span></div></div>
+    <div class="stats">
+      <div class="stat"><b id="stMsg">0</b><span>messaggi</span></div>
+      <div class="stat"><b id="stMem">0</b><span>ricordi</span></div>
+      <div class="stat"><b id="stClue">0</b><span>indizi</span></div>
+    </div>
+    <div class="list">
+      <div class="li" id="optLen">✍️ Lunghezza risposte <span class="r" id="lenVal">Media</span></div>
+      <div class="li" id="optQR">💡 Suggerimenti rapidi <span class="sw on" id="swQR"></span></div>
+      <div class="li" id="optMem">🧠 Apri la memoria</div>
+      <div class="li" id="optBrain" style="display:none">🤖 Cervello AI <span class="r" id="brainVal">—</span></div>
+    </div>
+    <div class="list">
+      <div class="li red" id="optReset">🗑️ Cancella la storia</div>
+    </div>
+    <p class="foot">Storie d'Italia · v1.1 · Fatto con Claude</p>
+  </div>
+</section>
+
+<!-- ================= DETAIL ================= -->
+<section class="view" id="v-detail">
+  <div class="scroll" style="padding-bottom:30px">
+    <div class="dtop">
+      <svg viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="dsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1c10"/><stop offset="1" stop-color="#0d0905"/></linearGradient></defs>
+        <rect width="400" height="280" fill="url(#dsky)"/>
+        <rect x="20" y="70" width="360" height="140" fill="#1d140b"/>
+        <rect x="40" y="110" width="320" height="10" fill="#3a2a17"/>
+        <g fill="#5a3f1e"><rect x="60" y="80" width="10" height="28"/><rect x="76" y="86" width="8" height="22"/><rect x="90" y="78" width="10" height="30"/><rect x="300" y="82" width="10" height="26"/><rect x="316" y="78" width="8" height="30"/></g>
+        <rect x="160" y="78" width="80" height="30" rx="4" fill="#3b3b3b"/><circle cx="180" cy="94" r="5" fill="#888"/><circle cx="220" cy="94" r="5" fill="#888"/>
+        <rect x="20" y="160" width="360" height="60" fill="#120c06"/>
+        <rect x="330" y="80" width="40" height="80" fill="#0a0603" stroke="#3a2a17"/><circle cx="337" cy="122" r="2" fill="#e0a83f"/>
+        <text x="350" y="76" text-anchor="middle" font-size="8" fill="#c8423b" font-family="Inter">PRIVATO</text>
+        <circle cx="200" cy="135" r="16" fill="#0a0603"/><rect x="180" y="150" width="40" height="30" rx="6" fill="#0a0603"/>
+      </svg>
+      <button class="backbtn" data-back><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="ov"><h2>Il Bar di Via Lecco</h2><div class="meta">Milano · Porta Venezia · oggi</div></div>
+    </div>
+    <div class="pad stagger">
+      <p class="lead">Ti sei appena trasferita a Milano con una valigia e pochi soldi. Trovi lavoro come barista al <b>Bar Ferrante</b>. Il titolare, Rocco, è gentile, generoso, protettivo. Clienti che non pagano, buste lasciate sotto il piattino, una porta sul retro sempre chiusa a chiave… Tu non sai niente. <b>Per ora.</b></p>
+      <div class="chips"><span class="chip">🇮🇹 Milano</span><span class="chip">🎭 Drama</span><span class="chip">🕵️ Mistero</span><span class="chip">🧠 Memoria</span><span class="chip">⏱️ Infinita</span></div>
+      <div class="secret">🤫 Ogni scelta conta: fidarti di Rocco, indagare, parlare con la polizia o scappare. La storia si adatta a te.</div>
+      <div class="sec-h" style="margin-top:20px"><h2>Personaggi</h2></div>
+      <div class="chars" id="charRow2" style="padding-left:18px;margin:0 -18px"></div>
+      <div class="field"><label for="pname">Come si chiama la tua protagonista?</label><input id="pname" maxlength="24" value="Giulia"></div>
+      <div class="field"><label for="porig">Da dove arriva?</label><input id="porig" maxlength="30" value="Bari"></div>
+      <div class="field"><label>Carattere</label>
+        <div class="seg" id="pers"><button data-v="timida">Timida</button><button data-v="sveglia" class="on">Sveglia</button><button data-v="testarda">Testarda</button></div>
+      </div>
+      <button class="btn" id="startBtn">Inizia la storia</button>
+      <button class="btn ghost" id="resumeBtn" style="display:none">Continua la storia salvata</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHAT ================= -->
+<section class="view" id="v-chat">
+  <div class="bar">
+    <button class="ico" data-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="av" style="background:linear-gradient(135deg,#5a3a1e,#1e140c);color:var(--accent);border:1px solid #4a3520">R<i class="dot"></i></div>
+    <div class="who"><b>Bar Ferrante</b><span id="status">Milano · online</span></div>
+    <button class="ico" id="memBtn" aria-label="Memoria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5v1a3 3 0 0 0 6 0V3.5"/><path d="M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5v1a3 3 0 0 1-6 0"/></svg></button>
+    <button class="ico" id="regenBtn" aria-label="Rigenera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  </div>
+  <div id="log"></div>
+  <div class="qr" id="qr"></div>
+  <div class="compose">
+    <button class="act" id="starBtn" title="Inserisci azione">✱</button>
+    <textarea id="input" rows="1" placeholder="Scrivi… (*azione* tra asterischi)"></textarea>
+    <button class="send" id="sendBtn" aria-label="Invia"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button>
+  </div>
+</section>
+
+<!-- ================= SETUP AI OFFLINE ================= -->
+<section class="view" id="v-setup">
+  <div class="scroll" style="padding-bottom:30px">
+    <div class="brain"><span>🧠</span></div>
+    <div class="setup-h">
+      <h1>Il cervello dell'AI</h1>
+      <p>L'AI di Storie d'Italia vive <b>dentro il tuo telefono</b>: gratis per sempre, funziona anche senza internet, nessuno legge le tue chat. Va scaricata una sola volta.</p>
+      <span class="ram" id="ramInfo">Memoria del telefono: …</span>
+    </div>
+    <div class="sec" id="modelList"></div>
+    <div class="sec">
+      <div class="prog" id="prog">
+        <b style="font-size:14px" id="progTitle">Download in corso…</b>
+        <div class="track"><div class="fillbar" id="progFill"></div></div>
+        <div class="row2"><span id="progTxt">0%</span><span id="progMb"></span></div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:8px">Puoi uscire dall'app: il download continua nelle notifiche. Usa il Wi-Fi.</p>
+      </div>
+      <button class="btn" id="setupBtn">Scarica</button>
+      <button class="btn ghost" id="setupSkip" style="display:none">Annulla download</button>
+      <div class="loadmsg" id="loadMsg">Accendo il cervello… (può volerci un minuto)</div>
+    </div>
+  </div>
+</section>
+
+<!-- TAB BAR -->
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-tab="home"><span class="pill"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button class="tab" data-tab="explore"><span class="pill"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Esplora</button>
+  <button class="tab" data-tab="stories"><span class="pill"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Storie</button>
+  <button class="tab" data-tab="profile"><span class="pill"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</button>
+</nav>
+</div>
+
+<!-- SHEETS / DIALOGS -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="dialog" id="dlg"><div class="box"><p id="dlgText"></p><div class="drow"><button id="dlgNo">Annulla</button><button class="danger" id="dlgYes">Conferma</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const KEY = "storie-italia-milano-v1", SKEY = "storie-italia-settings";
+const MAX_RECENT = 24, MEM_EVERY = 3;
+
+const CHARS = [
+  {id:"rocco", n:"Rocco", full:"Rocco Ferrante", role:"Il titolare", c1:"#5a3a1e", c2:"#1e140c", col:"#e0a83f",
+   d:"52 anni, camicia sempre stirata, sorriso da padre di famiglia. Vent'anni di bar in via Lecco, tutti nel quartiere lo rispettano. Paga puntuale, ti offre aiuto per la casa, non alza mai la voce. Ma quel cassetto sotto la cassa lo chiude sempre a chiave."},
+  {id:"marta", n:"Marta", full:"Marta Colombo", role:"La collega", c1:"#3b4a6b", c2:"#141a26", col:"#9db7ff",
+   d:"34 anni, milanese doc, ironica e stanca. Lavora da Rocco da sei anni. Ti fa da guida tra cornetti e clienti difficili. A volte sembra che voglia dirti qualcosa, poi ci ripensa."},
+  {id:"nico", n:"Nico", full:"Nico Ferrante", role:"Il nipote", c1:"#2e5a3e", c2:"#0f1f15", col:"#7fe0a6",
+   d:"26 anni, scooter nero, battuta pronta. Fa \"commissioni\" per lo zio a tutte le ore. Simpatico, sfacciato, ti fa sempre i complimenti."},
+  {id:"rag", n:"Il Ragioniere", full:"Il Ragioniere", role:"Cliente fisso", c1:"#4a4a52", c2:"#16161a", col:"#cfcfd8",
+   d:"Completo grigio, valigetta, mai un sorriso. Arriva ogni giorno alle 11 in punto, prende un ristretto e lascia sempre qualcosa sotto il piattino."},
+  {id:"vale", n:"Valeria", full:"Valeria Conti", role:"Cliente misteriosa", c1:"#6b2f3a", c2:"#22101a", col:"#ff9eb0",
+   d:"Sui 40, cappotto blu, fa domande. Troppe domande. Dice di lavorare \"in un ufficio qui vicino\"."},
+  {id:"pina", n:"Sig.ra Pina", full:"Signora Pina", role:"La vicina", c1:"#6b5a2f", c2:"#221c10", col:"#ffd98a",
+   d:"78 anni, vive sul tuo pianerottolo da sempre. Ti porta il minestrone e sa tutto di tutti, anche di Rocco."}
+];
+const CITIES = [
+  {n:"Milano", e:"🏙️", s:"Il Bar di Via Lecco", open:true},
+  {n:"Roma", e:"🏛️", s:"Stagista a Montecitorio"},
+  {n:"Napoli", e:"🌋", s:"Il palazzo di famiglia"},
+  {n:"Torino", e:"🏭", s:"Turno di notte"},
+  {n:"Palermo", e:"🍋", s:"Il ritorno a casa"},
+  {n:"Venezia", e:"🛶", s:"Gondoliera per caso"},
+  {n:"Bologna", e:"🎓", s:"Fuorisede in crisi"},
+  {n:"Firenze", e:"🎨", s:"Il restauro proibito"}
+];
+
+let state = null, settings = {len:"media", qr:true};
+let sample = null, db = null, uid = null, busy = false;
+let current = "home", stack = [];
+
+/* ---------- AI OFFLINE (app Android) ---------- */
+const LOCAL = !!window.AndroidAI;
+let aiReady = false, selModel = null, pollT = null, reqSeq = 0;
+const pending = {};
+window.__aiToken = (id, t) => { const p = pending[id]; if(p) p.onText({text:t}); };
+window.__aiDone = (id, t, err) => {
+  const p = pending[id]; if(!p) return; delete pending[id];
+  if(err) p.reject({message:err}); else p.resolve({text:t});
+};
+function localSample(prompt, {maxTokens=400, temp=.85, onText}={}){
+  return new Promise((resolve, reject) => {
+    const id = ++reqSeq;
+    pending[id] = {resolve, reject, onText: onText || (()=>{})};
+    AndroidAI.generate(id, prompt, maxTokens, temp);
+  });
+}
+const chatml = (system, turns) =>
+  `<|im_start|>system\n${system}<|im_end|>\n` +
+  turns.map(t => `<|im_start|>${t.role}\n${t.content}<|im_end|>\n`).join("") +
+  `<|im_start|>assistant\n`;
+const LOCAL_TOK = {corta:240, media:400, lunga:600};
+function buildLocalPrompt(){
+  const maxTok = LOCAL_TOK[settings.len] || 400;
+  const system = rules() + `
+
+=== MEMORIA A LUNGO TERMINE ===
+${memText(state.memory)}
+
+=== FORMATO DI OGNI RISPOSTA ===
+Scrivi solo la scena (narrazione tra *asterischi* e dialoghi Nome: "battuta"), ricca di dettagli, emozioni e conseguenze. Poi, nell'ultima riga, scrivi:
+OPZIONI: prima idea | seconda idea | terza idea
+(tre cose brevi che ${state.name} potrebbe dire o fare, in prima persona).`;
+  const all = state.messages;
+  // la finestra si sposta a blocchi di 8 messaggi: cosi' il telefono riusa i calcoli gia' fatti
+  let start = Math.floor(Math.max(0, all.length - 24) / 8) * 8;
+  const ctx = AndroidAI.contextSize() || 4096, budget = ctx - maxTok - 24;
+  let prompt;
+  for(;;){
+    const turns = all.slice(start).map((m, i, arr) => ({
+      role: m.r === "u" ? "user" : "assistant",
+      content: (m.r === "u" && i === arr.length - 1)
+        ? m.t + `\n\n(Continua la storia come narratore. Non scrivere al posto di ${state.name}. Finisci con la riga OPZIONI.)`
+        : m.t
+    }));
+    prompt = chatml(system, turns);
+    if(start >= all.length - 2 || AndroidAI.countTokens(prompt) <= budget) break;
+    start += 2;
+  }
+  return {prompt, maxTok};
+}
+function cleanLocal(t){
+  return t.replace(/<\|im_(start|end)\|>/g, "").replace(/^\s*(NARRATORE|Narratore)\s*:\s*/, "").trim();
+}
+function aiStatus(){ try{ return JSON.parse(AndroidAI.status()); }catch(e){ return null; } }
+function renderSetup(){
+  const s = aiStatus(); if(!s) return;
+  $("ramInfo").textContent = `Memoria del telefono: ${s.ram} GB`;
+  if(!selModel) selModel = s.selected || s.recommended;
+  $("modelList").innerHTML = s.models.map(m => {
+    const tags = [`<span class="tg">${(m.mb/1000).toFixed(1)} GB</span>`];
+    if(m.ready) tags.push('<span class="tg ok">✓ Scaricato</span>');
+    if(m.id === s.recommended) tags.push('<span class="tg rec">⭐ Consigliato per te</span>');
+    if(s.ram < m.minRam) tags.push('<span class="tg warn">⚠️ Poca RAM: può chiudersi</span>');
+    if(s.loaded === m.id) tags.push('<span class="tg ok">● Acceso</span>');
+    return `<div class="mcard ${m.id===selModel?"sel":""}" data-model="${m.id}"><b>${m.name}</b><p>${m.desc}</p><div class="tags">${tags.join("")}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".mcard").forEach(c => c.onclick = () => { selModel = c.dataset.model; renderSetup(); });
+  const m = s.models.find(x => x.id === selModel), d = s.download || {};
+  const downloading = d.active;
+  $("prog").classList.toggle("on", !!downloading);
+  $("setupSkip").style.display = downloading ? "block" : "none";
+  $("setupBtn").style.display = downloading || s.loading ? "none" : "block";
+  $("loadMsg").classList.toggle("on", !!s.loading);
+  if(downloading){
+    const pct = d.total > 0 ? Math.floor(d.done / d.total * 100) : 0;
+    $("progFill").style.width = pct + "%";
+    $("progTxt").textContent = (d.state === "paused" ? "In pausa (aspetto la rete) · " : "") + pct + "%";
+    $("progMb").textContent = `${Math.round(d.done/1e6)} / ${d.total>0?Math.round(d.total/1e6):"?"} MB`;
+    $("progTitle").textContent = "Scarico: " + ((s.models.find(x=>x.id===d.model)||{}).name || "");
+  }
+  if(m) $("setupBtn").textContent = s.loaded === m.id ? "✓ AI accesa – Torna alla Home" : m.ready ? "Accendi l'AI" : `Scarica (${(m.mb/1000).toFixed(1)} GB)`;
+  return s;
+}
+function pollDownload(){
+  clearInterval(pollT);
+  pollT = setInterval(() => {
+    const s = renderSetup(); if(!s) return;
+    const d = s.download || {};
+    if(!d.active){
+      clearInterval(pollT);
+      if(d.state === "ok"){ toast("✅ Download completato! Accendo l'AI…"); selModel = d.model; loadModel(d.model); }
+      else if(d.state === "error") toast("Download non riuscito. Controlla la connessione e riprova.");
+    }
+  }, 1000);
+}
+function loadModel(id){
+  AndroidAI.load(id);
+  setTimeout(renderSetup, 50);
+}
+window.__aiLoaded = ok => {
+  aiReady = ok; renderSetup(); refresh();
+  if(ok){ toast("🧠 AI pronta! Funziona anche offline."); if(current === "setup"){ stack = []; show("home", false); } }
+  else { toast("Il telefono non riesce ad avviare questo modello. Prova quello più leggero."); show("setup"); }
+};
+window.__back = () => {
+  if($("dlg").classList.contains("on")){ $("dlg").classList.remove("on"); return true; }
+  if($("sheet").classList.contains("on")){ closeSheet(); return true; }
+  if(current !== "home"){ back(); return true; }
+  return false;
+};
+async function localMemory(p){
+  const r = await localSample(chatml("Sei un sistema di memoria. Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo.", [{role:"user", content:p}]), {maxTokens:650, temp:.3});
+  const t = r.text, a = t.indexOf("{"), b = t.lastIndexOf("}");
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+/* ---------- STORAGE ---------- */
+const ls = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+function ref(){ return db && uid ? db.collection("data/users/"+uid).doc("milano") : null; }
+async function loadRemote(){
+  const r = ref(); if(!r) return null;
+  try{
+    const snap = await r.get();
+    let d = snap; if(snap && typeof snap.data === "function") d = snap.data();
+    else if(snap && snap.data && typeof snap.data === "object") d = snap.data;
+    if(d && d.json) return JSON.parse(d.json);
+  }catch(e){}
+  return null;
+}
+let saveTimer = null;
+function save(){
+  if(!state) return;
+  state.messages = state.messages.slice(-300);
+  state.updated = Date.now();
+  ls.set(KEY, state);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => { const r = ref(); if(!r) return; try{ await r.set({json:JSON.stringify(state), updated:Date.now()}); }catch(e){} }, 600);
+}
+async function wipe(){ ls.del(KEY); const r = ref(); if(r){ try{ await r.delete(); }catch(e){} } }
+
+/* ---------- PROMPT ---------- */
+function emptyMemory(){ return {riassunto:"", fatti:[], personaggi:[], indizi:[], relazione_rocco:""}; }
+const LEN = {corta:"40-90 parole", media:"70-170 parole", lunga:"150-280 parole"};
+function rules(){
+  const n = state.name, o = state.origin, p = state.pers || "sveglia";
+  return `Sei il narratore e tutti i personaggi di una chat-storia interattiva in italiano, ambientata a Milano ai giorni nostri (smartphone, affitti cari, metro M1/M2, tram, aperitivi, Navigli, Porta Venezia, rider, bollette, gente sempre di corsa).
+
+PROTAGONISTA (la interpreta SOLO l'utente): ${n}, giovane donna arrivata da ${o}, carattere ${p}, appena trasferita a Milano, assunta come barista al "Bar Ferrante" in via Lecco. Non conosce nessuno in città. NON sa nulla del lato oscuro del titolare.
+
+SEGRETO: Rocco Ferrante, 52 anni, titolare, in apparenza cortese, paterno e generoso; in realtà capo di un'organizzazione criminale inventata ("la famiglia Ferrante"). Usa il bar per incontri, contanti da ripulire e messaggi. Non lo ammette MAI apertamente: nega con calma, sorride, cambia discorso. Protegge ${n} a modo suo, ma è pericoloso con chi lo tradisce.
+
+ALTRI PERSONAGGI:
+${CHARS.slice(1).map(c=>"- "+c.full+" ("+c.role+"): "+c.d).join("\n")}
+(Valeria Conti è in realtà un'ispettrice di polizia sotto copertura, ma non lo dice.) Puoi inventare altri personaggi realistici.
+
+COME SCRIVERE:
+- Italiano naturale e moderno. Rocco ogni tanto usa espressioni del Sud; i milanesi qualche "uè", "dai", "sciura". Niente parolacce pesanti.
+- Azioni e descrizioni tra *asterischi*. Dialoghi nel formato: Nome: "battuta".
+- Non scrivere MAI pensieri, parole o azioni di ${n}: decide solo l'utente. Fermati quando tocca a lei.
+- Lunghezza: ${LEN[settings.len]||LEN.media}. Fai succedere qualcosa a ogni risposta.
+- Il mistero si svela LENTAMENTE, con indizi piccoli e ambigui; più ${n} indaga, più la verità si avvicina.
+- Le scelte di ${n} hanno conseguenze coerenti. Rispetta SEMPRE la MEMORIA e non contraddirla.
+- Niente violenza esplicita né contenuti sessuali espliciti: tensione con minacce velate, silenzi, sguardi.
+- Non uscire dal personaggio e non dire di essere un'AI.`;
+}
+function memText(m){
+  if(!m || (!m.riassunto && !m.fatti.length)) return "(nessun ricordo: la storia è appena iniziata)";
+  let s = "";
+  if(m.riassunto) s += "Riassunto: "+m.riassunto+"\n";
+  if(m.fatti.length) s += "Fatti: - "+m.fatti.join("\n- ")+"\n";
+  if(m.personaggi.length) s += "Personaggi: - "+m.personaggi.join("\n- ")+"\n";
+  if(m.indizi.length) s += "Indizi notati da "+state.name+": - "+m.indizi.join("\n- ")+"\n";
+  if(m.relazione_rocco) s += "Rapporto con Rocco: "+m.relazione_rocco;
+  return s.trim();
+}
+const transcript = msgs => msgs.map(x => (x.r==="u" ? state.name.toUpperCase()+" (utente): " : "NARRATORE: ")+x.t).join("\n\n");
+function buildPrompt(){
+  return `${rules()}
+
+=== MEMORIA A LUNGO TERMINE ===
+${memText(state.memory)}
+
+=== ULTIMI MESSAGGI ===
+${transcript(state.messages.slice(-MAX_RECENT))}
+
+=== COMPITO ===
+Scrivi SOLO la prossima risposta del narratore/personaggi, coerente con memoria e ultimo messaggio di ${state.name}.
+Poi, su un'ultima riga separata, scrivi esattamente: OPZIONI: prima idea | seconda idea | terza idea
+(tre brevissime cose che ${state.name} potrebbe dire o fare, max 6 parole ciascuna, in prima persona).`;
+}
+function splitOptions(t){
+  const i = t.lastIndexOf("OPZIONI:");
+  if(i < 0) return {text:t.trim(), opts:[]};
+  const opts = t.slice(i+8).split("|").map(s=>s.replace(/[\n*"]/g,"").trim()).filter(Boolean).slice(0,3);
+  return {text:t.slice(0,i).trim(), opts};
+}
+
+/* ---------- MEMORY ---------- */
+async function updateMemory(){
+  if(LOCAL ? !aiReady : !sample) return;
+  const p = `Sei il sistema di memoria di una chat-storia a Milano. Protagonista: ${state.name}. Unisci la memoria attuale con i nuovi messaggi. Tieni solo cose utili per la coerenza futura: nomi, luoghi, promesse, oggetti, segreti, decisioni, cosa sa e cosa NON sa ${state.name}.
+
+MEMORIA ATTUALE:
+${JSON.stringify(state.memory)}
+
+NUOVI MESSAGGI:
+${transcript(state.messages.slice(-(MEM_EVERY*2+4)))}
+
+Rispondi SOLO con JSON valido:
+{"riassunto":"max 120 parole","fatti":["max 15"],"personaggi":["Nome – chi è e rapporto con ${state.name}, max 10"],"indizi":["indizi sul segreto di Rocco notati da ${state.name}, max 10"],"relazione_rocco":"una frase"}`;
+  try{
+    let v;
+    if(LOCAL){ $("status").textContent = "sta ricordando…"; v = await localMemory(p); $("status").textContent = "Milano · online"; }
+    else if(typeof sample.json === "function") v = await sample.json(p, {modelTier:"quick", cache:false});
+    else { const r = await sample(p, {modelTier:"quick", cache:false}); v = JSON.parse(r.text.replace(/```json|```/g,"").trim()); }
+    if(v && typeof v === "object"){
+      const m = emptyMemory();
+      m.riassunto = String(v.riassunto||"").slice(0,1200);
+      ["fatti","personaggi","indizi"].forEach(k => { if(Array.isArray(v[k])) m[k] = v[k].map(String).slice(0,15); });
+      m.relazione_rocco = String(v.relazione_rocco||"");
+      const newClues = m.indizi.length > (state.memory.indizi||[]).length;
+      state.memory = m; save();
+      const f = document.createElement("div"); f.className = "memflash";
+      f.textContent = newClues ? "🔍 Nuovo indizio salvato in memoria" : "🧠 Memoria aggiornata";
+      $("log").appendChild(f); $("log").scrollTop = $("log").scrollHeight;
+    }
+  }catch(e){}
+}
+
+/* ---------- RENDER HELPERS ---------- */
+const esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function colorFor(name){
+  const c = CHARS.find(c => name.toLowerCase().includes(c.n.toLowerCase().replace("sig.ra ","")));
+  return c ? c.col : "#e9c27a";
+}
+function fmt(t){
+  let h = esc(t).replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  h = h.replace(/(^|\n)([A-ZÀ-Ü][\wÀ-ü'. ]{1,24}):(?=\s*["“«])/g, (m,a,b) => `${a}<span class="sp" style="color:${colorFor(b)}">${b}:</span>`);
+  return h;
+}
+function face(c, size){
+  return `<div class="face" style="background:linear-gradient(135deg,${c.c1},${c.c2});color:${c.col};${size?`width:${size}px;height:${size}px;font-size:${size*.42}px`:""}">${c.n[0]}</div>`;
+}
+function aiRow(text){
+  const row = document.createElement("div"); row.className = "row-ai";
+  row.innerHTML = `<div class="av" style="background:linear-gradient(135deg,#5a3a1e,#1e140c);color:var(--accent)">R</div><div class="msg ai">${text===null?'<span class="typing"><i></i><i></i><i></i></span>':fmt(text)}</div>`;
+  return row;
+}
+function meBubble(t){ const d = document.createElement("div"); d.className = "msg me"; d.innerHTML = fmt(t); return d; }
+
+function renderChars(){
+  const html = CHARS.map(c => `<div class="ch" data-char="${c.id}">${face(c)}<b>${c.n}</b><span>${c.role}</span></div>`).join("");
+  $("charRow").innerHTML = html; $("charRow2").innerHTML = html;
+}
+function cityCard(c){
+  return `<div class="city" data-city="${c.n}">${c.open?'':'<span class="lock">🔒 PRESTO</span>'}<span class="em">${c.e}</span><b>${c.n}</b><span>${c.s}</span></div>`;
+}
+function renderCities(){
+  $("cityHome").innerHTML = CITIES.filter(c=>!c.open).slice(0,4).map(cityCard).join("");
+  $("exploreList").innerHTML = `<div class="cities">${CITIES.map(cityCard).join("")}</div>`;
+}
+function lastLine(){
+  if(!state || !state.messages.length) return "";
+  return state.messages.at(-1).t.replace(/\*/g,"").replace(/\s+/g," ").slice(0,90);
+}
+function ago(ts){
+  if(!ts) return "";
+  const m = Math.round((Date.now()-ts)/60000);
+  if(m<1) return "adesso"; if(m<60) return m+" min fa";
+  const h = Math.round(m/60); if(h<24) return h+" ore fa";
+  return Math.round(h/24)+" giorni fa";
+}
+function refresh(){
+  const has = state && state.messages && state.messages.length > 1;
+  $("resumeSec").style.display = has ? "block" : "none";
+  $("resumeLast").textContent = has ? lastLine() : "";
+  $("resumeBtn").style.display = has ? "block" : "none";
+  $("startBtn").textContent = has ? "Nuova storia" : "Inizia la storia";
+  if(state){ $("pname").value = state.name; $("porig").value = state.origin; setPers(state.pers||"sveglia"); }
+  $("storyList").innerHTML = has
+    ? `<div class="story" data-open="chat"><div class="av" style="background:linear-gradient(135deg,#5a3a1e,#1e140c);color:var(--accent);border:1px solid #4a3520">R<i class="dot"></i></div><div class="t"><b>Il Bar di Via Lecco</b><span>${esc(lastLine())}</span><small>${state.messages.length} messaggi · ${ago(state.updated)}</small></div></div>`
+    : `<div class="emptyst"><span class="big">☕</span>Nessuna storia ancora.<br>Inizia "Il Bar di Via Lecco" dalla Home.</div>`;
+  const n = state ? state.name : ($("pname").value||"Giulia");
+  $("pName").textContent = n; $("pAv").textContent = n[0].toUpperCase();
+  $("pSub").textContent = state ? `Da ${state.origin} · barista a Milano` : "Nessuna storia iniziata";
+  countUp($("stMsg"), state ? state.messages.length : 0);
+  countUp($("stMem"), state ? (state.memory.fatti||[]).length : 0);
+  countUp($("stClue"), state ? (state.memory.indizi||[]).length : 0);
+  $("lenVal").textContent = settings.len[0].toUpperCase()+settings.len.slice(1);
+  $("swQR").classList.toggle("on", settings.qr);
+  if(LOCAL){
+    $("optBrain").style.display = "flex";
+    const s = aiStatus(), m = s && s.models.find(x => x.id === s.loaded);
+    $("brainVal").textContent = m ? m.name : (s && s.loading ? "si accende…" : "spento");
+  }
+}
+function countUp(el, to){
+  const from = 0, t0 = performance.now();
+  const step = now => { const k = Math.min(1,(now-t0)/700); el.textContent = Math.round(from + (to-from)*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function renderChat(){
+  const log = $("log"); log.innerHTML = "";
+  const sc = document.createElement("div"); sc.className = "scene";
+  sc.textContent = `🇮🇹 Milano, oggi · Tu sei ${state.name}, da ${state.origin}`;
+  log.appendChild(sc);
+  state.messages.forEach(m => log.appendChild(m.r==="u" ? meBubble(m.t) : aiRow(m.t)));
+  renderQR(state.opts||[]);
+  requestAnimationFrame(()=> log.scrollTop = log.scrollHeight);
+}
+function renderQR(opts){
+  const q = $("qr");
+  if(!settings.qr || !opts.length || busy){ q.innerHTML = ""; return; }
+  q.innerHTML = opts.map(o => `<button>${esc(o)}</button>`).join("");
+  [...q.children].forEach((b,i) => { b.style.animation = `fadeUp .4s ${i*.08}s both`; b.onclick = () => { $("input").value = b.textContent; send(); }; });
+}
+
+/* ---------- NAVIGATION ---------- */
+const TAB_VIEWS = ["home","explore","stories","profile"];
+function show(v, push=true){
+  if(v === current) return;
+  const prev = $("v-"+current), next = $("v-"+v);
+  if(push) stack.push(current);
+  prev.classList.remove("on"); prev.classList.add("back");
+  setTimeout(()=>prev.classList.remove("back"), 360);
+  next.classList.add("on");
+  // restart stagger animations
+  next.querySelectorAll(".stagger").forEach(s => { s.classList.remove("stagger"); void s.offsetWidth; s.classList.add("stagger"); });
+  current = v;
+  $("tabs").classList.toggle("hide", !TAB_VIEWS.includes(v));
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.tab === v));
+  if(TAB_VIEWS.includes(v)) refresh();
+  if(v === "chat") setTimeout(()=>$("input").focus(), 300);
+}
+function back(){ const p = stack.pop() || "home"; show(p, false); }
+
+function openSheet(html){ $("sheetBody").innerHTML = html; $("sheet").classList.add("on"); $("sheetBg").classList.add("on"); }
+function closeSheet(){ $("sheet").classList.remove("on"); $("sheetBg").classList.remove("on"); }
+function memSheet(){
+  const m = state && state.memory;
+  let h = `<h4>🧠 Memoria della storia</h4><div class="sub">L'AI aggiorna questi ricordi da sola mentre giochi e li usa per restare coerente.</div>`;
+  if(!m || (!m.riassunto && !m.fatti.length)){ openSheet(h+'<p class="empty">Ancora vuota. Dopo qualche messaggio l\'AI inizierà a ricordare fatti, personaggi e indizi.</p>'); return; }
+  const list = a => a.length ? "<ul>"+a.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>" : '<p class="empty">—</p>';
+  openSheet(h+
+    `<div class="mem-sec"><b>La storia finora</b><p>${esc(m.riassunto||"—")}</p></div>`+
+    `<div class="mem-sec"><b>Rapporto con Rocco</b><p>${esc(m.relazione_rocco||"—")}</p></div>`+
+    `<div class="mem-sec"><b>Fatti ricordati</b>${list(m.fatti)}</div>`+
+    `<div class="mem-sec"><b>Personaggi</b>${list(m.personaggi)}</div>`+
+    `<div class="mem-sec"><b>🔍 Indizi notati</b>${list(m.indizi)}</div>`);
+}
+function charSheet(id){
+  const c = CHARS.find(x=>x.id===id);
+  openSheet(`<div class="cbig">${face(c,72)}<div><b>${c.full}</b><span>${c.role} · Bar di Via Lecco</span></div></div><p class="cdesc">${c.d}</p><button class="btn" id="sheetGo">Gioca con ${c.n}</button>`);
+  $("sheetGo").onclick = () => { closeSheet(); state && state.messages.length>1 ? show("chat") : show("detail"); };
+}
+let dlgCb = null;
+function confirmDlg(text, cb){ $("dlgText").textContent = text; dlgCb = cb; $("dlg").classList.add("on"); }
+function toast(t){ const e=$("toast"); e.textContent=t; e.classList.add("on"); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove("on"),3200); }
+
+/* ---------- STORY FLOW ---------- */
+function setPers(v){ document.querySelectorAll("#pers button").forEach(b => b.classList.toggle("on", b.dataset.v===v)); }
+function getPers(){ const b = document.querySelector("#pers button.on"); return b ? b.dataset.v : "sveglia"; }
+function opening(n, o){
+  return `*Lunedì mattina, le 6:40. Via Lecco è ancora mezza addormentata: un rider passa contromano, il tram sferraglia in fondo alla strada. La saracinesca del Bar Ferrante è alzata a metà e dentro la macchina del caffè sbuffa già.*
+
+*Dietro il bancone, un uomo sulla cinquantina in camicia bianca stirata alla perfezione conta degli scontrini. Alza lo sguardo e sorride.*
+
+Rocco: "Tu devi essere ${n}. Puntuale, brava. Qua a Milano la gente arriva sempre di corsa e mai in orario." *Ti porge la mano: stretta calda, decisa.* "Rocco Ferrante. Il bar è mio da vent'anni. Pure io vengo da giù, sai? Quindi tra noi ci capiamo."
+
+*Una donna con il grembiule nero e la coda di cavallo esce dal retro con una cassa di cornetti.*
+
+Marta: "Uè, la nuova. Io sono Marta. Ti avviso: alle sette e mezza qui è l'inferno."
+
+*Rocco chiude a chiave un cassetto sotto la cassa e si infila la chiave in tasca, senza fretta.*
+
+Rocco: "Allora, ${n}… com'è andato il viaggio da ${o}? Hai già trovato casa, o ti devo dare una mano io?"`;
+}
+function start(fresh){
+  const clean = s => s.replace(/[<>*|]/g,"").trim();
+  const n = clean($("pname").value) || "Giulia", o = clean($("porig").value) || "Bari";
+  if(fresh || !state){
+    state = {name:n, origin:o, pers:getPers(), messages:[{r:"a", t:opening(n,o)}], memory:emptyMemory(), turns:0,
+             opts:["Il viaggio è stato lungo…","Sì, mi servirebbe una mano","Cosa c'è in quel cassetto?"]};
+    save();
+  }
+  renderChat(); show("chat");
+}
+async function generate(){
+  if(LOCAL && !aiReady){ toast("Prima scarica e accendi il cervello AI 🧠"); renderSetup(); show("setup"); return; }
+  if(!LOCAL && !sample){
+    for(let i=0;i<3 && !sample;i++){
+      try{ if(typeof claude !== "undefined") sample = await claude.use("sample"); }catch(e){}
+      if(!sample) await new Promise(r=>setTimeout(r,1500));
+    }
+    if(!sample){ toast("AI non raggiungibile da qui. Apri il link da Chrome su claude.ai, con il tuo account, e riprova."); return; }
+  }
+  busy = true; $("sendBtn").disabled = true; renderQR([]);
+  $("status").textContent = "sta scrivendo…"; $("status").classList.add("typ");
+  const log = $("log"), row = aiRow(null), bub = row.querySelector(".msg");
+  log.appendChild(row); log.scrollTop = log.scrollHeight;
+  try{
+    const onText = ({text}) => {
+      if(text && text!=="Thinking..."){ bub.innerHTML = fmt(splitOptions(LOCAL ? cleanLocal(text) : text).text); log.scrollTop = log.scrollHeight; }
+    };
+    let r;
+    if(LOCAL){ const lp = buildLocalPrompt(); r = await localSample(lp.prompt, {maxTokens:lp.maxTok, temp:.85, onText}); r.text = cleanLocal(r.text); }
+    else r = await sample(buildPrompt(), {cache:false, onText});
+    const {text, opts} = splitOptions(r.text||"");
+    if(!text) throw {message:"vuoto"};
+    bub.innerHTML = fmt(text);
+    state.messages.push({r:"a", t:text}); state.opts = opts;
+    state.turns = (state.turns||0)+1; save();
+    if(state.turns % (LOCAL ? 4 : MEM_EVERY) === 0) updateMemory();
+  }catch(e){
+    row.remove();
+    if(e && e.code==="rate_limited") toast("Troppi messaggi di fila: aspetta un attimo.");
+    else if(e && e.code==="not_granted") toast("Serve il permesso per usare l'AI: riprova e accetta.");
+    else toast("Risposta non arrivata. Tocca ↻ per riprovare.");
+  }finally{
+    busy = false; $("sendBtn").disabled = false;
+    $("status").textContent = "Milano · online"; $("status").classList.remove("typ");
+    renderQR(state.opts||[]);
+  }
+}
+async function send(){
+  if(busy) return;
+  const t = $("input").value.trim(); if(!t) return;
+  $("input").value = ""; autosize();
+  state.messages.push({r:"u", t}); state.opts = []; save();
+  $("log").appendChild(meBubble(t));
+  await generate();
+}
+async function regen(){
+  if(busy || !state) return;
+  if(state.messages.at(-1).r==="a" && state.messages.length>1){ state.messages.pop(); save(); renderChat(); }
+  await generate();
+}
+
+/* ---------- EVENTS ---------- */
+function autosize(){ const i=$("input"); i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,140)+"px"; }
+$("input").addEventListener("input", autosize);
+$("input").addEventListener("keydown", e => { if(e.key==="Enter" && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); send(); } });
+$("sendBtn").onclick = send;
+$("regenBtn").onclick = regen;
+$("memBtn").onclick = memSheet;
+$("starBtn").onclick = () => { const i=$("input"), p=i.selectionStart||i.value.length; i.value = i.value.slice(0,p)+"**"+i.value.slice(p); i.focus(); i.setSelectionRange(p+1,p+1); };
+$("sheetBg").onclick = closeSheet;
+$("dlgNo").onclick = () => $("dlg").classList.remove("on");
+$("dlgYes").onclick = () => { $("dlg").classList.remove("on"); if(dlgCb) dlgCb(); };
+document.querySelectorAll("#pers button").forEach(b => b.onclick = () => setPers(b.dataset.v));
+$("startBtn").onclick = () => {
+  if(state && state.messages.length>1) confirmDlg("Iniziare una nuova storia? Quella salvata e la sua memoria verranno cancellate.", async () => { await wipe(); state=null; start(true); });
+  else start(true);
+};
+$("resumeBtn").onclick = () => start(false);
+$("resumeCard").onclick = () => start(false);
+$("optMem").onclick = memSheet;
+$("optBrain").onclick = () => { renderSetup(); show("setup"); };
+$("setupBtn").onclick = () => {
+  const s = aiStatus(); if(!s) return;
+  const m = s.models.find(x => x.id === selModel); if(!m) return;
+  if(s.loaded === m.id){ stack = []; show("home", false); return; }
+  if(m.ready){ loadModel(m.id); return; }
+  AndroidAI.download(m.id); toast("⬇️ Download avviato"); setTimeout(()=>{ renderSetup(); pollDownload(); }, 300);
+};
+$("setupSkip").onclick = () => { AndroidAI.cancelDownload(); clearInterval(pollT); renderSetup(); toast("Download annullato"); };
+$("optQR").onclick = () => { settings.qr = !settings.qr; ls.set(SKEY, settings); refresh(); };
+$("optLen").onclick = () => { const o=["corta","media","lunga"]; settings.len = o[(o.indexOf(settings.len)+1)%3]; ls.set(SKEY, settings); refresh(); toast("Risposte: "+settings.len); };
+$("optReset").onclick = () => confirmDlg("Cancellare la storia e tutta la sua memoria?", async () => { await wipe(); state=null; refresh(); toast("Storia cancellata"); });
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-tab],[data-open],[data-back],[data-char],[data-city]");
+  if(!t) return;
+  if(t.dataset.tab){ stack = []; show(t.dataset.tab, false); }
+  else if(t.dataset.open === "chat") start(false);
+  else if(t.dataset.open) show(t.dataset.open);
+  else if(t.hasAttribute("data-back")) back();
+  else if(t.dataset.char) charSheet(t.dataset.char);
+  else if(t.dataset.city){
+    const c = CITIES.find(x=>x.n===t.dataset.city);
+    if(c.open) show("detail");
+    else { t.classList.remove("wiggle"); void t.offsetWidth; t.classList.add("wiggle"); toast(`${c.e} ${c.n}: "${c.s}" arriva presto!`); }
+  }
+});
+
+/* ---------- BOOT ---------- */
+(function motes(){
+  const box = $("motes");
+  for(let i=0;i<14;i++){ const m=document.createElement("i"); m.className="mote"; m.style.left=(Math.random()*100)+"%"; m.style.top=(55+Math.random()*40)+"%"; m.style.animationDelay=(Math.random()*7)+"s"; m.style.animationDuration=(5+Math.random()*5)+"s"; box.appendChild(m); }
+})();
+settings = Object.assign(settings, ls.get(SKEY)||{});
+state = ls.get(KEY);
+renderChars(); renderCities(); refresh();
+setTimeout(()=>$("splash").classList.add("out"), 2300);
+if(LOCAL) setTimeout(() => {
+  const s = renderSetup(); if(!s) return;
+  if(s.loaded){ aiReady = true; return; }
+  if(s.download && s.download.active){ show("setup"); pollDownload(); return; }
+  const sel = s.models.find(m => m.id === s.selected && m.ready) || s.models.find(m => m.ready);
+  if(sel){ selModel = sel.id; toast("🧠 Accendo l'AI…"); loadModel(sel.id); }
+  else show("setup");
+}, 2400);
+(async () => {
+  try{ sample = await claude.use("sample"); }catch(e){ sample = null; }
+  try{ db = await claude.use("db"); const user = await claude.use("user"); if(db && user) uid = await user.id(); }catch(e){ db = null; }
+  const remote = await loadRemote();
+  if(remote && remote.messages && (!state || remote.messages.length >= (state.messages||[]).length)){
+    state = remote; ls.set(KEY, state);
+    if(current==="chat") renderChat();
+  }
+  refresh();
+})();
+})();
+</script>
+</body>
+</html>
