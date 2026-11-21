@@ -142,7 +142,8 @@ Java_it_storieitalia_app_NativeLlm_generate(JNIEnv *env, jclass, jbyteArray jpro
     LOGI("prompt %zu token, riusati %zu", toks.size(), common);
 
     for (size_t i = common; i < toks.size(); i += g_batch) {
-        if (g_stop) { reset_cache(); return env->NewStringUTF(""); }
+        // interrotto: la parte già elaborata resta valida e verrà riusata dalla prossima richiesta
+        if (g_stop) return env->NewStringUTF("");
         int n = (int) std::min((size_t) g_batch, toks.size() - i);
         llama_batch b = llama_batch_get_one(&toks[i], n);
         if (llama_decode(g_ctx, b) != 0) {
@@ -151,6 +152,8 @@ Java_it_storieitalia_app_NativeLlm_generate(JNIEnv *env, jclass, jbyteArray jpro
         }
         g_cached.insert(g_cached.end(), toks.begin() + (long) i, toks.begin() + (long) i + n);
     }
+
+    if (maxTokens <= 0) return env->NewStringUTF("");   // solo preparazione del contesto
 
     // --- campionamento: creativo ma coerente, con anti-ripetizione ---
     llama_sampler *smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());

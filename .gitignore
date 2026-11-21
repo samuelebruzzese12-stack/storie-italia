@@ -4,3 +4,7 @@ app/build/
 app/.cxx/
 app/src/main/cpp/llama.cpp/
 local.properties
+*.p12
+*.jks
+*.keystore
+chk/

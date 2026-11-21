@@ -1,7 +1,8 @@
-name: Crea APK
+name: Crea APK e AAB
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +11,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      REPORT_URL: ${{ secrets.REPORT_URL }}
+      REPORT_KEY: ${{ secrets.REPORT_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -21,29 +26,75 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.13'
 
-      - name: Installa NDK e CMake
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+      - name: Installa Android 16 (API 36), NDK e CMake
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
 
       - name: Scarica il motore AI (llama.cpp)
         run: git clone --depth 1 --branch b4600 https://github.com/ggml-org/llama.cpp app/src/main/cpp/llama.cpp
 
-      - name: Compila
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+      - name: Prepara la chiave di firma del Play Store
+        env:
+          KS_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            echo "$KS_B64" | tr -d ' \n\r' | base64 -d > "$RUNNER_TEMP/upload.p12"
+            echo "SIGNING_KEYSTORE=$RUNNER_TEMP/upload.p12" >> "$GITHUB_ENV"
+            echo "FIRMATO=si" >> "$GITHUB_ENV"
+            echo "Chiave del Play Store trovata: creo APK e AAB firmati."
+          else
+            echo "FIRMATO=no" >> "$GITHUB_ENV"
+            echo "Nessuna chiave nei secrets: creo solo l'APK di prova."
+          fi
 
-      - name: Rinomina APK
-        run: cp app/build/outputs/apk/release/app-release.apk StorieItalia.apk
+      - name: Compila
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          set -o pipefail
+          TASKS=":app:assembleRelease"
+          if [ "$FIRMATO" = "si" ]; then TASKS="$TASKS :app:bundleRelease"; fi
+          gradle $TASKS --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Controlla l'allineamento a 16 KB
+        run: |
+          mkdir -p chk && cd chk && unzip -o -q ../app/build/outputs/apk/release/app-release.apk 'lib/*'
+          for so in lib/arm64-v8a/*.so; do echo "== $so"; readelf -lW "$so" | grep LOAD; done
+
+      - name: Prepara i file
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk StorieItalia.apk
+          if [ "$FIRMATO" = "si" ]; then cp app/build/outputs/bundle/release/app-release.aab StorieItalia-PlayStore.aab; fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: StorieItalia-apk
-          path: StorieItalia.apk
+          name: StorieItalia
+          path: |
+            StorieItalia.apk
+            StorieItalia-PlayStore.aab
+          if-no-files-found: ignore
 
-      - name: Pubblica nelle Release (link diretto per il telefono)
+      - name: Pubblica nelle Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.${{ github.run_number }}
-          name: Storie d'Italia v1.${{ github.run_number }}
-          body: Scarica StorieItalia.apk qui sotto e installalo sul telefono.
-          files: StorieItalia.apk
+          tag_name: v2.${{ github.run_number }}
+          name: Storie d'Italia 2.0.${{ github.run_number }}
+          body: |
+            **StorieItalia.apk** – da installare direttamente sul telefono.
+            **StorieItalia-PlayStore.aab** – da caricare su Google Play Console (presente solo se la chiave di firma è configurata).
+          files: |
+            StorieItalia.apk
+            StorieItalia-PlayStore.aab
+          fail_on_unmatched_files: false
+
+      - name: Pubblica il registro degli errori
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: log-${{ github.run_number }}
+          name: Registro errori ${{ github.run_number }}
+          prerelease: true
+          files: build.log
+          fail_on_unmatched_files: false

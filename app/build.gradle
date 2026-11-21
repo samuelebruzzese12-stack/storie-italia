@@ -2,26 +2,58 @@ plugins {
     id 'com.android.application'
 }
 
+// Numero di versione: lo fornisce GitHub (numero della compilazione), così cresce sempre da solo.
+def vCode = (System.getenv('VERSION_CODE') ?: '1').toInteger()
+
+// Indirizzo dove arrivano le segnalazioni degli utenti (vuoto = non configurato).
+def reportUrl = System.getenv('REPORT_URL') ?: ''
+def reportKey = System.getenv('REPORT_KEY') ?: ''
+
+// Chiave di firma per il Play Store (arriva dai "secrets" di GitHub).
+def ksPath = System.getenv('SIGNING_KEYSTORE')
+def ksPass = System.getenv('SIGNING_PASSWORD')
+def hasUploadKey = ksPath != null && ksPass != null && file(ksPath).exists()
+
 android {
     namespace 'it.storieitalia.app'
-    compileSdk 34
+    compileSdk 36
     ndkVersion '27.2.12479018'
 
     defaultConfig {
         applicationId 'it.storieitalia.app'
         minSdk 26
-        targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        targetSdk 36
+        versionCode vCode
+        versionName "2.0.${vCode}"
+
+        buildConfigField 'String', 'REPORT_URL', "\"${reportUrl}\""
+        buildConfigField 'String', 'REPORT_KEY', "\"${reportKey}\""
 
         ndk {
-            // AI ottimizzata per telefoni a 64 bit (praticamente tutti dal 2017 in poi)
+            // telefoni a 64 bit (praticamente tutti dal 2017 in poi)
             abiFilters 'arm64-v8a'
         }
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_STL=c++_shared'
+                // libreria C++ statica + pagine di memoria da 16 KB (requisito Google Play)
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
                 cppFlags '-std=c++17'
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        upload {
+            if (hasUploadKey) {
+                storeFile file(ksPath)
+                storePassword ksPass
+                keyAlias 'upload'
+                keyPassword ksPass
+                storeType 'pkcs12'
             }
         }
     }
@@ -29,8 +61,8 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            // firmata con la chiave di debug: basta per installarla sul proprio telefono
-            signingConfig signingConfigs.debug
+            // con la chiave del Play Store se disponibile, altrimenti chiave di prova
+            signingConfig hasUploadKey ? signingConfigs.upload : signingConfigs.debug
         }
     }
 
@@ -51,7 +83,7 @@ android {
         checkReleaseBuilds false
     }
 
-    packagingOptions {
+    packaging {
         jniLibs { useLegacyPackaging true }
     }
 }

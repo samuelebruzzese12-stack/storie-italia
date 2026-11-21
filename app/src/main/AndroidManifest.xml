@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Internet serve solo per scaricare il "cervello" AI la prima volta. Poi l'AI funziona offline. -->
+    <!-- Internet serve solo per scaricare il "cervello" AI e inviare le segnalazioni. L'AI funziona offline. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -10,14 +10,17 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:largeHeap="true"
         android:allowBackup="true"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_rules"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@android:style/Theme.Material.NoActionBar">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|uiMode"
-            android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="portrait">
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
