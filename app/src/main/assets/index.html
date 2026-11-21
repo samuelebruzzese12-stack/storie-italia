@@ -536,6 +536,8 @@ input,textarea{font:inherit;color:inherit}
 
 <script src="storie.js"></script>
 <script src="storie_nuove.js"></script>
+<script src="storie_guerra.js"></script>
+<script src="storie_malavita.js"></script>
 <script>
 (() => {
 "use strict";
@@ -544,7 +546,7 @@ const VERSION = "2.0";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
-const GENRE_ORDER = ["giallo","romantico","fantascienza","avventura","fantasy","malavita","thriller","horror","commedia","drama"];
+const GENRE_ORDER = ["giallo","romantico","fantascienza","avventura","fantasy","malavita","guerra","thriller","horror","commedia","drama"].filter(k => G[k]);
 const K = { save:"si2:save:", settings:"si2:settings", custom:"si2:custom", reports:"si2:reports", last:"si2:last" };
 const COLORS = ["#e9b65a","#9db7ff","#7fe0a6","#ff9eb0","#d6c8ff","#ffd98a","#7fd4e0","#ffb38a"];
 const GITHUB = "https://github.com/samuelebruzzese12-stack/storie-italia";
@@ -682,6 +684,20 @@ function coverSVG(s, W, H){
       for(let j = 0; j < 18; j++) e += `<circle cx="${f(rnd(0,W))}" cy="${f(rnd(H*.3,H))}" r="${rnd(.6,2).toFixed(2)}" fill="${A}" opacity="${rnd(.3,.85).toFixed(2)}"/>`;
       break;
     }
+    case "guerra": {
+      for(let k = 0; k < 3; k++) e += `<circle cx="${f(rnd(W*.1,W*.9))}" cy="${f(H*rnd(.55,.7))}" r="${f(W*rnd(.1,.2))}" fill="${A}" opacity="${rnd(.12,.24).toFixed(2)}"/>`;
+      for(let k = 0; k < 2; k++){ const x = rnd(W*.2, W*.8), a = rnd(-.45, .45); e += `<polygon points="${f(x-2)},${f(H*.72)} ${f(x+2)},${f(H*.72)} ${f(x+a*W+W*.08)},0 ${f(x+a*W-W*.08)},0" fill="#fff4d6" opacity="${rnd(.06,.11).toFixed(2)}"/>`; }
+      let x = 0, p = `M0 ${H} L0 ${f(H*.74)}`;
+      while(x < W){ const bw = rnd(W*.07, W*.16), bh = rnd(H*.03, H*.15); p += ` L${f(x)} ${f(H*.74-bh)} L${f(x+bw*.35)} ${f(H*.74-bh-rnd(0,H*.05))} L${f(x+bw*.55)} ${f(H*.74-bh+rnd(0,H*.04))} L${f(x+bw)} ${f(H*.74-bh)}`; x += bw; }
+      e += `<path d="${p} L${W} ${H} Z" fill="#0d0c08"/>`;
+      const wy = H*.88; let wp = `M0 ${f(wy)}`;
+      for(let xx = 0; xx < W; xx += W*.06) wp += ` Q${f(xx+W*.03)} ${f(wy+(R()<.5?-5:5))} ${f(xx+W*.06)} ${f(wy)}`;
+      e += `<path d="${wp}" fill="none" stroke="#b9a37a" stroke-opacity=".45" stroke-width="1.4"/>`;
+      for(let xx = W*.03; xx < W; xx += W*.06) e += `<path d="M${f(xx-3)} ${f(wy-3)} l6 6 M${f(xx+3)} ${f(wy-3)} l-6 6" stroke="#b9a37a" stroke-opacity=".45" stroke-width="1.1"/>`;
+      for(let xx = rnd(W*.02,W*.12); xx < W; xx += rnd(W*.2,W*.32)) e += `<rect x="${f(xx)}" y="${f(wy-H*.07)}" width="3" height="${f(H*.12)}" fill="#c9b18a" opacity=".35" transform="rotate(${rnd(-14,14).toFixed(0)} ${f(xx)} ${f(wy)})"/>`;
+      for(let j = 0; j < 24; j++) e += `<circle cx="${f(rnd(0,W))}" cy="${f(rnd(H*.15,H))}" r="${rnd(.5,1.8).toFixed(2)}" fill="${R()<.6?A:"#ffd27a"}" opacity="${rnd(.3,.85).toFixed(2)}"/>`;
+      break;
+    }
     case "commedia": {
       const cx = W*.5, cy = H*.5, r = Math.max(W, H);
       for(let k = 0; k < 16; k++){ const a1 = k/16*Math.PI*2, a2 = a1 + Math.PI/32; e += `<polygon points="${f(cx)},${f(cy)} ${f(cx+Math.cos(a1)*r)},${f(cy+Math.sin(a1)*r)} ${f(cx+Math.cos(a2)*r)},${f(cy+Math.sin(a2)*r)}" fill="${A}" opacity=".08"/>`; }
@@ -757,7 +773,7 @@ async function remoteLoad(){
 /* ===================== TESTI PER L'AI ===================== */
 function rules(s, x){
   const Rz = t => resolve(t, x), g = genre(s);
-  return `Sei il narratore e tutti i personaggi di una storia interattiva in italiano: "${s.t}" (${g.n}), ambientata in Italia.
+  return `Sei il narratore e tutti i personaggi di una storia interattiva in italiano: "${s.t}" (${g.n}).
 
 AMBIENTAZIONE: ${Rz(s.world)}
 
