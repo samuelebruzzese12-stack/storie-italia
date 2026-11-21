@@ -195,6 +195,12 @@ input,textarea{font:inherit;color:inherit}
 .btn.ghost::after,.btn.red::after{display:none}
 .btn.red{background:transparent;color:#ef7b74;border:1px solid #5a2a26;font-weight:600;margin-top:10px}
 .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.casa{display:grid;gap:8px}
+.casa select,.casa input{background:var(--panel2);border:1px solid var(--line);padding:12px 38px 12px 13px;border-radius:13px;font-size:15px;color:var(--text);outline:none;width:100%;color-scheme:dark;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23e0a83f' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+.casa input{background-image:none;padding-right:13px}
+.casa select:focus,.casa input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,168,63,.15)}
+.casainfo{white-space:pre-line;font-size:12.5px;color:#d9caa6;line-height:1.5;margin-top:8px;background:rgba(224,168,63,.06);border:1px solid rgba(224,168,63,.18);border-radius:12px;padding:10px 12px}
+.casainfo:empty{display:none}
 
 /* ---------- CHAT ---------- */
 .bar{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 8px 9px;border-bottom:1px solid var(--line);background:rgba(13,13,17,.96);flex:none}
@@ -450,6 +456,15 @@ input,textarea{font:inherit;color:inherit}
       </div>
       <div class="field"><label for="pname">Il tuo nome nella storia</label><input id="pname" maxlength="24" autocomplete="off"></div>
       <div class="field" id="fOrig"><label for="porig">Da dove arrivi?</label><input id="porig" maxlength="30" autocomplete="off"></div>
+      <div class="field" id="fCasa" style="display:none"><label>Dove vivi? Scegli provincia, città e quartiere</label>
+        <div class="casa">
+          <select id="hProv" aria-label="Provincia"></select>
+          <select id="hCom" aria-label="Città o paese"></select>
+          <select id="hZona" aria-label="Quartiere, rione o zona"></select>
+          <input id="hZonaTxt" maxlength="40" placeholder="Scrivi la tua via, frazione o rione" autocomplete="off" style="display:none">
+        </div>
+        <p class="casainfo" id="hInfo"></p>
+      </div>
       <div class="field"><label>Carattere</label>
         <div class="seg" id="persSeg"><button data-v="timida">Timido</button><button data-v="sveglia" class="on">Sveglio</button><button data-v="testarda">Testardo</button></div>
       </div>
@@ -544,6 +559,9 @@ input,textarea{font:inherit;color:inherit}
 <script src="storie_nuove.js"></script>
 <script src="storie_guerra.js"></script>
 <script src="storie_malavita.js"></script>
+<script src="storie_vita.js"></script>
+<script src="storie_azione.js"></script>
+<script src="campania.js"></script>
 <script src="effetti.js"></script>
 <script>
 (() => {
@@ -553,7 +571,7 @@ const VERSION = "2.4";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
-const GENRE_ORDER = ["giallo","romantico","fantascienza","avventura","fantasy","malavita","guerra","thriller","horror","commedia","drama"].filter(k => G[k]);
+const GENRE_ORDER = ["giallo","romantico","vita","fantascienza","avventura","azione","fantasy","malavita","guerra","thriller","horror","commedia","drama"].filter(k => G[k]);
 const K = { save:"si2:save:", settings:"si2:settings", custom:"si2:custom", reports:"si2:reports", last:"si2:last" };
 const COLORS = ["#e9b65a","#9db7ff","#7fe0a6","#ff9eb0","#d6c8ff","#ffd98a","#7fd4e0","#ffb38a"];
 const GITHUB = "https://github.com/samuelebruzzese12-stack/storie-italia";
@@ -706,6 +724,46 @@ function coverSVG(s, W, H){
       for(let j = 0; j < 24; j++) e += `<circle cx="${f(rnd(0,W))}" cy="${f(rnd(H*.15,H))}" r="${rnd(.5,1.8).toFixed(2)}" fill="${R()<.6?A:"#ffd27a"}" opacity="${rnd(.3,.85).toFixed(2)}"/>`;
       break;
     }
+    case "vita": {
+      e += `<circle cx="${f(rnd(W*.15,W*.85))}" cy="${f(H*.16)}" r="${f(W*.08)}" fill="#ffe2a8" opacity=".7"/>`;
+      let x = -rnd(0, W*.1);
+      while(x < W){
+        const bw = rnd(W*.22, W*.38), top = rnd(H*.22, H*.42), col = ["#3a2618","#2e1f15","#422a1a"][Math.floor(R()*3)];
+        e += `<rect x="${f(x)}" y="${f(top)}" width="${f(bw)}" height="${f(H-top)}" fill="${col}"/><rect x="${f(x)}" y="${f(top)}" width="${f(bw)}" height="3" fill="#000" opacity=".25"/>`;
+        for(let yy = top + 10; yy < H - 12; yy += 22) for(let xx = x + 8; xx < x + bw - 10; xx += 18){
+          const lit = R() < .45;
+          e += `<rect x="${f(xx)}" y="${f(yy)}" width="8" height="11" rx="1" fill="${lit ? A : "#1a120c"}" opacity="${lit ? rnd(.55,.95).toFixed(2) : ".9"}"/>`;
+          if(R() < .3) e += `<rect x="${f(xx-3)}" y="${f(yy+11)}" width="14" height="2" fill="#120c08"/>`;
+        }
+        x += bw + rnd(-2, 4);
+      }
+      const ly = H*rnd(.3,.45), cols = ["#e9524a","#f2f2f2","#5aa0e8","#f3c873","#7fd4a0","#ff8fb1"];
+      e += `<path d="M0 ${f(ly)} Q${f(W/2)} ${f(ly+H*.06)} ${W} ${f(ly)}" stroke="#d9caa6" stroke-opacity=".6" fill="none"/>`;
+      for(let k = 0; k < 7; k++){ const px = W*(.08 + k*.13), py = ly + H*.06*(1 - Math.pow((px - W/2)/(W/2), 2)) - 1, c = cols[k % cols.length];
+        e += k % 2 ? `<path d="M${f(px-6)} ${f(py)} h12 l3 6 h-4 v12 h-10 v-12 h-4z" fill="${c}" opacity=".9"/>` : `<rect x="${f(px-5)}" y="${f(py)}" width="10" height="${f(rnd(12,18))}" fill="${c}" opacity=".9"/>`; }
+      break;
+    }
+    case "azione": {
+      d += `<linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#ff4fa3"/></linearGradient>`;
+      const sx = rnd(W*.3, W*.7), hy = H*.64, sr = Math.min(W, H)*.27, sy = hy - sr*.35;
+      e += `<circle cx="${f(sx)}" cy="${f(sy)}" r="${f(sr)}" fill="url(#${u}s)"/>`;
+      for(let k = 0; k < 5; k++) e += `<rect x="${f(sx-sr)}" y="${f(sy + sr*(.08 + k*.17))}" width="${f(sr*2)}" height="${f(1.6 + k*1.4)}" fill="${g.c1}"/>`;
+      let x = 0;
+      while(x < W){ const bw = rnd(W*.05, W*.12), bh = rnd(H*.06, H*.3);
+        e += `<rect x="${f(x)}" y="${f(hy-bh)}" width="${f(bw)}" height="${f(bh+1)}" fill="#14061f"/>`;
+        for(let k = 0; k < 3; k++) if(R() < .6) e += `<rect x="${f(x+rnd(2,Math.max(3,bw-5)))}" y="${f(hy-bh+rnd(4,Math.max(5,bh-6)))}" width="3" height="2" fill="${R()<.5?A:"#5ee1ff"}" opacity=".9"/>`;
+        x += bw + rnd(0, 3); }
+      e += `<rect y="${f(hy)}" width="${W}" height="${f(H-hy)}" fill="#12051c"/>`;
+      for(let k = -8; k <= 8; k++) e += `<line x1="${f(W/2)}" y1="${f(hy)}" x2="${f(W/2+k*W*.2)}" y2="${H}" stroke="${A}" stroke-opacity=".35"/>`;
+      for(let k = 1; k < 6; k++){ const y = hy + (H-hy)*Math.pow(k/6, 1.7); e += `<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="${A}" stroke-opacity=".3"/>`; }
+      [[W*rnd(.04,.16), 1], [W*rnd(.84,.96), -1]].forEach(([px, dr]) => {
+        const th = H*rnd(.42,.55), tx = px + dr*W*.06, ty = H - th, k = "#0b0410", sw = Math.max(2, W*.022);
+        e += `<path d="M${f(px)} ${H} Q${f(px + dr*W*.02)} ${f(H - th*.5)} ${f(tx)} ${f(ty)}" stroke="${k}" stroke-width="${f(sw)}" fill="none" stroke-linecap="round"/>`;
+        [[-1,.2],[-.6,-.25],[0,-.35],[.6,-.25],[1,.2]].forEach(([fx, fy]) => { const ex = tx + fx*W*.13, ey = ty + fy*H*.08 + H*.04;
+          e += `<path d="M${f(tx)} ${f(ty)} Q${f(tx + fx*W*.07)} ${f(ty - H*.05)} ${f(ex)} ${f(ey)}" stroke="${k}" stroke-width="${f(sw*.8)}" fill="none" stroke-linecap="round"/>`; });
+      });
+      break;
+    }
     case "commedia": {
       const cx = W*.5, cy = H*.5, r = Math.max(W, H);
       for(let k = 0; k < 16; k++){ const a1 = k/16*Math.PI*2, a2 = a1 + Math.PI/32; e += `<polygon points="${f(cx)},${f(cy)} ${f(cx+Math.cos(a1)*r)},${f(cy+Math.sin(a1)*r)} ${f(cx+Math.cos(a2)*r)},${f(cy+Math.sin(a2)*r)}" fill="${A}" opacity=".08"/>`; }
@@ -785,7 +843,7 @@ function rules(s, x){
 
 AMBIENTAZIONE: ${Rz(s.world)}
 
-PROTAGONISTA (la interpreta SOLO l'utente): ${Rz(s.you)} ${x.sex === "m" ? "È un uomo." : "È una donna."} Carattere: ${Rz(PERS[x.pers] || PERS.sveglia)}.
+PROTAGONISTA (la interpreta SOLO l'utente): ${Rz(s.you)} ${x.sex === "m" ? "È un uomo." : "È una donna."} Carattere: ${Rz(PERS[x.pers] || PERS.sveglia)}.${s.pick && x.home ? "\n\nDOVE VIVE " + x.name.toUpperCase() + ":\n" + homeText(x.home) : ""}
 
 PERSONAGGI:
 ${(s.chars || []).map(c => `- ${c.full || c.n} (${Rz(c.r)}): ${Rz(c.d)}`).join("\n")}
@@ -1066,6 +1124,76 @@ function renderProfile(){
   $("verFoot").textContent = `Storie d'Italia v${VERSION}${LOCAL ? " · AI offline" : ""} · ${allStories().length} storie`;
 }
 
+/* ===================== DOVE VIVI (Campania) ===================== */
+const CAMP = window.CAMPANIA || null;
+const PROV_ORDER = ["NA","SA","CE","AV","BN"], CAPOLUOGO = { NA:"Napoli", SA:"Salerno", CE:"Caserta", AV:"Avellino", BN:"Benevento" };
+const SIZE = p => p > 500000 ? "la grande metropoli" : p > 60000 ? "una città grande e affollata" : p > 25000 ? "una città media" : p > 10000 ? "una cittadina" : p > 3000 ? "un paese" : "un piccolo borgo";
+const OTHER = "__altro";
+const AREA_DI = { "area vesuviana":"dell'area vesuviana", "area stabiese e dei Monti Lattari":"dell'area stabiese e dei Monti Lattari", "penisola sorrentina":"della penisola sorrentina",
+  "isole del golfo":"delle isole del golfo", "Campi Flegrei":"dei Campi Flegrei", "area nord di Napoli":"dell'area nord di Napoli", "area nolana":"dell'area nolana",
+  "Costiera Amalfitana":"della Costiera Amalfitana", "Agro nocerino-sarnese":"dell'Agro nocerino-sarnese", "Valle dell'Irno e area salernitana":"della Valle dell'Irno",
+  "Piana del Sele e Picentini":"della Piana del Sele e dei Picentini", "Cilento":"del Cilento", "Vallo di Diano":"del Vallo di Diano", "agro aversano":"dell'agro aversano",
+  "litorale domizio":"del litorale domizio", "area casertana":"dell'area casertana", "Alto Casertano e Matese":"dell'Alto Casertano e del Matese", "Valle Caudina":"della Valle Caudina",
+  "Irpinia":"dell'Irpinia", "Sannio":"del Sannio" };
+function comRow(n){ return CAMP ? CAMP.comuni.find(r => r[0] === n) : null; }
+function areaOf(n, prov){ return (CAMP && CAMP.area[n]) || (prov === "AV" ? "Irpinia" : prov === "BN" ? "Sannio" : ""); }
+function zonesOf(n){ const z = (CAMP && CAMP.zone[n]) || []; return z.length ? z : [{ n:"Centro", t:"zona" }, { n:"Periferia", t:"zona" }, { n:"Frazione o campagna", t:"zona" }]; }
+function fillCom(prov, sel){
+  const list = CAMP.comuni.filter(r => r[1] === prov).map(r => r[0]), cap = CAPOLUOGO[prov];
+  const ord = [cap].concat(list.filter(n => n !== cap));
+  $("hCom").innerHTML = ord.map(n => `<option value="${esc(n)}">${esc(n)}${n === cap ? " (capoluogo)" : ""}</option>`).join("");
+  $("hCom").value = sel && list.includes(sel) ? sel : cap;
+}
+function fillZona(com, sel){
+  const z = zonesOf(com);
+  let h = "";
+  if(com === "Napoli"){
+    const groups = {};
+    z.filter(q => q.t === "quartiere").forEach(q => (groups[q.q] = groups[q.q] || []).push(q));
+    Object.keys(groups).forEach(g => { h += `<optgroup label="${esc(g)}">` + groups[g].map(q => `<option value="${esc(q.n)}">${esc(q.n)}</option>`).join("") + "</optgroup>"; });
+    h += `<optgroup label="Rioni e zone famose">` + z.filter(q => q.t !== "quartiere").map(q => `<option value="${esc(q.n)}">${esc(q.n)}${q.q ? " (" + esc(q.q) + ")" : ""}</option>`).join("") + "</optgroup>";
+  } else h = z.map(q => `<option value="${esc(q.n)}">${esc(q.n)}</option>`).join("");
+  h += `<option value="${OTHER}">✏️ Un'altra zona: la scrivo io</option>`;
+  $("hZona").innerHTML = h;
+  const names = z.map(q => q.n);
+  if(sel && names.includes(sel)) $("hZona").value = sel;
+  else if(sel){ $("hZona").value = OTHER; $("hZonaTxt").value = sel; }
+  else $("hZona").value = com === "Napoli" ? "Rione Sanità" : names[0];
+  $("hZonaTxt").style.display = $("hZona").value === OTHER ? "block" : "none";
+}
+function homeFromUI(){
+  if(!CAMP || !$("hCom").value) return { prov:"NA", com:"Napoli", zona:"" };
+  const z = $("hZona").value === OTHER ? (clean($("hZonaTxt").value) || "") : $("hZona").value;
+  return { prov:$("hProv").value, com:$("hCom").value, zona:z };
+}
+function homeLabel(h){ if(!h || !h.com) return "Napoli"; return h.zona && h.zona !== h.com ? `${h.zona}, ${h.com}` : h.com; }
+function homeText(h){
+  if(!CAMP || !h || !h.com) return "";
+  const row = comRow(h.com), prov = row ? row[1] : h.prov, P = CAMP.prov[prov] || {}, area = areaOf(h.com, prov);
+  const z = ((CAMP.zone[h.com]) || []).find(q => q.n === h.zona);
+  let t = `${h.com}, in provincia di ${P.n || prov}${area ? " (" + area + ")" : ""}: ${SIZE(row ? row[2] : 0)}.`;
+  if(CAMP.info[h.com]) t += " " + CAMP.info[h.com];
+  if(CAMP.aree[area]) t += ` Zona: ${CAMP.aree[area]}.`;
+  t += " " + (P.d || "");
+  if(h.zona) t += `\nQUARTIERE O ZONA: ${h.zona}${z && z.q ? " (" + z.q + ")" : ""}${z && z.d ? ": " + z.d : "."}`;
+  t += "\nUsa luoghi, strade, mezzi di trasporto, abitudini, piatti e modi di dire veri di questo posto, con affetto e senza stereotipi. Se il protagonista si trasferisce, cambia ambientazione di conseguenza.";
+  return t;
+}
+function casaInfo(){
+  const h = homeFromUI(), row = comRow(h.com), prov = row ? row[1] : h.prov, area = areaOf(h.com, prov);
+  const z = (CAMP.zone[h.com] || []).find(q => q.n === h.zona);
+  const base = CAMP.info[h.com] || (`${h.com} è ${SIZE(row ? row[2] : 0)}${area ? " " + (AREA_DI[area] || "in " + area) : ""}, in provincia di ${(CAMP.prov[prov] || {}).n || prov}.` + (CAMP.aree[area] ? " " + CAMP.aree[area][0].toUpperCase() + CAMP.aree[area].slice(1) + "." : ""));
+  $("hInfo").textContent = "📍 " + base + (z && z.d ? "\n\n🏘️ " + z.n + ": " + z.d : "");
+}
+function initCasa(saved){
+  if(!CAMP) return;
+  if(!$("hProv").options.length) $("hProv").innerHTML = PROV_ORDER.map(p => `<option value="${p}">Provincia di ${CAMP.prov[p].n} · ${CAMP.comuni.filter(r => r[1] === p).length} comuni</option>`).join("");
+  const h = saved || { prov:"NA", com:"Napoli", zona:"" };
+  $("hProv").value = PROV_ORDER.includes(h.prov) ? h.prov : "NA";
+  fillCom($("hProv").value, h.com); fillZona($("hCom").value, h.zona); casaInfo();
+}
+function casaChanged(){ casaInfo(); fillDetailTexts(); }
+
 /* ===================== DETTAGLIO ===================== */
 function setSeg(id, v){ document.querySelectorAll("#" + id + " button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); if(window.FX) FX.seg(id); }
 function segVal(id, def){ const b = document.querySelector("#" + id + " button.on"); return b ? b.dataset.v : def; }
@@ -1073,7 +1201,7 @@ function face(c, i, size){
   const col = COLORS[i % COLORS.length];
   return `<div class="face" style="background:radial-gradient(circle at 30% 25%,${col}55,#15151b 70%);color:${col};${size ? `width:${size}px;height:${size}px;font-size:${Math.round(size * .42)}px` : ""}">${esc((c.n || "?").replace(/^(Sig\.ra|Zì|Zio|Zia|Nonna|Nonno|Don|Suor|Mamma|Papà|Sior|Il|La)\s+/i, "")[0] || "?")}</div>`;
 }
-function pvState(s){ return { sex:pvSex, name:clean($("pname").value) || s.names[pvSex] || "…", origin:clean($("porig").value) || s.origin || "" }; }
+function pvState(s){ return { sex:pvSex, name:clean($("pname").value) || s.names[pvSex] || "…", origin:s.pick ? homeLabel(homeFromUI()) : (clean($("porig").value) || s.origin || "") }; }
 function fillDetailTexts(){
   const s = story(detailId); if(!s) return;
   const x = pvState(s);
@@ -1095,7 +1223,9 @@ function openDetail(id){
   $("fSex").style.display = s.sex === "x" ? "flex" : "none";
   setSeg("sexSeg", pvSex);
   $("pname").value = x ? x.name : s.names[pvSex];
-  $("fOrig").style.display = s.origin != null ? "flex" : "none";
+  $("fOrig").style.display = s.origin != null && !s.pick ? "flex" : "none";
+  $("fCasa").style.display = s.pick ? "flex" : "none";
+  if(s.pick) initCasa(x && x.home);
   $("porig").value = x ? (x.origin || s.origin || "") : (s.origin || "");
   setSeg("persSeg", x ? x.pers : "sveglia");
   refreshDetailButtons();
@@ -1124,13 +1254,13 @@ function startStory(id, fresh){
   if(isNew){
     const sex = s.sex === "x" ? pvSex : (s.sex === "m" ? "m" : "f");
     x = { sid:id, name:clean($("pname").value) || s.names[sex] || "Alex", sex,
-          origin:s.origin != null ? (clean($("porig").value) || s.origin) : "",
+          origin:s.pick ? homeLabel(homeFromUI()) : (s.origin != null ? (clean($("porig").value) || s.origin) : ""), home:s.pick ? homeFromUI() : null,
           pers:segVal("persSeg", "sveglia"), messages:[], memory:emptyMemory(), turns:0, opts:[], win:0, created:Date.now() };
     if(s.open){ x.messages.push({ r:"a", t:resolve(s.open, x) }); x.opts = (s.opts || []).map(o => resolve(o, x)); }
   }
   st = x; persist();
   renderChat(); show("chat");
-  if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720) });
+  if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720), meta:(s.pick && st.home ? homeLabel(st.home) : s.city) + " · " + (s.era || "Oggi") });
   if(!st.messages.length) generate("open");
   else warmup();
 }
@@ -1164,7 +1294,7 @@ function renderChat(){
   setStatus();
   log.innerHTML = "";
   const sc = document.createElement("div"); sc.className = "scene";
-  sc.textContent = `${genre(s).e} ${s.city} · ${s.era || "Oggi"} · Tu sei ${st.name}`;
+  sc.textContent = `${genre(s).e} ${s.pick && st.home ? homeLabel(st.home) : s.city} · ${s.era || "Oggi"} · Tu sei ${st.name}`;
   log.appendChild(sc);
   st.messages.forEach((m, i) => log.appendChild(m.r === "u" ? meBubble(m.t) : aiRow(m.t, i)));
   renderQR(st.opts || []);
@@ -1378,7 +1508,8 @@ function licensesHTML(){
   <h5>Modelli AI (scaricati sul telefono)</h5>
   <ul><li>Qwen2.5 7B Instruct e Qwen2.5 1.5B Instruct – Alibaba Cloud, licenza Apache 2.0.</li>
   <li>Llama 3.2 3B Instruct – <b>Built with Llama</b>. Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.</li></ul>
-  <h5>Caratteri</h5><p>Inter e Playfair Display – SIL Open Font License.</p></div>`;
+  <h5>Caratteri</h5><p>Inter e Playfair Display – SIL Open Font License.</p>
+  <h5>Dati</h5><p>Elenco dei comuni della Campania: ISTAT, licenza CC BY 3.0 IT.</p></div>`;
 }
 
 /* ===================== SETUP AI OFFLINE ===================== */
@@ -1454,6 +1585,10 @@ $("dlgNo").onclick = () => { $("dlg").classList.remove("on"); syncBack(); };
 $("dlgYes").onclick = () => { $("dlg").classList.remove("on"); syncBack(); if(dlgCb) dlgCb(); };
 $("q").addEventListener("input", renderExplore);
 $("pname").addEventListener("input", fillDetailTexts);
+$("hProv").addEventListener("change", () => { fillCom($("hProv").value); fillZona($("hCom").value); casaChanged(); });
+$("hCom").addEventListener("change", () => { fillZona($("hCom").value); casaChanged(); });
+$("hZona").addEventListener("change", () => { $("hZonaTxt").style.display = $("hZona").value === OTHER ? "block" : "none"; if($("hZona").value === OTHER) $("hZonaTxt").focus(); casaChanged(); });
+$("hZonaTxt").addEventListener("input", casaChanged);
 $("porig").addEventListener("input", fillDetailTexts);
 document.querySelectorAll("#sexSeg button").forEach(b => b.onclick = () => {
   const s = story(detailId), old = pvSex; pvSex = b.dataset.v; setSeg("sexSeg", pvSex);

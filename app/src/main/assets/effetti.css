@@ -172,6 +172,13 @@ body.fx-low .tab .pill{ display:block; }
 @keyframes fxBreathe{ 50%{ opacity:.45; } }
 .o-dust{ left:0; right:0; top:0; bottom:-120px; background:var(--t-dust); animation:fxUp120 16s linear infinite; }
 
+/* azione: lampeggianti e neon */
+.o-police{ left:-25%; bottom:-30%; width:75%; height:65%; border-radius:50%; background:radial-gradient(closest-side, rgba(255,50,70,.5), transparent); opacity:0; animation:fxPolice 2.4s ease-in-out infinite; }
+.o-police.b{ left:50%; background:radial-gradient(closest-side, rgba(50,130,255,.5), transparent); animation-delay:-1.2s; }
+@keyframes fxPolice{ 0%, 100%{ opacity:0; } 20%{ opacity:.8; } 35%{ opacity:.15; } 50%{ opacity:.7; } 70%{ opacity:0; } }
+.o-neon{ left:0; right:0; top:58%; height:2px; background:linear-gradient(90deg, transparent, #ff4fd8, #5ee1ff, transparent); box-shadow:0 0 14px 2px rgba(255,79,216,.6); opacity:.75; animation:fxNeon 3.4s steps(1) infinite; }
+@keyframes fxNeon{ 0%, 100%{ opacity:.75; } 8%{ opacity:.1; } 10%{ opacity:.75; } 52%{ opacity:.2; } 54%{ opacity:.85; } }
+
 /* ---------- passaggio copertina → scheda ---------- */
 .zoomghost{ position:fixed; z-index:90; overflow:hidden; pointer-events:none; box-shadow:0 24px 70px rgba(0,0,0,.6); }
 .zoomghost svg{ width:100%; height:100%; display:block; }

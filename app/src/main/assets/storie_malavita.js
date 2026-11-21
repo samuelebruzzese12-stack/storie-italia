@@ -3,7 +3,7 @@ window.STORIE.push(
 
 /* ============================== MALAVITA 2.3 ============================== */
 {
-  id: "riviera", g: "malavita", e: "🏎️", featured: true,
+  id: "riviera", g: "azione", e: "🏎️", featured: true,
   t: "Sole, Soldi e Sirene", city: "San Lucio a Mare", place: "Riviera Romagnola", era: "Oggi",
   hook: "Tre criminali, una città di discoteche e influencer, un colpo impossibile. Benvenuti in Riviera.",
   desc: "San Lucio a Mare, Riviera Romagnola: la città più folle d'Italia. Di giorno spiagge con trentamila ombrelloni, di notte discoteche, influencer e supercar sulla Via Emilia. Tu sei [il pilota|la pilota] che chiamano quando qualcuno deve sparire in fretta. Una notte, dopo una fuga andata male, ti salva un uomo di mezza età in vestaglia di seta: Ruggero Bassani, il più grande rapinatore degli anni Novanta, che vive sotto falso nome con una famiglia impossibile. Pochi giorni dopo un agente corrotto vi ricatta tutti e due. E dalle colline arriva il terzo socio: Tonino «Tornado», il pazzo della Valmarecchia. Serve un colpo grosso. Il più grosso di sempre.",

@@ -53,7 +53,9 @@ const OV = {
   thriller:'<i class="o-scan"></i><i class="o-glitch"></i><i class="o-rec">● REC</i>',
   horror:'<i class="o-fog"></i><i class="o-fog b"></i><i class="o-pulse"></i>',
   commedia:'<i class="o-confetti"></i><i class="o-confetti b"></i>',
-  drama:'<i class="o-beamw"></i><i class="o-dust"></i>'
+  drama:'<i class="o-beamw"></i><i class="o-dust"></i>',
+  vita:'<i class="o-beamw"></i><i class="o-dust"></i><i class="o-birds"></i>',
+  azione:'<i class="o-police"></i><i class="o-police b"></i><i class="o-neon"></i>'
 };
 function overlay(g){ const d = D.createElement("div"); d.className = "fxo"; d.innerHTML = OV[g] || OV.drama; return d; }
 
@@ -377,7 +379,7 @@ W.FX = {
     ambient(s.g, g && g.c1);
     const o = extra || {}, name = x.name || "", m = x.sex === "m";
     if(isNew){
-      titleCard({ emoji:s.e || (g && g.e) || "📖", cap:"Capitolo I", title:o.title || s.t, meta:[s.city, s.era || "Oggi"].filter(Boolean).join(" · "),
+      titleCard({ emoji:s.e || (g && g.e) || "📖", cap:"Capitolo I", title:o.title || s.t, meta:o.meta || [s.city, s.era || "Oggi"].filter(Boolean).join(" · "),
                   you:"Tu sei " + name, accent:g && g.a, cover:o.cover }).then(() => {
         const first = D.querySelector("#log .row-ai .msg.ai");
         if(first && !first.querySelector(".typing")) inkReveal(first);

@@ -1,6 +1,6 @@
 # Storie d'Italia – Chat AI offline
 
-App Android di storie interattive con personaggi AI, ambientate in Italia: 66 storie tra gialli, romantiche, fantascienza, avventura, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
+App Android di storie interattive con personaggi AI, ambientate in Italia: 70 storie tra gialli, romantiche, vita reale, fantascienza, avventura, azione, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
 L'AI funziona **direttamente sul telefono**: gratis, senza abbonamenti, anche senza internet.
 
 ## Scaricare l'app
@@ -37,7 +37,9 @@ L'app scarica una sola volta il "cervello" AI (meglio con il Wi-Fi) e consiglia 
 
 ## Com'è fatta
 
-- `app/src/main/assets/storie.js`, `storie_nuove.js`, `storie_guerra.js` e `storie_malavita.js` – il catalogo delle storie (personaggi, segreti, scene d'apertura)
+- `app/src/main/assets/storie.js`, `storie_nuove.js`, `storie_guerra.js`, `storie_malavita.js`, `storie_vita.js` e `storie_azione.js` – il catalogo delle storie (personaggi, segreti, scene d'apertura)
+- `app/src/main/assets/campania.js` – i 550 comuni della Campania (fonte ISTAT, licenza CC BY 3.0 IT) con aree, città, quartieri e rioni
+- `app/src/main/assets/effetti.js` e `effetti.css` – animazioni e grafica
 - `app/src/main/assets/index.html` – l'interfaccia e la logica (memoria, segnalazioni, crea storia)
 - `app/src/main/cpp/storie.cpp` – motore AI nativo basato su llama.cpp, con riuso del contesto già elaborato
 - `app/src/main/java/.../MainActivity.java` – WebView, download dei modelli, ponte JavaScript ↔ AI
