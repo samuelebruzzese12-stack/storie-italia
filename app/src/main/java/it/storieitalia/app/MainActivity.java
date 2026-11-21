@@ -49,7 +49,7 @@ public class MainActivity extends Activity {
         {"l3", "Bilanciata", "Llama 3.2 3B · ottimo italiano e buona velocità · telefoni con 6-8 GB di RAM",
          "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
          "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
-         "2020", "5.5", "4096", "llama3", "Built with Llama · Llama 3.2 Community License"},
+         "2020", "5.5", "5120", "llama3", "Built with Llama · Llama 3.2 Community License"},
         {"q15", "Veloce", "Qwen2.5 1.5B · leggera e rapida · per telefoni con poca memoria",
          "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
          "https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",

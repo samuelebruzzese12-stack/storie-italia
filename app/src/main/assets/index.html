@@ -535,6 +535,7 @@ input,textarea{font:inherit;color:inherit}
 <div class="toast" id="toast"></div>
 
 <script src="storie.js"></script>
+<script src="storie_nuove.js"></script>
 <script>
 (() => {
 "use strict";
@@ -543,7 +544,7 @@ const VERSION = "2.0";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
-const GENRE_ORDER = ["giallo","romantico","fantascienza","avventura","thriller","horror","commedia","drama"];
+const GENRE_ORDER = ["giallo","romantico","fantascienza","avventura","fantasy","malavita","thriller","horror","commedia","drama"];
 const K = { save:"si2:save:", settings:"si2:settings", custom:"si2:custom", reports:"si2:reports", last:"si2:last" };
 const COLORS = ["#e9b65a","#9db7ff","#7fe0a6","#ff9eb0","#d6c8ff","#ffd98a","#7fd4e0","#ffb38a"];
 const GITHUB = "https://github.com/samuelebruzzese12-stack/storie-italia";
@@ -660,6 +661,25 @@ function coverSVG(s, W, H){
         e += `<path d="M${f(tx)} ${H} L${f(tx)} ${f(H*.45)} M${f(tx)} ${f(H*.62)} l${f(dr*W*.12)} ${f(-H*.1)} M${f(tx)} ${f(H*.55)} l${f(-dr*W*.1)} ${f(-H*.08)} M${f(tx)} ${f(H*.5)} l${f(dr*W*.08)} ${f(-H*.12)}" stroke="#05030a" stroke-width="${f(W*.025)}" stroke-linecap="round" fill="none"/>`;
       });
       e += `<rect y="${f(H*.75)}" width="${W}" height="${f(H*.25)}" fill="#cfc8ff" opacity=".06"/>`;
+      break;
+    }
+    case "malavita": {
+      for(let k = 0; k < 7; k++){ const y = H*(.1 + k*.12); e += `<polygon points="0,${f(y)} ${W},${f(y-H*.2)} ${W},${f(y-H*.2+H*.05)} 0,${f(y+H*.05)}" fill="${A}" opacity="${rnd(.06,.13).toFixed(2)}"/>`; }
+      for(let k = 0; k < 3; k++){ const x = rnd(W*.15, W*.85); e += `<path d="M${f(x)} ${H} c${f(-W*.1)} ${f(-H*.12)} ${f(W*.1)} ${f(-H*.22)} 0 ${f(-H*.34)} s${f(W*.1)} ${f(-H*.22)} 0 ${f(-H*.34)}" fill="none" stroke="#ffffff" stroke-opacity="${rnd(.06,.14).toFixed(2)}" stroke-width="${f(W*.025)}" stroke-linecap="round"/>`; }
+      e += `<rect y="${f(H*.86)}" width="${W}" height="${f(H*.14)}" fill="#000" opacity=".35"/>`;
+      break;
+    }
+    case "fantasy": {
+      e += `<circle cx="${f(rnd(W*.2,W*.8))}" cy="${f(H*.2)}" r="${f(W*.09)}" fill="#e8f6ff" opacity=".55"/>`;
+      [["#0b1d24",.62],["#06131a",.78]].forEach(([c, base]) => {
+        let p = `M0 ${H} L0 ${f(H*base)}`, x = 0;
+        while(x < W){ x += rnd(W*.1, W*.22); p += ` L${f(x)} ${f(H*base-rnd(H*.06,H*.22))}`; x += rnd(W*.08, W*.18); p += ` L${f(x)} ${f(H*base+rnd(0,H*.04))}`; }
+        e += `<path d="${p} L${W} ${H} Z" fill="${c}"/>`;
+      });
+      const cx = rnd(W*.3, W*.7), cy = H*.7, cw = W*.16, k = "#030a0d";
+      e += `<rect x="${f(cx-cw*.5)}" y="${f(cy-H*.07)}" width="${f(cw)}" height="${f(H*.1)}" fill="${k}"/>`;
+      [-1, 1].forEach(sd => { const tx = cx + sd*cw*.5; e += `<rect x="${f(tx-cw*.12)}" y="${f(cy-H*.15)}" width="${f(cw*.24)}" height="${f(H*.18)}" fill="${k}"/><polygon points="${f(tx-cw*.17)},${f(cy-H*.15)} ${f(tx)},${f(cy-H*.23)} ${f(tx+cw*.17)},${f(cy-H*.15)}" fill="${k}"/><rect x="${f(tx-1.5)}" y="${f(cy-H*.11)}" width="3" height="4" fill="${A}" opacity=".9"/>`; });
+      for(let j = 0; j < 18; j++) e += `<circle cx="${f(rnd(0,W))}" cy="${f(rnd(H*.3,H))}" r="${rnd(.6,2).toFixed(2)}" fill="${A}" opacity="${rnd(.3,.85).toFixed(2)}"/>`;
       break;
     }
     case "commedia": {
