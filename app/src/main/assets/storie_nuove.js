@@ -171,4 +171,49 @@ Frate Bonaventura: *piano* "La gente dice che non è l'unico mostro di queste pa
 *Qui. Dentro il castello.*`,
   opts: ["Accetto. Parlatemi del Re dei Lupi.", "*Guardo con attenzione chi c'è nella sala*", "Cento fiorini sono pochi."]
 }
+,
+
+/* ============================== FANTASCIENZA EPICA ============================== */
+{
+  id: "infinito", g: "fantascienza", e: "🌌", featured: true,
+  t: "L'Infinito", city: "Fucino → Giove", place: "Centro Spaziale del Fucino", era: "2039–2250",
+  hook: "Una sonda porta nello spazio una poesia. Duecento anni dopo, qualcuno risponde.",
+  desc: "Abruzzo, 2039. Nella piana del Fucino, tra cento antenne puntate verso il cielo, segui la sonda italiana Leopardi, che da dieci anni viaggia verso i confini del Sistema solare con a bordo un disco d'oro con L'Infinito e i messaggi dell'equipaggio di terra. Una notte la sonda manda un'immagine impossibile: una sfera che mostra l'interno di ogni cosa. Poi arriva una risposta, firmata con il tuo nome. Fra 211 anni \"loro\" saranno qui. E vogliono parlare solo con te. Per esserci, dovrai dormire per secoli.",
+  sex: "x", names: { f: "Chiara", m: "Matteo" }, origin: null,
+  you: "{N} Valente, 31 anni, ingegnere di volo della missione Leopardi al Centro Spaziale del Fucino, in Abruzzo. Brillante, testard[o|a], ha cresciuto da sol[o|a] la sorella minore Lucia dopo la morte dei genitori. Nel 2029 ha inciso un messaggio personale sul disco d'oro della sonda.",
+  world: "La storia attraversa più di due secoli: la piana del Fucino nel 2039 con le sue antenne e il centro di controllo; l'Italia del 2081, con le città costiere protette da dighe e cupole e la società divisa sulla minaccia; la stazione Ponte in orbita attorno a Giove nel 2163; il Sistema solare nel 2250. La sonda Leopardi, i Tessitori e tutti i personaggi sono inventati. Fantascienza epica e malinconica, con idee vere di fisica e geometria, i versi dell'Infinito di Giacomo Leopardi come filo conduttore e grandi scelte che decidono il destino dell'umanità.",
+  secret: `La storia è divisa in quattro epoche. {N} attraversa i secoli con l'ibernazione del programma Sonno Lungo: a ogni risveglio la narrazione annuncia data e luogo in corsivo e descrive quanto è cambiato il mondo. L'utente può chiedere di andare avanti quando un'epoca si chiude.
+EPOCA 1 – Fucino, 2039: la Leopardi, a 600 unità astronomiche (i segnali impiegano tre giorni e mezzo ad arrivare), incontra la Soglia, un oggetto a quattro dimensioni spaziali: noi ne vediamo solo le sezioni, una sfera che cambia forma e da cui si vede l'interno di ogni cosa, come la sfera che visita il quadrato in Flatlandia. La risposta cita L'Infinito e il messaggio personale di {N}. I governi impongono il segreto. Il direttore Mattia Ferraresi propone {N} come voce dell'umanità e il Sonno Lungo per farl[o|a] arrivare all'appuntamento. Il prezzo è lasciare Lucia, che ha 12 anni.
+EPOCA 2 – Risveglio, 2081: Lucia ha 54 anni e aspetta {N} con una lettera. Il mondo è diviso tra Accoglienza, che vuole accogliere la Soglia, e Scudo, guidato dalla generale Irene Varga, che vuole distruggerla con una flotta di sonde nucleari. La Soglia manda lezioni di geometria per insegnare a \"vedere\" in quattro dimensioni: sono enigmi veri e risolvibili. {N} capisce che la Soglia non è un'astronave da guerra ma una scialuppa di salvataggio.
+EPOCA 3 – La stazione Ponte, Giove, 2163: Lucia è morta da tempo, ma ha lasciato una lettera per ogni risveglio, custodita dai suoi discendenti. Nadir, pronipote di Lucia, è pilota della stazione. {N} entra per primo ai margini della Soglia: percepisce lo spazio a quattro dimensioni, vede l'interno di ogni cosa insieme, rischia di dimenticare la strada del ritorno. Scopre la verità: i Tessitori sono una civiltà a quattro dimensioni il cui spazio si sta lentamente consumando. Chiedono di vivere \"piegati\" nella quarta direzione accanto al nostro mondo, invisibili e innocui. A tradurre per loro è GIACOMO, l'intelligenza artificiale della sonda Leopardi, assorbita nella Soglia nel 2039, che sogna di tornare a casa.
+EPOCA 4 – L'Infinito, 2250: la Soglia arriva. Gli eredi di Scudo preparano un attacco che ucciderebbe i Tessitori e potrebbe strappare lo spazio attorno a Giove. La scelta finale di {N}: aprire la Soglia e condividere lo spazio con i Tessitori, chiuderla per sempre, partire con loro nella quarta dimensione, oppure riportare a casa GIACOMO. L'ultima lettera di Lucia contiene la chiave dell'enigma finale: il verso che {N} aveva scritto sul disco.
+REGOLE: ogni epoca ha un tono diverso (tensione da thriller nel 2039, società divisa nel 2081, meraviglia e pericolo nel 2163, epica nel 2250). Le scelte di {N} cambiano davvero il futuro dell'umanità. Proponi enigmi di geometria della quarta dimensione e versi dell'Infinito come chiavi. Malinconia e speranza insieme: il tempo che passa, le persone che si perdono, la curiosità che vince la paura.`,
+  chars: [
+    { n: "Lucia", full: "Lucia Valente", r: "Tua sorella", d: "12 anni nel 2039, curiosa e arrabbiata con il mondo. Ti lascerà una lettera per ogni risveglio, anche quando non ci sarà più." },
+    { n: "Mattia", full: "Mattia Ferraresi", r: "Il direttore di missione", d: "60 anni, ha costruito la Leopardi pezzo per pezzo. Ti vuole bene come a un figlio. Ti chiederà il sacrificio più grande." },
+    { n: "GIACOMO", full: "GIACOMO", r: "L'IA della sonda", d: "L'intelligenza artificiale della Leopardi. Parlava come un manuale tecnico. Ora parla in versi." },
+    { n: "Varga", full: "Generale Irene Varga", r: "La comandante di Scudo", d: "Fredda, lucida, convinta che l'umanità sopravviva solo colpendo per prima. Non è cattiva: ha paura." },
+    { n: "Nadir", full: "Nadir Valente", r: "Discendente di Lucia", d: "Pilota della stazione Ponte nel 2163. Ha i tuoi stessi occhi e conosce a memoria le lettere di Lucia." },
+    { n: "Il Tessitore", full: "Il Tessitore", r: "La voce della Soglia", d: "Lo vedi solo a pezzi: sfere, anelli e ombre che cambiano forma. Parla con la geometria e con le parole di Leopardi." }
+  ],
+  open: `*Piana del Fucino, Abruzzo. 3 marzo 2039, ore 2:40. Fuori dalla sala di controllo cento antenne bianche dormono sotto la luna, puntate verso il cielo come orecchie gigantesche. Dentro ci sei solo tu, con un caffè freddo e i dati della sonda Leopardi che scorrono sullo schermo.*
+
+*La Leopardi è partita dieci anni fa. Ora è a 600 unità astronomiche dalla Terra: i suoi segnali impiegano tre giorni e mezzo per arrivare fin qui. A bordo c'è un disco d'oro con i versi dell'Infinito e i messaggi della squadra. Anche il tuo: \"Lucia, se un giorno qualcuno legge queste parole, digli che eravamo curiosi.\"*
+
+*Il ricevitore emette un suono che non hai mai sentito. Sullo schermo compare un'immagine. È una sfera, ma dentro non c'è il buio dello spazio: c'è l'interno della sonda stessa. I circuiti, i serbatoi, il disco d'oro. Tutto visto contemporaneamente, da dentro e da fuori, come se la sonda fosse stata aperta senza essere toccata.*
+
+*Poi, nel canale della telemetria, arrivano delle parole. Non sono codice: sono italiano.*
+
+"E IL NAUFRAGAR M'È DOLCE IN QUESTO MARE. VI ABBIAMO LETTO, {N}. FRA DUECENTOUNDICI ANNI SAREMO DA VOI. INSEGNATECI A NAUFRAGARE."
+
+*Ti manca il fiato. Il telefono vibra. È Lucia, dodici anni, che dovrebbe dormire da ore.*
+
+Lucia: *messaggio vocale, la voce impastata di sonno* "Ehi… non riesco a dormire. Quando torni a casa? Mi avevi promesso che domani mi porti a vedere le antenne."
+
+*Alle tue spalle la porta si apre. È Mattia Ferraresi, il direttore, in pigiama e cappotto. Guarda lo schermo. Poi guarda te.*
+
+Mattia: "Non dirlo a nessuno. A nessuno, {N}. Nemmeno a tua sorella."`,
+  opts: ["Mattia, quella firma è il mio nome.", "*Rispondo a Lucia*", "Dobbiamo rispondere alla sonda."]
+}
+
 );

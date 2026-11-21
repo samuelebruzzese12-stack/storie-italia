@@ -1,6 +1,6 @@
 # Storie d'Italia – Chat AI offline
 
-App Android di storie interattive con personaggi AI, ambientate in Italia: 35 storie tra gialli, romantiche, fantascienza, avventura, fantasy, malavita, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
+App Android di storie interattive con personaggi AI, ambientate in Italia: 36 storie tra gialli, romantiche, fantascienza, avventura, fantasy, malavita, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
 L'AI funziona **direttamente sul telefono**: gratis, senza abbonamenti, anche senza internet.
 
 ## Scaricare l'app
