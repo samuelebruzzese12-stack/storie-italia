@@ -25,4 +25,4 @@ add_library(storie SHARED storie.cpp)
 target_include_directories(storie PRIVATE ${LLAMA_DIR}/include ${LLAMA_DIR}/ggml/include)
 target_link_libraries(storie llama ggml android log)
 # allineamento a 16 KB richiesto da Google Play per i telefoni Android 15+
-target_link_options(storie PRIVATE "-Wl,-z,max-page-size=16384")
+target_link_options(storie PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,-z,common-page-size=16384")

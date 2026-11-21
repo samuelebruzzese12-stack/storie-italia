@@ -916,6 +916,7 @@ function show(v, push = true){
   if(v === "stories") renderStoryList();
   if(v === "profile") renderProfile();
   if(v === "setup") renderSetup();
+  if(v === "detail") refreshDetailButtons();
   syncBack();
 }
 function back(){ let p = stack.pop() || "home"; if(p === current) p = "home"; show(p, false); }
@@ -1043,13 +1044,17 @@ function openDetail(id){
   $("fOrig").style.display = s.origin != null ? "flex" : "none";
   $("porig").value = x ? (x.origin || s.origin || "") : (s.origin || "");
   setSeg("persSeg", x ? x.pers : "sveglia");
-  const has = !!(x && x.messages && x.messages.length > 1);
-  $("resumeBtn").style.display = has ? "block" : "none";
-  $("startBtn").textContent = has ? "Ricomincia da capo" : "Inizia la storia";
-  $("delCustomBtn").style.display = s.custom ? "block" : "none";
+  refreshDetailButtons();
   fillDetailTexts();
   show("detail");
   $("v-detail").querySelector(".scroll").scrollTop = 0;
+}
+function refreshDetailButtons(){
+  const s = story(detailId); if(!s) return;
+  const has = hasSave(detailId);
+  $("resumeBtn").style.display = has ? "block" : "none";
+  $("startBtn").textContent = has ? "Ricomincia da capo" : "Inizia la storia";
+  $("delCustomBtn").style.display = s.custom ? "block" : "none";
 }
 function charSheet(i){
   const s = story(detailId), c = s.chars[i], x = pvState(s);
