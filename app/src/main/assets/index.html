@@ -98,12 +98,12 @@ input,textarea{font:inherit;color:inherit}
 .feat .img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(13,13,17,.97))}
 .shine{position:absolute;inset:0;z-index:2;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.08) 45%,transparent 60%);transform:translateX(-100%);animation:shine 4.5s 1.5s infinite;pointer-events:none}
 @keyframes shine{40%,100%{transform:translateX(100%)}}
-.feat .ov{position:absolute;left:16px;right:16px;bottom:62px;z-index:3}
+.feat .ov{position:absolute;left:16px;right:16px;bottom:12px;z-index:3}
 .badge{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;background:var(--red);color:#fff;padding:4px 8px;border-radius:7px;margin-bottom:8px}
 .badge i{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
 @keyframes blink{50%{opacity:.2}}
 .feat h3{font-family:var(--serif);font-size:26px;line-height:1.08}
-.feat .meta{font-size:12.5px;color:#d9caa6;margin-top:5px}
+.feat .meta{font-size:12.5px;color:#d9caa6;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .feat .body{background:var(--panel);padding:12px 16px 14px;display:flex;align-items:center;gap:10px}
 .feat .body p{flex:1;font-size:13px;color:var(--muted);line-height:1.4}
 .go{background:var(--accent);color:#1a1205;font-weight:700;font-size:13px;padding:9px 14px;border-radius:12px;white-space:nowrap}
@@ -972,8 +972,7 @@ function renderHome(){
     h += `<div class="sec"><div class="resume" data-resume="${s.id}"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>Continua: ${esc(s.t)}</b><span>${esc(lastLine(last))}</span></div><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div></div></div>`;
   }
   h += `<div class="sec"><div class="sec-h"><h2>In evidenza oggi</h2></div>
-    <div class="feat" data-story="${f.id}"><div class="img">${coverSVG(f, 400, 210)}</div><div class="shine"></div>
-    <div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div>
+    <div class="feat" data-story="${f.id}"><div class="img">${coverSVG(f, 400, 210)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
     <div class="body"><p>${esc(resolve(f.hook, fx))}</p><span class="go">Gioca ›</span></div></div></div>`;
   h += `<div class="sec"><div class="chiprow">${GENRE_ORDER.map(k => `<button class="gchip" data-genre="${k}">${G[k].e} ${G[k].n}</button>`).join("")}</div></div>`;
   GENRE_ORDER.forEach(k => {
