@@ -112,12 +112,32 @@
   const EL = {};
   EL.luce = (c, o) => {
     const col = o.col || c.p.glow, r = o.r || 40;
+    if((o.t === "sole" || o.t === "luna") && c.luceX == null){ c.luceX = o.x; c.luceY = o.y; }
     let e = C(o.x, o.y, r * (o.alone || 4.5), c.rad([[0, col, .8], [.2, col, .3], [1, col, 0]]));
-    if(c.hd && (o.t === "sole" || o.t === "luna") && o.riflesso !== false) e += R(o.x - r * 7, o.y - r * .05, r * 14, r * .1, c.lin([[0, col, 0], [.5, col, .7], [1, col, 0]], 1, 0), null, ` filter="${c.sfoca(1.4)}"`) + R(o.x - r * 4, o.y - r * .3, r * 8, r * .6, c.lin([[0, col, 0], [.5, col, .14], [1, col, 0]], 1, 0), null, ` filter="${c.sfoca(4)}"`);
-    if(o.t === "sole") e += C(o.x, o.y, r, c.rad([[0, "#fffbe8"], [.7, col], [1, col, .9]]));
+    if(c.hd && (o.t === "sole" || o.t === "luna")){
+      // raggi morbidi che partono dall'astro
+      if(o.raggi !== false){
+        let rg = "";
+        const n = o.t === "sole" ? 26 : 16;
+        for(let k = 0; k < n; k++){
+          const a = k / n * Math.PI * 2 + c.rnd(-.12, .12), w = c.rnd(.01, .035), L2 = r * c.rnd(3.5, 8) * (o.raggiL || 1), x2 = o.x + Math.cos(a) * L2, y2 = o.y + Math.sin(a) * L2;
+          rg += P(`M${f(o.x)} ${f(o.y)}L${f(o.x + Math.cos(a - w) * L2)} ${f(o.y + Math.sin(a - w) * L2)}L${f(o.x + Math.cos(a + w) * L2)} ${f(o.y + Math.sin(a + w) * L2)}Z`, c.linU([[0, col, f(c.rnd(.05, .13) * (o.t === "sole" ? 1 : .6) * (o.raggiA || 1))], [.7, col, 0]], o.x, o.y, x2, y2));
+        }
+        e += `<g filter="${c.sfoca(3)}">${rg}</g>`;
+      }
+      if(o.riflesso !== false) e += R(o.x - r * 7, o.y - r * .05, r * 14, r * .1, c.lin([[0, col, 0], [.5, col, .7], [1, col, 0]], 1, 0), null, ` filter="${c.sfoca(1.4)}"`) + R(o.x - r * 4, o.y - r * .3, r * 8, r * .6, c.lin([[0, col, 0], [.5, col, .14], [1, col, 0]], 1, 0), null, ` filter="${c.sfoca(4)}"`);
+    }
+    if(o.t === "sole") e += C(o.x, o.y, r * 1.12, c.rad([[0, col, .5], [1, col, 0]])) + C(o.x, o.y, r, c.rad([[0, "#fffdf2"], [.55, "#fff3c8"], [.85, col], [1, col, .92]]));
     else if(o.t === "luna"){
-      e += C(o.x, o.y, r, c.rad([[0, "#fbf8ee"], [1, "#d6d0bf"]], .4, .38, .7));
-      [[-.32, -.18, .2], [.26, .3, .13], [.36, -.34, .1], [-.1, .38, .09], [.05, -.05, .07]].forEach(([dx, dy, k]) => e += C(o.x + dx * r, o.y + dy * r, k * r, "#bdb6a3", .5));
+      e += C(o.x, o.y, r * 1.25, c.rad([[.75, "#f4f0e2", .35], [1, "#f4f0e2", 0]])) + C(o.x, o.y, r, c.rad([[0, "#fdfbf3"], [.7, "#ece6d4"], [1, "#cfc8b4"]], .42, .4, .72));
+      if(c.hd){
+        const cl = c.clip(C(o.x, o.y, r, "#000"));
+        let m = "";
+        [[-.3, -.18, .36, .27, 20], [.22, .27, .3, .2, -10], [.36, -.3, .18, .14, 0], [-.1, .38, .22, .15, 30], [.04, -.02, .15, .12, 0], [-.44, .2, .14, .22, 0], [.1, -.46, .2, .1, 10]].forEach(([dx, dy, rx, ry, rot]) => m += E(o.x + dx * r, o.y + dy * r, rx * r, ry * r, "#9c9584", .5, ` transform="rotate(${rot} ${f(o.x + dx * r)} ${f(o.y + dy * r)})"`));
+        let cr = "";
+        for(let k = 0; k < 9; k++){ const a = c.rnd(0, 6.3), d = c.rnd(0, .8) * r, rr = c.rnd(.03, .08) * r, cx = o.x + Math.cos(a) * d, cy = o.y + Math.sin(a) * d; cr += C(cx, cy, rr, "#b6ae9c", .55) + `<circle cx="${f(cx - rr * .2)}" cy="${f(cy - rr * .2)}" r="${f(rr)}" fill="none" stroke="#fffcf0" stroke-width="${f(rr * .25)}" opacity=".45"/>`; }
+        e += `<g clip-path="${cl}"><g filter="${c.sfoca(f(r * .07))}">${m}</g>${R(o.x - r, o.y - r, 2 * r, 2 * r, "#8e8676", null, ` filter="${c.rumore("lunaT", ".11", 3, 7, 1.5, -.62)}"`)}${cr}${C(o.x - r * .35, o.y - r * .4, r * 1.1, c.rad([[0, "#ffffff", .25], [1, "#ffffff", 0]]))}</g>`;
+      } else [[-.32, -.18, .2], [.26, .3, .13], [.36, -.34, .1], [-.1, .38, .09], [.05, -.05, .07]].forEach(([dx, dy, k]) => e += C(o.x + dx * r, o.y + dy * r, k * r, "#bdb6a3", .5));
     }
     return e;
   };
@@ -242,6 +262,39 @@
   EL.colline = (c, o) => {
     const y = o.y || HOR, cols = o.cols || [c.p.far, c.p.mid, c.p.ink];
     let e = "";
+    if(c.hd){
+      const glow = c.p.glow, lx = c.luceX == null ? 300 : c.luceX, haze = mix(c.p.sky[c.p.sky.length - 1], glow, .25);
+      cols.forEach((col, i) => {
+        const nL = cols.length, prof = nL === 1 ? 1 : i / (nL - 1), base = y - 74 + i * 42, amp = (o.amp || 40) * (.55 + prof * .6), onda = 70 + prof * 260, pts = [[-60, base + c.rnd(-4, 10)]];
+        let x = -60 - c.rnd(0, onda);
+        while(x < VW + 80){ x += onda * c.rnd(.45, .7); pts.push([x, base - amp * c.rnd(.55, 1.2)]); x += onda * c.rnd(.45, .7); pts.push([x, base + c.rnd(-6, 14) * (.5 + prof)]); }
+        const yA = px => { for(let k = 1; k < pts.length; k++) if(pts[k][0] >= px){ const [ax, ay] = pts[k - 1], [bx, by] = pts[k], t = (px - ax) / (bx - ax || 1); return ay + (by - ay) * (.5 - Math.cos(t * Math.PI) / 2); } return base; };
+        const dorso = liscio(pts, false), hill = dorso + `L${VW + 80} ${VH}L-40 ${VH}Z`;
+        e += P(hill, c.lin([[0, mix(col, glow, .2)], [.28, col], [1, mix(col, c.p.ink, .3)]]));
+        const cl = c.clip(P(hill, "#000")), vigna = o.vigne && i === cols.length - 1;
+        let dentro = "";
+        // fasce di campi che seguono il profilo, appena più chiare o più scure
+        for(let k = 0; k < (i < cols.length - 1 ? 7 : 0); k++){
+          const o1 = 10 + k * (16 + i * 10) * (1 + k * .15), o2 = o1 + (8 + i * 6) * (1 + k * .15), ph = c.rnd(0, 6), sh = c.rnd(-1, 1) * 10;
+          const up = pts.map(([px, py]) => [px, py + o1 + 9 * Math.sin(px * .013 + ph) * (1 + k * .2)]), dn = pts.map(([px, py]) => [px, py + o2 + 9 * Math.sin(px * .013 + ph + sh * .2) * (1 + k * .2)]).reverse();
+          dentro += P(liscio(up, false) + liscio(dn, false).replace(/^M/, "L") + "Z", k % 2 ? mix(col, glow, .12) : mix(col, c.p.ink, .2), .28);
+        }
+        // filari di vite: righe fitte che seguono il pendio
+        if(vigna){ let rg = ""; for(let k = 1; k < 26; k++){ const off = 14 + k * 5.5 * (1 + k * .06); rg += liscio(pts.map(([px, py]) => [px, py + off]), false); } dentro += S(rg, mix(col, glow, .22), 2.2, .5, ' stroke-dasharray="2 3.2"') + S(rg, mix(col, "#000", .5), 1, .4, ' transform="translate(0 2)"'); }
+        // siepi e filari d'alberi lungo i confini dei campi
+        for(let k = 0; k < 3 - i * .5; k++){ const off = c.rnd(20, 90) * (1 + i * .5), x0 = c.rnd(-20, 400), x1 = x0 + c.rnd(80, 260); for(let px = x0; px < x1; px += c.rnd(4, 8) * (1 + i * .4)){ const r = c.rnd(2, 3.6) * (1 + i * .6); dentro += E(px, yA(px) + off, r * 1.3, r, mix(col, c.p.ink, .45), .9); } }
+        e += `<g clip-path="${cl}">${dentro}</g>`;
+        // cipressi in fila sul crinale e lungo i viali
+        if(o.cipressi && i < cols.length - 1){
+          const gruppi = i === 0 ? 4 : 3;
+          for(let g = 0; g < gruppi; g++){ const gx = c.rnd(20, 580), nq = 2 + Math.floor(c.rnd(0, 4)), h0 = i === 0 ? c.rnd(22, 34) : c.rnd(44, 66); for(let k = 0; k < nq; k++){ const px = gx + k * h0 * .24; e += alberoHD(c, "cipresso", px, yA(px) + 3 + i * 4, h0 * c.rnd(.85, 1.1), mix(col, c.p.ink, .55), {}); } }
+        }
+        // luce sul filo della collina
+        e += S(dorso, c.linU([[0, glow, 0], [.5, glow, .45], [1, glow, 0]], lx - 300, 0, lx + 300, 0), 1.2);
+        if(i < cols.length - 1) e += R(-20, base - amp - 20, VW + 40, amp + 70, c.lin([[0, haze, 0], [1, haze, .32]]));
+      });
+      return e;
+    }
     cols.forEach((col, i) => {
       const base = y - 70 + i * 38, amp = (o.amp || 40) - i * 8;
       let d = `M-10 ${VH}L-10 ${base}`;
@@ -265,21 +318,65 @@
     const luce = mix(col, c.p.glow, .32), med = mix(col, c.p.glow, .12);
     let e = "";
     if(t === "pino"){
-      e += R(x - 2.5, yy - h * .2, 5, h * .22, col);
-      for(let k = 0; k < 5; k++){
-        const tt = k / 5, w = h * (.12 + tt * .26), yTop = yy - h + tt * h * .72, yB = yTop + h * .3;
-        let d = `M${f(x)} ${f(yTop)}`;
-        for(let q = 0; q <= 6; q++){ const px = x + w * (q / 3 - 1), py = yB + (q % 2 ? -h * .03 : 0); d += `L${f(px)} ${f(py)}`; }
-        e += P(d + "Z", col) + S(`M${f(x)} ${f(yTop)}L${f(x + w)} ${f(yB)}`, luce, 1.2, .55);
+      // abete: palchi di rami spioventi con le punte frastagliate, più chiari dalla parte della luce
+      const lx = c.luceX == null ? 300 : c.luceX, ls = lx >= x ? 1 : -1, n = 5 + Math.min(4, Math.floor(h / 70));
+      e += R(x - h * .02, yy - h * .16, h * .04, h * .18, col);
+      for(let k = 0; k < n; k++){
+        const t0 = k / n, t1 = Math.min(1, (k + 1.7) / n), yT = yy - h + t0 * h * .86, yB = yy - h + t1 * h * .86, w = h * (.045 + .29 * Math.pow(t1, .95)) * c.rnd(.86, 1.12);
+        let d = `M${f(x + c.rnd(-1, 1))} ${f(yT)}L${f(x + w * c.rnd(.92, 1.08))} ${f(yB + h * .012)}`;
+        const m = 3 + Math.floor(k * .8);
+        for(let q = 1; q <= m * 2; q++){ const px = x + w - 2 * w * q / (m * 2), py = yB + (q % 2 ? -h * c.rnd(.015, .04) : h * c.rnd(0, .02)); d += `L${f(px)} ${f(py)}`; }
+        e += P(d + "Z", col);
+        e += S(`M${f(x)} ${f(yT + 1)}L${f(x + ls * w * .96)} ${f(yB + h * .01)}`, luce, f(Math.max(.8, h * .008)), .5);
+        e += S(`M${f(x + ls * w * .2)} ${f(yT + (yB - yT) * .35)}L${f(x + ls * w * .7)} ${f(yB - h * .01)}`, med, f(Math.max(.6, h * .005)), .45);
       }
     } else if(t === "cipresso"){
-      e += P(`M${f(x)} ${f(yy - h)}C${f(x + h * .1)} ${f(yy - h * .8)} ${f(x + h * .11)} ${f(yy - h * .3)} ${f(x + h * .05)} ${f(yy)}H${f(x - h * .05)}C${f(x - h * .11)} ${f(yy - h * .3)} ${f(x - h * .1)} ${f(yy - h * .8)} ${f(x)} ${f(yy - h)}Z`, c.linU([[0, med], [1, col]], x + h * .1, 0, x - h * .1, 0));
-      for(let q = 0; q < 6; q++) e += S(`M${f(x + c.rnd(-h * .05, h * .05))} ${f(yy - h * c.rnd(.2, .9))}q${f(h * .03)} ${f(h * .06)} ${f(h * .01)} ${f(h * .12)}`, luce, 1, .35);
+      // cipresso: fiamma scura con ciuffi irregolari, luce su un fianco
+      const lx = c.luceX == null ? 300 : c.luceX, ls = lx >= x ? 1 : -1, nn = 16, dx = [], sx = [];
+      for(let q = 0; q <= nn; q++){
+        const tq = q / nn, yq = yy - h + tq * h * .97, prof = tq < .68 ? Math.pow(tq / .68, .72) : 1 - (tq - .68) * .7, w = h * .1 * prof;
+        dx.push([x + w * c.rnd(.84, 1.14) + (q % 3 === 1 ? h * .008 : 0), yq]); sx.push([x - w * c.rnd(.84, 1.14) - (q % 3 === 2 ? h * .008 : 0), yq]);
+      }
+      const pts = [[x + c.rnd(-1, 1), yy - h - h * .01]].concat(dx.slice(1), [[x + h * .02, yy]], [[x - h * .02, yy]], sx.slice(1).reverse());
+      e += forma(pts, c.linU([[0, ls < 0 ? luce : col], [.55, med], [1, ls > 0 ? luce : col]], x - h * .11, 0, x + h * .11, 0));
+      for(let q = 0; q < 9; q++){ const qy = yy - h * c.rnd(.15, .88), qw = h * .1 * Math.min(1, (1 - (yy - qy) / h) / .68 + .2); e += S(`M${f(x + ls * qw * c.rnd(.2, .7))} ${f(qy)}q${f(ls * h * .025)} ${f(h * .02)} ${f(ls * h * .012)} ${f(h * .055)}`, luce, f(Math.max(.7, h * .006)), .45); }
+      for(let q = 0; q < 6; q++){ const qy = yy - h * c.rnd(.1, .8); e += S(`M${f(x - ls * h * c.rnd(0, .05))} ${f(qy)}q${f(-ls * h * .01)} ${f(h * .05)} 0 ${f(h * .1)}`, mix(col, "#000", .4), f(Math.max(.8, h * .007)), .5); }
     } else if(t === "pioppo"){
-      e += E(x, yy - h * .55, h * .1, h * .48, c.linU([[0, med], [1, col]], x + h * .1, 0, x - h * .1, 0)) + R(x - 2, yy - h * .1, 4, h * .12, col);
+      // pioppo cipressino: colonna stretta e frastagliata, tronco nudo in basso
+      const lx = c.luceX == null ? 300 : c.luceX, ls = lx >= x ? 1 : -1, nn = 18, dx = [], sx = [];
+      e += R(x - h * .012, yy - h * .14, h * .024, h * .15, col);
+      for(let q = 0; q <= nn; q++){ const tq = q / nn, yq = yy - h + tq * h * .88, w = h * .085 * Math.pow(Math.sin(Math.min(.97, Math.pow(tq, .85)) * Math.PI), .7); dx.push([x + w * c.rnd(.78, 1.2), yq]); sx.push([x - w * c.rnd(.78, 1.2), yq]); }
+      e += forma([[x, yy - h - h * .01]].concat(dx.slice(1), [[x, yy - h * .1]], sx.slice(1).reverse()), c.linU([[0, ls < 0 ? luce : col], [.55, med], [1, ls > 0 ? luce : col]], x - h * .09, 0, x + h * .09, 0));
+      for(let q = 0; q < 8; q++){ const qy = yy - h * c.rnd(.2, .85); e += S(`M${f(x + ls * h * c.rnd(.01, .05))} ${f(qy)}q${f(ls * h * .02)} ${f(h * .02)} ${f(ls * h * .01)} ${f(h * .05)}`, luce, f(Math.max(.7, h * .005)), .4); }
     } else if(t === "palma"){ e += palmaHD(c, x, yy, h / 230, col, o.dir || (x < 300 ? 1 : -1)); }
+    else if(t === "domestico"){
+      // pino domestico: tronco snello e un po' piegato, chioma piatta a ombrello
+      const lean = (o.piega == null ? c.rnd(-.12, .12) : o.piega) * h, tx = x + lean, ty = yy - h * .7, w = h * c.rnd(.34, .44);
+      e += S(`M${f(x)} ${f(yy)}Q${f(x + lean * .2)} ${f(yy - h * .4)} ${f(tx)} ${f(ty)}`, col, f(h * .034)) + S(`M${f(tx)} ${f(ty)}q${f(-w * .3)} ${f(-h * .06)} ${f(-w * .55)} ${f(-h * .1)}M${f(tx)} ${f(ty)}q${f(w * .3)} ${f(-h * .05)} ${f(w * .6)} ${f(-h * .09)}M${f(tx)} ${f(ty)}l${f(w * .05)} ${f(-h * .12)}`, col, f(h * .018));
+      const g = c.lin([[0, mix(col, c.p.glow, .3)], [.5, med], [1, col]]);
+      for(let q = 0; q < 14; q++){ const cx = tx + c.rnd(-w, w) * (q < 5 ? .5 : 1), cy = yy - h * c.rnd(.8, .93), rx = h * c.rnd(.11, .2); e += E(cx, cy, rx, rx * .42, g); }
+      e += E(tx, yy - h * .79, w * .95, h * .05, col, .85);
+      for(let q = 0; q < 10; q++) e += S(`M${f(tx + c.rnd(-w, w) * .9)} ${f(yy - h * c.rnd(.86, .95))}q${f(h * .03)} ${f(-h * .015)} ${f(h * .06)} 0`, luce, f(Math.max(.7, h * .006)), .45);
+    }
     else {
       // chiome a ciuffi: ulivo, agrumi, tondo
+      if(t === "ulivo" && c.hd){
+        // ulivo: tronco contorto a più capi, chioma argentata e sfrangiata
+        const lx = c.luceX == null ? 300 : c.luceX, ls = lx >= x ? 1 : -1, arg = mix(o.foglie || col, "#9aa88a", .22);
+        e += S(`M${f(x - h * .05)} ${f(yy)}q${f(h * .02)} ${f(-h * .2)} ${f(-h * .06)} ${f(-h * .42)}M${f(x + h * .04)} ${f(yy)}q${f(h * .06)} ${f(-h * .18)} ${f(h * .02)} ${f(-h * .34)}q${f(-h * .02)} ${f(-h * .1)} ${f(h * .1)} ${f(-h * .14)}M${f(x)} ${f(yy)}q${f(-h * .03)} ${f(-h * .15)} ${f(h * .03)} ${f(-h * .3)}`, col, f(h * .045)) + E(x, yy, h * .12, h * .02, col);
+        for(let q = 0; q < 26; q++){ const a = c.rnd(0, Math.PI * 2), rr = c.rnd(.05, .34) * h, cx = x + Math.cos(a) * rr * 1.25, cy = yy - h * .62 + Math.sin(a) * rr * .55, r = c.rnd(.06, .11) * h, lit = (cx - x) * ls > 0 && cy < yy - h * .6; e += E(cx, cy, r * 1.3, r * .8, lit ? mix(arg, c.p.glow, .3) : q % 3 ? arg : mix(arg, "#000", .3), .92); }
+        for(let q = 0; q < 30; q++){ const cx = x + c.rnd(-.42, .42) * h, cy = yy - h * c.rnd(.45, .85); e += S(`M${f(cx)} ${f(cy)}l${f(c.rnd(-4, 4))} ${f(c.rnd(-3, 3))}`, mix(arg, c.p.glow, .35), 1.6, .45); }
+        return e;
+      }
+      if(t === "tondo" && c.hd){
+        // latifoglia (faggio, quercia): tronco che si apre in rami, chioma irregolare a ciuffi con i vuoti
+        const lx = c.luceX == null ? 300 : c.luceX, ls = lx >= x ? 1 : -1, fol = o.foglie || col, cy = yy - h * .64, rw = h * .34, rh = h * .3;
+        e += S(`M${f(x)} ${f(yy)}Q${f(x + h * .02)} ${f(yy - h * .25)} ${f(x)} ${f(yy - h * .42)}`, col, f(h * .05)) + S(`M${f(x)} ${f(yy - h * .4)}q${f(-h * .1)} ${f(-h * .1)} ${f(-h * .2)} ${f(-h * .24)}M${f(x)} ${f(yy - h * .42)}q${f(h * .08)} ${f(-h * .12)} ${f(h * .18)} ${f(-h * .22)}M${f(x)} ${f(yy - h * .44)}l${f(h * .01)} ${f(-h * .3)}`, col, f(h * .022));
+        const scuro = mix(fol, "#000", .35), alto = mix(fol, c.p.glow, .28);
+        for(let q = 0; q < 34; q++){ const a = c.rnd(0, Math.PI * 2), rr = Math.sqrt(c.R()), px = x + Math.cos(a) * rw * rr, py = cy + Math.sin(a) * rh * rr * (Math.sin(a) > 0 ? .8 : 1), r = h * c.rnd(.06, .11); e += E(px, py, r * 1.2, r * .9, q < 12 ? scuro : ((px - x) * ls > 0 && py < cy ? alto : fol), .95); }
+        for(let q = 0; q < 24; q++){ const px = x + c.rnd(-rw, rw), py = cy + c.rnd(-rh, rh * .7); e += S(`M${f(px)} ${f(py)}q${f(c.rnd(-4, 4))} ${f(-3)} ${f(c.rnd(-6, 6))} ${f(-5)}`, alto, 1.4, .4); }
+        return e;
+      }
       const tr = t === "ulivo" ? .07 : .05;
       e += S(`M${f(x)} ${f(yy)}q${f(c.rnd(-10, 10))} ${f(-h * .3)} ${f(c.rnd(-14, 14))} ${f(-h * .48)}`, col, f(h * tr));
       if(t === "ulivo") e += S(`M${f(x)} ${f(yy - h * .3)}q${f(-h * .12)} ${f(-h * .08)} ${f(-h * .2)} ${f(-h * .2)}M${f(x)} ${f(yy - h * .34)}q${f(h * .12)} ${f(-h * .06)} ${f(h * .18)} ${f(-h * .2)}`, col, f(h * .035));
@@ -318,20 +415,126 @@
     }
     return e;
   };
+  /* crinale frattale: vette principali, poi suddivisioni con spostamento del punto medio */
+  function crinale(c, x0, x1, base, alt, rough, it, passo){
+    const key = [];
+    let x = x0, pts = [[x0, base - alt * c.rnd(.2, .45)]];
+    while(x < x1){
+      x += c.rnd(passo ? passo[0] : 90, passo ? passo[1] : 190); const hp = base - alt * c.rnd(.62, 1); pts.push([x, hp]); key.push([x, hp]);
+      x += c.rnd(passo ? passo[0] * .7 : 60, passo ? passo[1] * .7 : 140); pts.push([x, base - alt * c.rnd(.3, .58)]);
+    }
+    for(let k = 0; k < (it || 5); k++){
+      const nu = [pts[0]];
+      for(let i = 1; i < pts.length; i++){
+        const [ax, ay] = pts[i - 1], [bx, by] = pts[i], d = Math.abs(bx - ax);
+        nu.push([(ax + bx) / 2 + c.rnd(-.1, .1) * d, (ay + by) / 2 + c.rnd(-1, 1) * d * rough * .5]);
+        nu.push(pts[i]);
+      }
+      pts = nu;
+    }
+    pts.forEach(p => p[1] = Math.min(p[1], base - 1));
+    if(pts[pts.length - 1][0] > x1){ const ult = pts.filter(p => p[0] <= x1); pts.length = 0; ult.forEach(p => pts.push(p)); pts.push([x1, base - (x1 >= VW ? alt * .3 : 2)]); }
+    for(let q = key.length - 1; q >= 0; q--) if(key[q][0] > x1 - 10) key.splice(q, 1);
+    if(x1 < VW) pts.forEach(p => { const t = (x1 - p[0]) / 150; if(t < 1) p[1] = base - (base - p[1]) * Math.max(0, t); });
+    if(x0 > 0) pts.forEach(p => { const t = (p[0] - x0) / 150; if(t < 1) p[1] = base - (base - p[1]) * Math.max(0, t); });
+    for(let q = key.length - 1; q >= 0; q--) if((x1 < VW && key[q][0] > x1 - 75) || (x0 > 0 && key[q][0] < x0 + 75)) key.splice(q, 1); else key[q][1] = Math.max(key[q][1], -1e9);
+    key.forEach(k => { let b = 0, bd = 1e9; pts.forEach((p, i) => { const d = Math.abs(p[0] - k[0]); if(d < bd){ bd = d; b = i; } }); k[2] = b; });
+    return { pts, key };
+  }
+  const linea = pts => pts.map((p, i) => (i ? "L" : "M") + f(p[0]) + " " + f(p[1])).join("");
+  function seghetta(c, A, B2, n, amp){
+    let pts = [A, B2];
+    for(let k = 0; k < n; k++){ const nu = [pts[0]]; for(let i = 1; i < pts.length; i++){ const a = pts[i - 1], b = pts[i], d = Math.hypot(b[0] - a[0], b[1] - a[1]); nu.push([(a[0] + b[0]) / 2 + c.rnd(-1, 1) * d * amp, (a[1] + b[1]) / 2 + c.rnd(-.2, .2) * d * amp]); nu.push(b); } pts = nu; }
+    return pts;
+  }
+  // un gruppo di montagne: roccia, faccia in ombra, neve, foschia, filo di luce sul crinale, boschi
+  function montagnaHD(c, o, x0, x1, base, alt, col, i, n){
+    const lx = c.luceX == null ? 300 : c.luceX, { pts, key } = crinale(c, x0, x1, base, alt, o.ruvido || (i ? .56 : .46), i ? 5 : 6, o.passo);
+    const glow = c.p.glow, ombra = mix(col, c.p.ink, .5), cresta = linea(pts);
+    const pieno = x0 <= 0 && x1 >= VW;
+    let e = P(`M${x0} ${base + 6}` + cresta.replace(/^M/, "L") + `L${x1} ${base + 6}` + (pieno ? `V${VH}H${x0}Z` : "Z"), c.lin([[0, mix(col, glow, i ? .14 : .26)], [.45, col], [1, mix(col, c.p.ink, .2)]]), null, ` filter="${c.roccia()}"`);
+    // canaloni: fessure scure che scendono dal crinale
+    let can = "";
+    for(let k = 0; k < (o.canaloni == null ? 14 : o.canaloni); k++){ const p = pts[Math.floor(c.rnd(.05, .95) * pts.length)], l = (base - p[1]) * c.rnd(.25, .7); can += linea(seghetta(c, [p[0], p[1] + 4], [p[0] + c.rnd(-.25, .25) * l, p[1] + l], 3, .25)); }
+    e += S(can, ombra, 1.3, .35);
+    // neve sulle vette più alte
+    if(o.neve !== false && i < Math.max(1, n - 1)){
+      const neve = mix(o.nc || "#f4f8fb", glow, .18), nev = c.lin([[0, neve, .96], [1, mix(neve, col, .3), .82]]);
+      key.forEach(([kx, ky, ki]) => {
+        if(base - ky < alt * .58) return;
+        const fondo = (base - ky) * c.rnd(.2, .34), lim = ky + fondo;
+        let a = ki, b = ki;
+        while(a > 0 && pts[a - 1][1] < lim) a--;
+        while(b < pts.length - 1 && pts[b + 1][1] < lim) b++;
+        if(b - a < 3) return;
+        const sup = pts.slice(a, b + 1), inf = [], f1 = c.rnd(0, 6), f2 = c.rnd(0, 6), dita = [0, 1, 2].map(() => [c.rnd(sup[0][0], sup[sup.length - 1][0]), c.rnd(8, 22), fondo * c.rnd(.5, 1.2)]);
+        for(let q = sup.length - 1; q >= 0; q -= 2){ const [x, y] = sup[q]; let yl = lim + fondo * (.18 * Math.sin(x * .07 + f1) + .12 * Math.sin(x * .19 + f2)); dita.forEach(([fx, fw, fa]) => yl += fa * Math.max(0, 1 - Math.abs(x - fx) / fw)); inf.push([x, Math.max(y + 2.5, yl)]); }
+        e += P(linea(sup.concat(inf)) + "Z", nev);
+      });
+    }
+    // facce in ombra (dalla parte opposta alla luce), separate da una costola frastagliata
+    key.forEach(([kx, ky, ki]) => {
+      const lato = lx > kx ? -1 : 1;
+      let j = ki, basso = ki;
+      while(true){ const nj = j + lato; if(nj < 0 || nj >= pts.length) break; j = nj; if(pts[j][1] > pts[basso][1]) basso = j; else if(pts[basso][1] - pts[j][1] > alt * .08) break; }
+      if(Math.abs(basso - ki) < 3) return;
+      const v = pts[basso], sx = kx + lato * Math.abs(v[0] - kx) * c.rnd(.12, .4);
+      const cost = seghetta(c, [kx, ky], [sx, base + 4], 4, .12);
+      const lato1 = lato > 0 ? pts.slice(ki, basso + 1) : pts.slice(basso, ki + 1).reverse();
+      e += P(linea(lato1.concat([[v[0], base + 4]], cost.slice().reverse())) + "Z", c.lin([[0, ombra, .72], [1, ombra, .3]]));
+      e += S(linea(cost.slice(0, Math.ceil(cost.length * .6))), mix(col, glow, .3), 1, .3);
+    });
+    // filo di luce sul crinale, più forte vicino all'astro
+    e += S(cresta, c.linU([[0, glow, 0], [.5, glow, i ? .35 : .6], [1, glow, 0]], lx - 280, 0, lx + 280, 0), i ? 1 : 1.5);
+    // boschi sulle pendici basse
+    if(o.bosco || (i === n - 1 && o.bosco !== false && !o.nudo)){
+      const scuro = mix(col, c.p.ink, .35), alto = mix(col, glow, .1);
+      let b = "";
+      const nb = o.bosco === true || o.bosco == null ? 90 : o.bosco;
+      for(let k = 0; k < nb; k++){
+        const q = Math.floor(c.rnd(0, pts.length)), [px, py] = pts[q], y = py + (base - py) * c.rnd(.5, 1.02), h = c.rnd(6, 15) * (1 + (y - py) / 260), w = h * .32;
+        b += `<path d="M${f(px)} ${f(y - h)}L${f(px + w * .7)} ${f(y - h * .45)}L${f(px + w * .45)} ${f(y - h * .45)}L${f(px + w)} ${f(y)}L${f(px - w)} ${f(y)}L${f(px - w * .45)} ${f(y - h * .45)}L${f(px - w * .7)} ${f(y - h * .45)}Z" fill="${c.R() < .25 ? alto : scuro}"/>`;
+      }
+      e += b;
+    }
+    return e;
+  }
   EL.montagne = (c, o) => {
     const y = o.y || HOR, cols = o.cols || [c.p.far, c.p.mid], x0 = o.x0 == null ? -40 : o.x0, x1 = o.x1 == null ? VW + 40 : o.x1;
     let e = "";
+    if(c.hd){
+      const haze = mix(c.p.sky[c.p.sky.length - 1], c.p.glow, .25);
+      cols.forEach((col, i) => {
+        const base = y - i * 10, alt = (o.alt || 330) - i * 90;
+        e += montagnaHD(c, o, x0, x1, base, alt, col, i, cols.length);
+        if(i < cols.length - 1 || o.foschia) e += R(x0, base - alt * .55, x1 - x0, alt * .55 + 8, c.lin([[0, haze, 0], [1, haze, o.foschiaA || .3]]));
+      });
+      return e;
+    }
     cols.forEach((col, i) => {
       const base = y - i * 10, top = (o.alt || 330) - i * 90;
       let x = x0, d = `M${x0} ${base}`, pts = [];
       while(x < x1){ const px = x + c.rnd(50, 110), py = base - c.rnd(top * .45, top); pts.push([px, py]); d += ` L${f(px)} ${f(py)}`; x = px + c.rnd(40, 90); d += ` L${f(x)} ${f(base - c.rnd(top * .15, top * .4))}`; }
-      e += P(d + ` L${x1} ${base + 4} L${x1} ${VH} L${x0} ${VH}Z`, i === 0 ? c.lin([[0, mix(col, c.p.glow, .3)], [.5, col], [1, col]]) : col, null, c.hd ? ` filter="${c.roccia()}"` : "");
+      e += P(d + ` L${x1} ${base + 4} L${x1} ${VH} L${x0} ${VH}Z`, i === 0 ? c.lin([[0, mix(col, c.p.glow, .3)], [.5, col], [1, col]]) : col);
       if(o.neve !== false && i === 0){ const g = c.lin([[0, o.nc || "#f4f8fb", .95], [1, o.nc || "#f4f8fb", .15]]); pts.forEach(([px, py]) => e += P(`M${f(px)} ${f(py)}L${f(px - 26)} ${f(py + 40)}L${f(px - 10)} ${f(py + 32)}L${f(px)} ${f(py + 46)}L${f(px + 12)} ${f(py + 30)}L${f(px + 28)} ${f(py + 42)}Z`, g)); }
     });
     return e;
   };
   EL.cresta = (c, o) => {
     const col = o.col || c.col(2), x = o.x || 380, y = o.y || 560;
+    if(c.hd){
+      const sx = seghetta(c, [-20, y + 230], [x, y], 5, .09), dx = seghetta(c, [x, y], [x + 60, y + 40], 3, .1), rx = seghetta(c, [x + 60, y + 40], [VW + 20, y + 190], 5, .08);
+      const tutto = sx.concat(dx.slice(1), rx.slice(1)), glow = c.p.glow, lx = c.luceX == null ? 300 : c.luceX;
+      let e = P(linea(tutto) + `L${VW + 20} ${VH}L-20 ${VH}Z`, c.lin([[0, mix(col, glow, .2)], [.35, col], [1, mix(col, "#000", .3)]]), null, ` filter="${c.roccia()}"`);
+      // ghiaccio sul filo della cresta
+      const inf = tutto.slice().reverse().map(([px, py]) => [px + c.rnd(-2, 2), py + c.rnd(5, 16) + (c.R() < .2 ? c.rnd(8, 26) : 0)]);
+      e += P(linea(tutto.concat(inf)) + "Z", c.lin([[0, mix(o.neve || "#eaf2f8", glow, .25), .95], [1, mix(o.neve || "#eaf2f8", col, .4), .7]]));
+      // versante in ombra
+      const lato = lx > x ? -1 : 1, cost = seghetta(c, [x, y], [x + lato * 40, VH], 4, .1);
+      e += P(linea((lato < 0 ? sx.slice().reverse() : dx.concat(rx.slice(1))).concat([[lato < 0 ? -20 : VW + 20, VH]], cost.slice().reverse())) + "Z", c.lin([[0, mix(col, "#000", .4), .6], [1, mix(col, "#000", .4), .2]]));
+      e += S(linea(tutto), c.linU([[0, glow, .15], [.5, glow, .7], [1, glow, .15]], lx - 300, 0, lx + 300, 0), 1.6);
+      return e;
+    }
     let d = `M-20 ${VH}L-20 ${f(y + 230)}`;
     for(let k = 1; k <= 6; k++) d += ` L${f(-20 + (x + 20) * k / 6)} ${f(y + 230 - 230 * k / 6 + c.rnd(-14, 14))}`;
     d += ` L${f(x + 60)} ${f(y + 40)} L${f(VW + 20)} ${f(y + 190)} L${VW + 20} ${VH}Z`;
@@ -770,6 +973,226 @@
     donna:"M-18 -236C-20 -214 -14 -206 -12 -200M18 -236C20 -214 14 -206 12 -200M-24 -150H24M-10 -120C-14 -96 -20 -78 -26 -62M10 -120C14 -96 20 -78 26 -62",
     ragazzo:"M-8 -222V-200M8 -222V-200M0 -220V-126M-24 -166H24M-26 -166V-140H26V-166M-17 -122V-10M17 -122V-10"
   };
+  /* ---------- personaggi in alta definizione: corpo in proporzione (7 teste e mezzo), vestiti, capelli,
+     cappelli, pose e oggetti. Ogni parte è una forma morbida dello stesso colore: insieme fanno la silhouette. ---------- */
+  const PP = p => f(p[0]) + " " + f(p[1]);
+  function liscio(pts, chiuso){
+    const n = pts.length, Q = i => chiuso ? pts[(i % n + n) % n] : pts[Math.max(0, Math.min(n - 1, i))];
+    let d = "M" + PP(pts[0]);
+    for(let i = 0; i < (chiuso ? n : n - 1); i++){
+      const p0 = Q(i - 1), p1 = Q(i), p2 = Q(i + 1), p3 = Q(i + 2);
+      d += "C" + PP([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]) + " " + PP([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]) + " " + PP(p2);
+    }
+    return d + (chiuso ? "Z" : "");
+  }
+  const specchio = m => m.concat(m.slice(m[0][0] === 0 ? 1 : 0, m[m.length - 1][0] === 0 ? -1 : m.length).reverse().map(([x, y]) => [-x, y]));
+  const forma = (pts, fill, extra) => `<path d="${liscio(pts, true)}"${fill ? ` fill="${fill}"` : ""}${extra || ""}/>`;
+  const verso = (a, sd) => [sd * Math.sin(a * Math.PI / 180), Math.cos(a * Math.PI / 180)];
+  const avanti = (A, v, l) => [A[0] + v[0] * l, A[1] + v[1] * l];
+  const tra = (A, B2, t) => [A[0] + (B2[0] - A[0]) * t, A[1] + (B2[1] - A[1]) * t];
+  function arto(ch, fill){
+    const F = fill ? ` fill="${fill}"` : "";
+    let e = "";
+    ch.forEach(([x, y, r], i) => {
+      e += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}"${F}/>`;
+      if(!i) return;
+      const [x0, y0, r0] = ch[i - 1], d = Math.hypot(x - x0, y - y0);
+      if(d < .5) return;
+      const a = Math.atan2(y - y0, x - x0), t = Math.acos(Math.max(-1, Math.min(1, (r0 - r) / d)));
+      e += `<path d="M${PP([x0 + r0 * Math.cos(a + t), y0 + r0 * Math.sin(a + t)])}L${PP([x + r * Math.cos(a + t), y + r * Math.sin(a + t)])}L${PP([x + r * Math.cos(a - t), y + r * Math.sin(a - t)])}L${PP([x0 + r0 * Math.cos(a - t), y0 + r0 * Math.sin(a - t)])}Z"${F}/>`;
+    });
+    return e;
+  }
+  // il bordo interno di un braccio o di una gamba: una linea di luce che separa l'arto dal corpo
+  function bordo(ch, lato, k){
+    const pts = ch.map(([x, y, r], i) => {
+      const a = ch[Math.max(0, i - 1)], b = ch[Math.min(ch.length - 1, i + 1)];
+      let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
+      if(nx * lato < 0){ nx = -nx; ny = -ny; }
+      return [x + nx * r * (k || .84), y + ny * r * (k || .84)];
+    });
+    return liscio(pts, false);
+  }
+  const CORPI = {
+    m:{ hy:-279.5, hw:13.5, hh:20, collo:[-266, 6.3, -249, 7.8], sp:[31, -237], an:[12.5, -149], br:[51, 46], ga:[67, 70], mano:[6.6, 4.2], piede:"scarpa" },
+    f:{ hy:-276, hw:12.3, hh:18.5, collo:[-263, 5.2, -247, 6.2], sp:[25, -235], an:[11.5, -150], br:[48, 44], ga:[68, 70], mano:[5.8, 3.5], piede:"tacco" },
+    b:{ hy:-170, hw:13, hh:16, collo:[-158, 4.6, -150, 5.4], sp:[17, -143], an:[8, -90], br:[30, 28], ga:[42, 40], mano:[4, 2.7], piede:"bimbo" }
+  };
+  // mezze sagome dei vestiti (lato destro, dal collo all'orlo)
+  const BUSTI = {
+    camicia:[[8,-252.5],[18.5,-247.5],[29,-244.5],[35.5,-238.5],[37.5,-229.5],[35.5,-219],[31.5,-211],[30,-197],[28.4,-183],[27.2,-171],[27.8,-159],[29,-148],[23,-143],[11,-141.6],[0,-141.5]],
+    giacca:[[8.6,-253.5],[19,-248.5],[30,-245],[37.5,-239.5],[39.5,-230],[37.5,-219],[33.5,-210],[31.5,-195],[30,-180],[29.6,-165],[30.6,-150],[31.6,-137],[31,-130.5],[22,-128.5],[11,-127.4],[0,-127]],
+    cappotto:[[9,-256],[12.8,-262.6],[20,-251],[31.5,-246.5],[39,-240.5],[41,-230],[38.5,-218],[34.5,-208],[33,-192],[32.5,-176],[33.4,-160],[34.6,-140],[36,-118],[37.4,-96],[38.6,-76],[37.6,-69.5],[26,-67.5],[13,-66.6],[0,-66.5]],
+    trench:[[9.2,-256],[13.6,-264.4],[21,-251.5],[32.5,-247],[40,-240.5],[42,-230],[39.5,-218],[35,-207],[32.5,-190],[30.6,-176],[32.4,-166],[35.5,-148],[38.6,-124],[41.5,-100],[44.2,-76],[45.4,-63],[44,-58.5],[30,-57.2],[15,-56.6],[0,-56.5]],
+    divisa:[[8.6,-253],[19,-248.5],[30,-245],[37,-239],[38.6,-230],[36.5,-219],[33,-210],[31,-195],[29.5,-180],[30.4,-170],[33,-152],[34.5,-140],[33.6,-136],[22,-134.6],[11,-134],[0,-133.5]],
+    giubbotto:[[8.4,-253],[18.5,-248.5],[29,-245.5],[36,-239.5],[38.5,-230],[37,-219],[34,-210],[33,-195],[32,-180],[31.5,-165],[31,-152],[30.2,-143.5],[27,-140],[13,-138.8],[0,-138.6]],
+    mantello:[[10,-258],[20,-252.5],[33,-246.5],[42,-237],[46.5,-221],[49,-196],[51,-160],[53.5,-120],[56.5,-80],[59.5,-40],[61.5,-10],[57,-4],[30,-2.5],[0,-2]],
+    lorica:[[8,-252],[19,-248],[30,-245],[38,-238],[40,-228],[36,-216],[31.5,-206],[29.5,-190],[28.5,-175],[29.4,-160],[30.4,-150],[33,-134],[34.6,-118],[24,-116.5],[12,-116],[0,-116]],
+    vestito:[[6.6,-249.5],[14.8,-245.5],[23.2,-242],[28.3,-236.5],[29.5,-228],[27,-218],[25.2,-209],[24.2,-197],[20.8,-182],[21.8,-171],[25.4,-160],[28.8,-149],[31.6,-132],[34.6,-112],[37.4,-92],[39.6,-76],[38.6,-71.5],[27,-70.4],[14,-69.8],[0,-69.6]],
+    lungo:[[6.6,-249.5],[14.8,-245.5],[23.2,-242],[28.3,-236.5],[29.5,-228],[27,-218],[25.2,-209],[24.2,-197],[20.8,-182],[21.8,-171],[25.4,-160],[28.8,-149],[31.4,-125],[34.4,-95],[37.4,-62],[40.4,-30],[42.6,-8],[41,-3.5],[28,-2.6],[14,-2.2],[0,-2]],
+    cappottoF:[[7,-252],[10.4,-259],[16,-247],[25,-243],[31,-237],[32.5,-228],[30,-217],[27.5,-207],[26,-193],[23,-180],[25.5,-168],[29,-152],[32,-130],[35,-108],[37.6,-86],[39,-70],[37.6,-66.2],[26,-65],[13,-64.4],[0,-64.2]],
+    sposa:[[6.6,-249.5],[14.8,-245.5],[23.2,-242],[27.8,-237],[28.5,-228],[26,-218],[24.4,-207],[22.8,-195],[19.6,-182],[24,-172],[34,-158],[46,-130],[58,-96],[68,-60],[76,-26],[80,-6],[77,-1],[52,.5],[26,1.2],[0,1.5]],
+    anziana:[[6.8,-247],[15,-243],[24,-238.5],[30,-232],[33,-222],[34,-208],[32,-194],[28,-182],[25,-170],[27.5,-158],[30,-146],[32.5,-120],[35,-90],[37.5,-58],[39.5,-26],[40.6,-8],[38.8,-3],[26,-2.2],[13,-1.8],[0,-1.6]],
+    vestitino:[[5.4,-152],[11,-149],[17,-146.5],[20.5,-142],[21,-135],[19.2,-128],[18.2,-118],[17.6,-108],[19.6,-96],[22.6,-80],[25,-64],[24,-60],[12,-58.8],[0,-58.6]],
+    maglietta:[[5.4,-152],[11,-149],[17.5,-146],[21,-141],[21.5,-134],[19.5,-127],[18.5,-115],[18.2,-103],[18.8,-93],[14,-88.4],[6,-87.6],[0,-87.5]]
+  };
+  BUSTI.tshirt = BUSTI.gilet = BUSTI.camicia; BUSTI.frac = BUSTI.giacca;
+  // maniche: raggi da spalla a polso
+  const MANICHE = { camicia:[8.6,7.4,6,5.5,4.6], giacca:[9.4,8.3,7.1,6.6,5.9], cappotto:[10.2,9.2,8.1,7.6,7.2], trench:[10.4,9.4,8.4,7.8,7.6], divisa:[9.2,8.2,7,6.6,6.2], giubbotto:[9.8,9,7.8,7.4,6.4], mantello:[10.4,9.6,8.6,8,7.6], lorica:[8.6,7.4,5.8,5.4,4.2], tshirt:[9,8,5.6,5,3.8],
+    vestito:[6.6,5.6,4.3,4,3.1], lungo:[7.2,6.2,5,4.6,3.8], cappottoF:[8.2,7.4,6.4,6,5.6], sposa:[6.4,5.4,4.2,3.9,3], anziana:[8,7.4,6,5.4,4.4], vestitino:[5.4,4.6,3.6,3.4,2.8], maglietta:[5.6,4.8,3.6,3.4,2.8] };
+  MANICHE.gilet = MANICHE.camicia; MANICHE.frac = MANICHE.giacca;
+  // gambe: raggi da anca a caviglia
+  const GAMBE = { pantaloni:[13,11.6,8.8,8.4,8.3,8.3], jeans:[12.8,11.2,8.4,8.2,8.2,8.4], calzoni:[14,14.6,9.2,8.6,7.4,6.6], nude:[12.5,10.5,7,8.2,6.2,4.6], donna:[12,10,6.2,7,4.8,3.6], bimbo:[7.8,6.6,4.6,5.2,3.6,2.9], calzoncini:[8.4,7.8,4.6,5.2,3.6,2.9] };
+  // pose delle braccia: [angolo del braccio, angolo dell'avambraccio (0 = giù, positivo = in fuori), accorcia braccio, accorcia avambraccio, mano visibile]
+  const POSE = {
+    fermo:{ R:[7, -1.5], L:[7, -1.5] }, tasche:{ R:[17, -40, 1, .6, 0], L:[17, -40, 1, .6, 0] }, conserte:{ R:[10, -98, 1, .84, 0], L:[10, -90, 1, .8, 1] },
+    ombrello:{ R:[8, -152, 1, .86, 1], L:[6, 3] }, valigia:{ R:[11, 7], L:[6, 3] }, porto:{ R:[13, -60, 1, .8, 1], L:[8, -150, 1, .76, 1] },
+    spalla:{ R:[9, -125, 1, .55, 1], L:[6, 3] }, pistola:{ R:[7, 4], L:[17, -40, 1, .6, 0] }, bastone:{ R:[14, 12], L:[6, 3] }, pastorale:{ R:[26, -168, 1, .72, 1], L:[6, 3] },
+    aperte:{ R:[98, 108], L:[98, 108] }, alzate:{ R:[152, 166], L:[146, 170] }, sigaretta:{ R:[9, -166, 1, .92, 1], L:[17, -40, 1, .6, 0] },
+    lancia:{ R:[18, -150, 1, .62, 1], L:[24, -80, 1, .7, 0] }, piccozza:{ R:[15, 14], L:[6, 3] }, bouquet:{ R:[10, -62, 1, .8, 1], L:[10, -62, 1, .8, 1] },
+    zaino:{ R:[10, -140, 1, .55, 1], L:[10, -140, 1, .55, 1] }, abbraccio:{ R:[18, 78, 1, .62, 0], L:[7, -1.5] }, mano:{ R:[40, 60, .95, .9, 1], L:[6, 3] }, valigiaT:{ R:[11, 7], L:[17, -40, 1, .6, 0] }
+  };
+  const PASSI = { fermo:{ R:[2, -1.5], L:[4, -5] }, largo:{ R:[6.5, 2.5], L:[6.5, 2.5] }, cammina:{ R:[2.2, 9, 1, .87, 1], L:[1, -1.2] } };
+  const TIPI = {
+    uomo:{ c:"m", abito:"giacca", cap:"fedora", posa:"fermo" }, testa:{ c:"m", abito:"giacca", capelli:"corti", posa:"fermo" },
+    coppola:{ c:"m", abito:"gilet", cap:"coppola", posa:"fermo" }, trench:{ c:"m", abito:"trench", cap:"fedora", posa:"tasche" },
+    ragazzo:{ c:"m", abito:"giubbotto", capelli:"ciuffo", posa:"tasche" }, donna:{ c:"f", abito:"vestito", capelli:"lunghi", posa:"fermo" },
+    velo:{ c:"f", abito:"lungo", cap:"velo", posa:"fermo" }, sposa:{ c:"f", abito:"sposa", capelli:"raccolti", cap:"velosposa", posa:"bouquet" },
+    tenore:{ c:"m", abito:"frac", capelli:"corti", posa:"aperte", passo:"largo" }, nonna:{ c:"f", abito:"anziana", cap:"fazzoletto", posa:"bastone", curva:true },
+    cacciatore:{ c:"m", abito:"mantello", cap:"cappuccio", posa:"porto", arma:"fucile" }, soldato:{ c:"m", abito:"divisa", cap:"elmetto", posa:"porto", arma:"fucile", baionetta:true, passo:"largo" },
+    legionario:{ c:"m", abito:"lorica", cap:"galea", posa:"lancia", scudo:true, passo:"largo" }, garibaldino:{ c:"m", abito:"camicia", rosso:true, cap:"kepi", posa:"porto", arma:"fucile", passo:"largo" },
+    dj:{ c:"m", abito:"tshirt", capelli:"ciuffo", cap:"cuffie", posa:"alzate", passo:"largo" }, pastore:{ c:"m", abito:"mantello", cap:"coppola", posa:"pastorale" },
+    bandito:{ c:"m", abito:"cappotto", cap:"coppola", posa:"spalla", arma:"fucile", passo:"largo" }, alpinista:{ c:"m", abito:"giubbotto", cap:"berretto", zaino:"alpino", posa:"piccozza", passo:"cammina" },
+    spallone:{ c:"m", abito:"giacca", cap:"coppola", zaino:"bricolla", posa:"zaino", passo:"cammina" }, bambina:{ c:"b", abito:"vestitino", capelli:"codini", posa:"fermo" },
+    bambino:{ c:"b", abito:"maglietta", capelli:"corti", posa:"fermo" }
+  };
+  function fucile(Bt, Mz, bai){
+    const dx = Mz[0] - Bt[0], dy = Mz[1] - Bt[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, nx = -uy, ny = ux;
+    const at = t => [Bt[0] + dx * t, Bt[1] + dy * t], q = (p, w) => [[p[0] + nx * w, p[1] + ny * w], [p[0] - nx * w, p[1] - ny * w]];
+    const s = [q(Bt, 5.4), q(at(.08), 4.6), q(at(.24), 2.9), q(at(.3), 2.6), q(at(.66), 2.3), q(at(.69), 1.3), q(Mz, 1.2)];
+    let e = `<path d="M${s.map(p => PP(p[0])).join("L")}L${s.slice().reverse().map(p => PP(p[1])).join("L")}Z"/>`;
+    const g = at(.33); e += `<circle cx="${f(g[0] + nx * 3.4)}" cy="${f(g[1] + ny * 3.4)}" r="2.4"/>`;
+    if(bai){ const b = [Mz[0] + ux * 32, Mz[1] + uy * 32]; e += `<path d="M${PP([Mz[0] + nx * 1.4, Mz[1] + ny * 1.4])}L${PP(b)}L${PP([Mz[0] - nx * 1.4, Mz[1] - ny * 1.4])}Z"/>`; }
+    return e;
+  }
+  function persona(tipo, o, col, glow){
+    const T = Object.assign({}, TIPI[tipo] || TIPI.uomo);
+    ["posa", "cap", "capelli", "abito", "gambe", "arma", "zaino", "passo", "inclina", "rosso", "oggetto", "c"].forEach(k => { if(o[k] !== undefined) T[k] = o[k]; });
+    if(o.ombrello) T.posa = "ombrello";
+    if(o.casco) T.cap = "casco";
+    const B = CORPI[T.c] || CORPI.m, luce = mix(col, glow, .5);
+    const rosso = T.rosso ? mix("#b8241f", col, .38) : null;
+    let dietro = "", e = "", sopra = "", lin = "";
+    const hy = B.hy + (T.curva ? 8 : 0), hw = B.hw, hh = B.hh, top = hy - hh;
+    // gambe e piedi
+    const tg = T.gambe || ({ giubbotto:"jeans", tshirt:"jeans", divisa:"calzoni", lorica:"nude", vestito:"donna", cappottoF:"donna", vestitino:"bimbo", maglietta:"calzoncini" }[T.abito]) || "pantaloni";
+    const nascoste = ["lungo", "sposa", "anziana", "mantello"].includes(T.abito), rg = GAMBE[tg] || GAMBE.pantaloni, LP = PASSI[T.passo] || PASSI.fermo;
+    const scarpa = T.abito === "divisa" ? "stivale" : T.abito === "lorica" ? "sandalo" : B.piede;
+    [1, -1].forEach(sd => {
+      const lp = LP[sd > 0 ? "R" : "L"], H = [sd * B.an[0], B.an[1]], K = avanti(H, verso(lp[0], sd), B.ga[0] * (lp[2] || 1)), A = avanti(K, verso(lp[1], sd), B.ga[1] * (lp[3] || 1));
+      if(!nascoste) e += arto([[...H, rg[0]], [...tra(H, K, .5), rg[1]], [...K, rg[2]], [...tra(K, A, .33), rg[3]], [...tra(K, A, .72), rg[4]], [...A, rg[5]]]);
+      const px = A[0], py = A[1];
+      if(nascoste) e += `<ellipse cx="${f(sd * B.an[0] * .9)}" cy="-2.4" rx="${T.c === "f" ? 5 : 7}" ry="2.8"/>`;
+      else if(lp[4]) e += `<ellipse cx="${f(px + sd)}" cy="${f(py + 8)}" rx="${f(B.mano[1] * 1.1)}" ry="9" transform="rotate(${f(-sd * 8)} ${f(px)} ${f(py + 8)})"/>`;
+      else if(scarpa === "tacco") e += `<rect x="${f(px - 3)}" y="${f(py)}" width="6" height="${f(-4 - py)}"/><ellipse cx="${f(px + sd * 1.2)}" cy="-4.2" rx="4.4" ry="4.2"/>`;
+      else if(scarpa === "stivale") e += `<rect x="${f(px - 6.8)}" y="${f(py - 16)}" width="13.6" height="${f(12 - py)}" rx="3"/><ellipse cx="${f(px + sd * 1.5)}" cy="-4.6" rx="8" ry="4.8"/>`;
+      else if(scarpa === "bimbo") e += `<rect x="${f(px - 3.2)}" y="${f(py)}" width="6.4" height="${f(-3 - py)}"/><ellipse cx="${f(px + sd)}" cy="-3.2" rx="4.8" ry="3.2"/>`;
+      else if(scarpa === "sandalo") e += `<rect x="${f(px - 3.8)}" y="${f(py)}" width="7.6" height="${f(-3 - py)}"/><ellipse cx="${f(px + sd * 1.2)}" cy="-3.4" rx="5.6" ry="3.4"/>`;
+      else e += `<rect x="${f(px - 5.2)}" y="${f(py - 1)}" width="10.4" height="${f(-3 - py)}"/><ellipse cx="${f(px + sd * 1.8)}" cy="-4.6" rx="7.4" ry="4.6"/>`;
+    });
+    // zaini (dietro le spalle: nella silhouette spuntano sopra e ai lati)
+    if(T.zaino === "bricolla"){ e += forma(specchio([[0,-272],[16,-271],[30,-266],[38,-254],[41,-232],[41,-204],[38,-176],[30,-160],[0,-156]])); lin += "M-38 -236Q0 -226 38 -236M-40 -196Q0 -186 40 -196M-18 -270Q-8 -220 -14 -160"; }
+    if(T.zaino === "alpino"){ e += forma(specchio([[0,-266],[17,-265],[26,-257],[28,-224],[27,-184],[21,-164],[0,-162]])) + `<ellipse cx="0" cy="-268" rx="25" ry="7"/>`; lin += "M-26 -236H26M-24 -196H24"; }
+    if(T.cap === "velosposa") dietro += `<path d="${liscio([[-hw, top + 4], [0, top - 2], [hw, top + 4], [hw * 2.6, hy + 80], [hw * 3.6, hy + 180], [hw * 4.4, -2], [-hw * 4.4, -2], [-hw * 3.6, hy + 180], [-hw * 2.6, hy + 80]], true)}" fill="${mix("#ffffff", col, .2)}" opacity=".34"/>`;
+    // busto e vestito
+    const busto = BUSTI[T.abito] || BUSTI.camicia;
+    e += forma(specchio(busto), rosso);
+    if(T.abito === "frac") e += [1, -1].map(sd => forma([[sd * 9, -150], [sd * 29, -147], [sd * 30, -120], [sd * 27, -92], [sd * 20, -88], [sd * 13, -112]])).join("");
+    const orlo = busto[busto.length - 1][1];
+    if(["giacca", "cappotto", "trench", "divisa", "giubbotto", "frac"].includes(T.abito)) lin += `M0 ${f(busto[0][1] + 4)}V${f(orlo - 2)}`;
+    if(["giacca", "cappotto", "trench", "frac"].includes(T.abito)) lin += `M${-busto[0][0]} ${busto[0][1]}L-3 -212M${busto[0][0]} ${busto[0][1]}L3 -212`;
+    if(T.abito === "trench") lin += "M-31 -176H31M-34 -150L-31 -176";
+    if(T.abito === "divisa") lin += "M-30 -168H30M-24 -222h12v12h-12zM12 -222h12v12h-12z";
+    if(T.abito === "gilet") lin += "M-8 -252L-22 -214L-26 -150Q0 -138 26 -150L22 -214L8 -252";
+    if(T.abito === "lorica") lin += "M-34 -226H34M-32 -212H32M-30 -198H30M-29 -184H29M-29 -170H29M-24 -150V-118M-12 -150V-117M0 -150V-117M12 -150V-117M24 -150V-118";
+    if(T.abito === "cappottoF") lin += "M-23 -180H23";
+    if(["vestito", "lungo"].includes(T.abito)) lin += "M-20 -182Q0 -178 20 -182";
+    // braccia e mani
+    const P = POSE[T.posa] || POSE.fermo, man = MANICHE[T.abito] || MANICHE.camicia, mani = {};
+    [1, -1].forEach(sd => {
+      const pa = P[sd > 0 ? "R" : "L"], S = [sd * B.sp[0], B.sp[1] + (T.curva ? 5 : 0)];
+      const El = avanti(S, verso(pa[0], sd), B.br[0] * (pa[2] == null ? 1 : pa[2])), v = verso(pa[1], sd), Wr = avanti(El, v, B.br[1] * (pa[3] == null ? 1 : pa[3]));
+      const ch = [[...S, man[0]], [...tra(S, El, .5), man[1]], [...El, man[2]], [...tra(El, Wr, .5), man[3]], [...Wr, man[4]]];
+      e += arto(ch, rosso);
+      if(Math.abs(pa[1]) < 40 && pa[0] < 40) lin += bordo(ch.slice(1), -sd);
+      if(pa[4] == null || pa[4]){
+        const [hl, hw2] = B.mano, cx = Wr[0] + v[0] * hl * .8, cy = Wr[1] + v[1] * hl * .8;
+        e += `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(hl)}" ry="${f(hw2)}" transform="rotate(${f(Math.atan2(v[1], v[0]) * 180 / Math.PI)} ${f(cx)} ${f(cy)})"/>`;
+        mani[sd] = [Wr[0] + v[0] * hl * 1.1, Wr[1] + v[1] * hl * 1.1];
+      }
+      mani["p" + sd] = Wr;
+    });
+    // collo, testa, capelli, cappello (la testa può piegarsi)
+    const [cy1, cw1, cy2, cw2] = B.collo, sh = T.curva ? 8 : 0;
+    let tt = `<path d="M${-cw1} ${cy1 + sh}L${cw1} ${cy1 + sh}L${cw2} ${cy2 + sh * .5}L${-cw2} ${cy2 + sh * .5}Z"/>`;
+    tt += forma(specchio([[0, -hh], [hw * .63, -hh * .9], [hw * .95, -hh * .56], [hw * 1.02, -hh * .17], [hw * .99, hh * .22], [hw * .87, hh * .56], [hw * .62, hh * .82], [hw * .3, hh * .98], [0, hh]]).map(([x, y]) => [x, y + hy]));
+    tt += `<ellipse cx="${f(-hw * .99)}" cy="${f(hy + 1.5)}" rx="2.5" ry="5.4"/><ellipse cx="${f(hw * .99)}" cy="${f(hy + 1.5)}" rx="2.5" ry="5.4"/>`;
+    const cap = T.cap, cp = T.capelli;
+    if(cp === "corti" || cp === "ciuffo" || cp === "raccolti" || cp === "codini") tt += `<ellipse cx="0" cy="${f(hy - 3.5)}" rx="${f(hw * 1.05)}" ry="${f(hh * .9)}"/>`;
+    if(cp === "ciuffo") tt += `<path d="M${f(-hw * .9)} ${f(top + 6)}Q${f(-hw * .6)} ${f(top - 8)} ${f(-hw * .1)} ${f(top - 3)}Q${f(hw * .2)} ${f(top - 11)} ${f(hw * .7)} ${f(top - 4)}Q${f(hw * 1.2)} ${f(top - 1)} ${f(hw * 1.02)} ${f(top + 8)}Z"/>`;
+    if(cp === "raccolti") tt += `<circle cx="0" cy="${f(top + 1)}" r="${f(hw * .52)}"/>`;
+    if(cp === "codini") tt += `<ellipse cx="${f(-hw * 1.3)}" cy="${f(hy + 7)}" rx="3.4" ry="9" transform="rotate(18 ${f(-hw * 1.3)} ${f(hy + 7)})"/><ellipse cx="${f(hw * 1.3)}" cy="${f(hy + 7)}" rx="3.4" ry="9" transform="rotate(-18 ${f(hw * 1.3)} ${f(hy + 7)})"/>`;
+    if(cp === "lunghi") tt += forma(specchio([[0, -hh - 1.5], [hw * .62, -hh + .5], [hw * 1.12, -hh + 8], [hw * 1.26, 2], [hw * 1.32, 16], [hw * 1.46, 30], [hw * 1.62, 44], [hw * 1.5, 56], [hw * 1.1, 60], [hw * .5, 58], [0, 57]]).map(([x, y]) => [x, y + hy]));
+    if(cap === "fedora"){ tt += forma([[-hw * .88, top + 8.6], [-hw * .93, top - 2.6], [-hw * .68, top - 10], [-hw * .22, top - 8.2], [hw * .22, top - 8.2], [hw * .68, top - 10], [hw * .93, top - 2.6], [hw * .88, top + 8.6]]) + `<path d="M${f(-hw * 2)} ${f(top + 9.6)}Q${f(-hw * 2)} ${f(top + 5.2)} ${f(-hw * 1.15)} ${f(top + 5.8)}L${f(hw * 1.15)} ${f(top + 5.8)}Q${f(hw * 2)} ${f(top + 5.2)} ${f(hw * 2)} ${f(top + 9.6)}Q${f(hw)} ${f(top + 12.2)} 0 ${f(top + 12.4)}Q${f(-hw)} ${f(top + 12.2)} ${f(-hw * 2)} ${f(top + 9.6)}Z"/>`; lin += `M${f(-hw * .9)} ${f(top + 4.6)}H${f(hw * .9)}`; }
+    if(cap === "coppola") tt += forma([[-hw * 1.1, top + 12.6], [-hw * 1.16, top + 5.4], [-hw * .82, top - 1.8], [0, top - 3.6], [hw * .82, top - 1.8], [hw * 1.16, top + 5.4], [hw * 1.1, top + 12.6]]) + `<ellipse cx="0" cy="${f(top + 12.4)}" rx="${f(hw * 1.28)}" ry="2.6"/>`;
+    if(cap === "elmetto") tt += forma([[-hw * 1.34, top + 13.5], [-hw * 1.27, top + 3.5], [-hw * .75, top - 5], [0, top - 7.6], [hw * .75, top - 5], [hw * 1.27, top + 3.5], [hw * 1.34, top + 13.5]]) + `<ellipse cx="0" cy="${f(top + 13.4)}" rx="${f(hw * 1.5)}" ry="3.2"/><rect x="-1.6" y="${f(top - 12)}" width="3.2" height="6"/>`;
+    if(cap === "casco") tt += forma([[-hw * 1.2, top + 11], [-hw * 1.18, top + 2], [-hw * .7, top - 6], [0, top - 8], [hw * .7, top - 6], [hw * 1.18, top + 2], [hw * 1.2, top + 11]], mix("#f2c230", col, .3)) + `<ellipse cx="0" cy="${f(top + 11)}" rx="${f(hw * 1.5)}" ry="3" fill="${mix("#f2c230", col, .4)}"/>`;
+    if(cap === "kepi") tt += `<path d="M${f(-hw * 1.02)} ${f(top + 11)}L${f(-hw * .9)} ${f(top - 1)}Q0 ${f(top - 5.5)} ${f(hw * .9)} ${f(top - 3)}L${f(hw * 1.02)} ${f(top + 11)}Z"/><ellipse cx="0" cy="${f(top + 11)}" rx="${f(hw * 1.12)}" ry="2.6"/>`;
+    if(cap === "galea"){ tt += forma([[-hw * 1.2, top + 12], [-hw * 1.16, top + 2], [-hw * .7, top - 6], [0, top - 8], [hw * .7, top - 6], [hw * 1.16, top + 2], [hw * 1.2, top + 12]]) + `<rect x="${f(-hw * 1.24)}" y="${f(hy - 6)}" width="5" height="18"/><rect x="${f(hw * 1.24 - 5)}" y="${f(hy - 6)}" width="5" height="18"/>`; sopra += `<path d="M${f(-hw * 1.3)} ${f(top - 1)}Q0 ${f(top - 30)} ${f(hw * 1.3)} ${f(top - 1)}Q0 ${f(top - 14)} ${f(-hw * 1.3)} ${f(top - 1)}Z" fill="${mix("#b8241f", col, .35)}"/>`; }
+    if(cap === "cappuccio") tt += forma([[-hw * 1.25, hy + 16], [-hw * 1.36, hy - 2], [-hw * 1.18, top + 6], [-hw * .6, top - 3.4], [0, top - 4.6], [hw * .6, top - 3.4], [hw * 1.18, top + 6], [hw * 1.36, hy - 2], [hw * 1.25, hy + 16], [hw * 1.6, hy + 26], [-hw * 1.6, hy + 26]]);
+    if(cap === "fazzoletto") tt += forma([[-hw * 1.1, hy + 12], [-hw * 1.18, hy], [-hw, top + 5], [-hw * .5, top - 1.2], [0, top - 1.8], [hw * .5, top - 1.2], [hw, top + 5], [hw * 1.18, hy], [hw * 1.1, hy + 12], [hw * 1.4, hy + 22], [0, hy + 30], [-hw * 1.4, hy + 22]]);
+    if(cap === "velo") tt += forma([[-hw * 1.2, top + 3], [-hw * .6, top - 2.5], [0, top - 3.5], [hw * .6, top - 2.5], [hw * 1.2, top + 3], [hw * 1.5, hy + 10], [hw * 2, hy + 40], [hw * 2.2, hy + 60], [0, hy + 56], [-hw * 2.2, hy + 60], [-hw * 2, hy + 40], [-hw * 1.5, hy + 10]]);
+    if(cap === "berretto") tt += forma([[-hw * 1.08, hy - 2], [-hw * 1.1, top + 4], [-hw * .6, top - 4], [0, top - 5.5], [hw * .6, top - 4], [hw * 1.1, top + 4], [hw * 1.08, hy - 2]]) + `<circle cx="0" cy="${f(top - 6)}" r="4.6"/>`;
+    if(cap === "cuffie") tt += `<path d="M${f(-hw * 1.15)} ${f(hy)}Q${f(-hw * 1.2)} ${f(top - 6)} 0 ${f(top - 7)}Q${f(hw * 1.2)} ${f(top - 6)} ${f(hw * 1.15)} ${f(hy)}" fill="none" stroke="currentColor" stroke-width="3.4"/><rect x="${f(-hw * 1.28 - 3)}" y="${f(hy - 7)}" width="7" height="14" rx="3"/><rect x="${f(hw * 1.28 - 4)}" y="${f(hy - 7)}" width="7" height="14" rx="3"/>`;
+    if(T.inclina) tt = `<g transform="rotate(${f(T.inclina)} 0 ${f(cy2)})">${tt}</g>`;
+    e += tt;
+    if(o.collana) sopra += `<path d="M-7 ${f(cy2 + 1)}Q0 ${f(cy2 + 13)} 7 ${f(cy2 + 1)}" fill="none" stroke="#ffd36b" stroke-width="1.8"/><circle cx="0" cy="${f(cy2 + 12)}" r="2.4" fill="#ffd36b"/>`;
+    // oggetti in mano
+    const Rh = mani[1] || mani.p1, Lh = mani[-1] || mani["p-1"];
+    if(T.posa === "ombrello"){ const ap = [Rh[0] - 6, Rh[1] - 120], w = 84, cy = ap[1] + 34; let d = `M${f(ap[0] - w)} ${f(cy + 6)}Q${f(ap[0] - w * .96)} ${f(ap[1] - 4)} ${f(ap[0])} ${f(ap[1] - 6)}Q${f(ap[0] + w * .96)} ${f(ap[1] - 4)} ${f(ap[0] + w)} ${f(cy + 6)}`; for(let k = 0; k < 6; k++){ const xa = ap[0] + w - k * w / 3, xb = xa - w / 3; d += `Q${f((xa + xb) / 2)} ${f(cy - 4)} ${f(xb)} ${f(cy + 6)}`; }
+      e += `<path d="M${PP(Rh)}L${PP(ap)}M${PP(Rh)}l0 10q0 7 -7 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>` + `<path d="${d}Z"${o.ombrelloCol ? ` fill="${o.ombrelloCol}"` : ""}/>`; lin += [-2, -1, 0, 1, 2].map(k => `M${PP(ap)}L${f(ap[0] + k * w / 3)} ${f(cy + 6)}`).join(""); }
+    if(T.posa === "valigia" || T.posa === "valigiaT"){ e += `<rect x="${f(Rh[0] - 10)}" y="${f(Rh[1] + 5)}" width="34" height="44" rx="4"/><path d="M${f(Rh[0] - 2)} ${f(Rh[1] + 6)}v-6h14v6" fill="none" stroke="currentColor" stroke-width="2.4"/>`; lin += `M${f(Rh[0] - 10)} ${f(Rh[1] + 18)}h34M${f(Rh[0] - 10)} ${f(Rh[1] + 36)}h34`; }
+    if(T.arma === "fucile" && T.posa === "porto"){ const dx = Lh[0] - Rh[0], dy = Lh[1] - Rh[1], l = Math.hypot(dx, dy) || 1; e += fucile([Rh[0] - dx / l * 34, Rh[1] - dy / l * 34], [Lh[0] + dx / l * 112, Lh[1] + dy / l * 112], T.baionetta); }
+    if(T.arma === "fucile" && T.posa === "spalla"){ e += fucile([-34, -118], [40, -332], false); lin += "M28 -244L-30 -150"; }
+    if(T.posa === "pistola") e += `<path d="M${f(Rh[0] - 3)} ${f(Rh[1] - 2)}h7v24h-5l-2 -6z"/>`;
+    if(T.posa === "bastone") e += `<path d="M${PP(Rh)}L${f(Rh[0] + 9)} 0M${PP(Rh)}q2 -9 10 -6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>`;
+    if(T.posa === "pastorale") e += `<path d="M${f(Rh[0] + 4)} 0L${f(Rh[0] - 2)} ${f(Rh[1] - 116)}q-2 -22 16 -22q16 2 12 18" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>`;
+    if(T.posa === "piccozza") e += `<path d="M${PP(Rh)}l7 64" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M${f(Rh[0] - 14)} ${f(Rh[1] - 2)}q14 -6 28 4l-2 3q-12 -6 -26 -3z"/>`;
+    if(T.posa === "lancia") e += `<path d="M${f(Rh[0] + 3)} 6L${f(Rh[0] - 3)} -380" fill="none" stroke="currentColor" stroke-width="3.2"/><path d="M${f(Rh[0] - 3)} -412l5 32h-10z"/>`;
+    if(T.scudo){ const sc = mix("#8a1c18", col, .45); sopra += `<rect x="-82" y="-238" width="54" height="142" rx="9" fill="${sc}"/><rect x="-82" y="-238" width="54" height="142" rx="9" fill="none" stroke="${mix("#e6c25a", col, .35)}" stroke-width="2.4"/><circle cx="-55" cy="-167" r="9" fill="${mix("#e6c25a", col, .35)}"/>`; }
+    if(T.posa === "bouquet") sopra += [[-6, -178], [4, -181], [-1, -170], [8, -172], [-9, -169], [2, -164]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${5 - i * .3}" fill="${mix(i % 2 ? "#f6e6ea" : "#ffffff", col, .1)}"/>`).join("") + `<path d="M-3 -162l-4 22M3 -162l4 22" stroke="${mix("#ffffff", col, .2)}" stroke-width="1.6"/>`;
+    if(T.posa === "sigaretta"){ const p = [Rh[0] - 4, Rh[1] - 3]; sopra += `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="1.8" fill="#ffb347"/><circle cx="${f(p[0])}" cy="${f(p[1])}" r="7" fill="#ffb347" opacity=".25"/><path d="M${PP(p)}q-6 -14 2 -26t-2 -30" fill="none" stroke="${luce}" stroke-width="1.6" opacity=".35"/>`; }
+    if(o.numero) sopra += `<text x="0" y="-180" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="40" fill="${glow}" opacity=".85">${esc(o.numero)}</text>`;
+    // linee di luce che danno forma: tesa del cappello, giacca, braccia
+    const linee = lin ? `<path d="${lin}" fill="none" stroke="${luce}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>` : "";
+    return { dietro, corpo:e, sopra, linee };
+  }
+
+  // il robot gentile e l'astronauta, con le stesse regole di luce dei personaggi
+  function robotHD(col, glow, acc){
+    let e = `<path d="M0 -300V-322" stroke="currentColor" stroke-width="3"/><circle cx="0" cy="-326" r="5"/>` + `<rect x="-31" y="-300" width="62" height="54" rx="18"/><rect x="-8" y="-248" width="16" height="14"/><rect x="-37" y="-236" width="74" height="88" rx="16"/><rect x="-27" y="-152" width="54" height="20" rx="8"/>`;
+    e += arto([[-40, -226, 10], [-47, -188, 7], [-45, -150, 6.5]]) + arto([[40, -226, 10], [47, -188, 7], [45, -150, 6.5]]) + arto([[-15, -136, 10], [-16, -76, 8], [-16, -16, 7.5]]) + arto([[15, -136, 10], [16, -76, 8], [16, -16, 7.5]]);
+    e += `<rect x="-29" y="-16" width="26" height="16" rx="6"/><rect x="3" y="-16" width="26" height="16" rx="6"/><path d="M-52 -150l-6 14l6 2l4 -10zM-38 -150l2 14l6 0l-2 -14zM52 -150l6 14l-6 2l-4 -10zM38 -150l-2 14l-6 0l2 -14z"/>`;
+    const sopra = `<rect x="-22" y="-286" width="44" height="24" rx="11" fill="#08090c"/><circle cx="-10" cy="-274" r="5" fill="${acc}"/><circle cx="10" cy="-274" r="5" fill="${acc}"/><circle cx="-10" cy="-274" r="11" fill="${acc}" opacity=".3"/><circle cx="10" cy="-274" r="11" fill="${acc}" opacity=".3"/><circle cx="0" cy="-326" r="3" fill="${acc}"/>` +
+      `<rect x="-16" y="-218" width="32" height="30" rx="5" fill="#08090c" opacity=".85"/><circle cx="-7" cy="-207" r="3" fill="${acc}"/><circle cx="3" cy="-207" r="3" fill="#ff6a5a" opacity=".9"/><rect x="-10" y="-198" width="20" height="3" rx="1.5" fill="${acc}" opacity=".7"/><path d="M-22 -260q22 10 44 0" fill="none" stroke="${acc}" stroke-width="2" opacity=".6"/>`;
+    return { dietro:"", corpo:e, sopra, linee:`<path d="M-37 -192H37M-31 -246H31M-16 -76h2M14 -76h2" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.4" opacity=".4"/>` };
+  }
+  function astronautaHD(col, glow, acc){
+    let e = `<rect x="-50" y="-240" width="100" height="84" rx="14"/><circle cx="0" cy="-262" r="33"/><rect x="-42" y="-236" width="84" height="104" rx="20"/>` + arto([[-44, -224, 13], [-56, -184, 11], [-52, -146, 10.5]]) + arto([[44, -224, 13], [56, -184, 11], [52, -146, 10.5]]) + `<ellipse cx="-52" cy="-134" rx="11" ry="13"/><ellipse cx="52" cy="-134" rx="11" ry="13"/>` + arto([[-18, -136, 15], [-20, -74, 12.5], [-19, -18, 11.5]]) + arto([[18, -136, 15], [20, -74, 12.5], [19, -18, 11.5]]) + `<rect x="-36" y="-22" width="32" height="22" rx="8"/><rect x="4" y="-22" width="32" height="22" rx="8"/>`;
+    const sopra = `<path d="M-23 -276Q0 -296 23 -276Q20 -242 0 -238Q-20 -242 -23 -276Z" fill="${c0(glow)}" opacity=".75"/><path d="M-14 -280Q0 -290 10 -284" fill="none" stroke="#ffffff" stroke-width="3" opacity=".7"/><rect x="-18" y="-206" width="36" height="22" rx="4" fill="#0a0c10" opacity=".8"/><circle cx="-8" cy="-195" r="3" fill="${acc}"/><circle cx="4" cy="-195" r="3" fill="#ff6a5a"/>`;
+    return { dietro:"", corpo:e, sopra, linee:`<path d="M-30 -140Q0 -132 30 -140M-42 -180H42M-60 -190q-6 30 6 60M60 -190q6 30 -6 60" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.6" opacity=".45"/>` };
+  }
+  const c0 = g => c0.v || (c0.v = g);
   // personaggio: x, y (piedi), s, z (0 lontano … 2 vicino), flip, col, rim (luce di contorno: -1 sinistra, 1 destra, 0 tutt'intorno)
   function figura(c, tipo, o){
     let inner = FIG[tipo] || FIG.uomo;
@@ -786,9 +1209,20 @@
     if(o.ombrello) extra += '<path d="M-60 -300Q-56 -382 34 -388Q124 -382 128 -300Q112 -312 97 -300Q82 -312 66 -300Q50 -312 34 -300Q18 -312 2 -300Q-14 -312 -29 -300Q-44 -312 -60 -300Z"/><path d="M33 -388V-212Q33 -200 24 -200" fill="none" stroke="currentColor" stroke-width="4"/><path d="M22 -206L30 -214L36 -208L28 -200Z"/>';
     if(c.hd){
       if(o.y >= 860 && s >= 1.05 && o.alza !== false) o = Object.assign({}, o, { y:o.y - 62 });
-      const corpo = c.linU([[0, mix(col, glow, .24)], [.4, mix(col, glow, .07)], [1, col]], 0, -300, 0, 0);
-      const det = DETTAGLI[tipo] ? `<path d="${DETTAGLI[tipo]}" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>` : "";
-      let fig = `<g color="${col}">` + G(o.x, o.y, s, inner + extra + det, corpo, o.flip, o.rot) + "</g>";
+      const corpo = c.linU([[0, mix(col, glow, TIPI[tipo] || o.c ? .15 : .24)], [.4, mix(col, glow, .05)], [1, col]], 0, -300, 0, 0);
+      let fig;
+      if(TIPI[tipo] || o.c || tipo === "robot" || tipo === "astronauta"){
+        // corpo vero: silhouette, lato in luce, linee di forma, dettagli a colori
+        c0.v = null;
+        const pz = tipo === "robot" ? robotHD(col, glow, c.p.acc) : tipo === "astronauta" ? astronautaHD(col, glow, c.p.acc) : persona(tipo, o, col, glow), r = o.rim === true || o.rim == null ? 0 : o.rim, rr = o.flip ? -r : r;
+        const lato = rr ? c.linU([[0, glow, rr < 0 ? .2 : 0], [.5, glow, 0], [1, glow, rr > 0 ? .2 : 0]], -46, 0, 46, 0) : c.linU([[0, glow, .2], [.3, glow, .04], [.6, glow, 0]], 0, -320, 0, 0);
+        const mk = c.id();
+        c.d += `<mask id="${mk}" maskUnits="userSpaceOnUse" x="-260" y="-470" width="520" height="500"><g fill="#fff" color="#fff">${pz.corpo.replace(/ fill="(?!none)[^"]*"/g, "")}</g></mask>`;
+        fig = `<g color="${col}">` + G(o.x, o.y, s, pz.dietro + pz.corpo, corpo, o.flip, o.rot) + G(o.x, o.y, s, `<rect x="-260" y="-470" width="520" height="500" fill="${lato}" mask="url(#${mk})"/>`, null, o.flip, o.rot) + G(o.x, o.y, s, pz.linee + pz.sopra, null, o.flip, o.rot) + "</g>";
+      } else {
+        const det = DETTAGLI[tipo] ? `<path d="${DETTAGLI[tipo]}" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>` : "";
+        fig = `<g color="${col}">` + G(o.x, o.y, s, inner + extra + det, corpo, o.flip, o.rot) + "</g>";
+      }
       let pre = o.ombra === false ? "" : E(o.x, o.y + 2 * s, 46 * s, 7 * s, c.rad([[0, "#000", .7], [1, "#000", 0]]));
       if(o.rim != null){
         const r = o.rim === true ? 0 : o.rim;
@@ -807,7 +1241,7 @@
     return out;
   }
   Object.keys(FIG).forEach(t => EL[t] = (c, o) => figura(c, t, o));
-  EL.coppia = (c, o) => figura(c, o.lui || "testa", Object.assign({}, o, { x:o.x - 34 * (o.s || 1) })) + figura(c, o.lei || "donna", Object.assign({}, o, { x:o.x + 30 * (o.s || 1), s:(o.s || 1) * .94, flip:true }));
+  EL.coppia = (c, o) => figura(c, o.lui || "testa", Object.assign({ posa:"abbraccio", inclina:3 }, o, { x:o.x - 32 * (o.s || 1) })) + figura(c, o.lei || "donna", Object.assign({ posa:"abbraccio", inclina:9 }, o, { x:o.x + 30 * (o.s || 1), s:(o.s || 1) * .94, flip:true }));
   EL.banda = (c, o) => (o.tipi || ["testa", "coppola", "ragazzo", "uomo", "ragazzo"]).map((t, i, a) => figura(c, t, Object.assign({}, o, { x:o.x + (i - (a.length - 1) / 2) * (o.passo || 76) * (o.s || 1), y:o.y + (i % 2) * 6, s:(o.s || 1) * (i % 2 ? .95 : 1) * (t === "bambina" || t === "bambino" ? 1.05 : 1) }))).join("");
   EL.lupo = (c, o) => G(o.x, o.y, o.s || 1, P("M-60 0Q-74 -22 -56 -40Q-40 -50 -30 -78Q-24 -104 -8 -122L-12 -150Q-4 -140 2 -136L8 -158Q14 -140 14 -128Q30 -130 44 -150Q40 -124 26 -108Q36 -86 34 -58Q40 -30 44 0Z", c.col(o.z == null ? 2 : o.z)) + P("M-56 -6Q-90 -10 -110 -30Q-84 -22 -60 -24Z", c.col(o.z == null ? 2 : o.z)) + C(10, -128, 2.6, c.p.acc), null, o.flip);
   EL.streghe = (c, o) => (o.pos || [[210, 230, .9], [380, 190, .7], [470, 280, .55]]).map(([x, y, s], i) => G(x, y, s, L(-40, 6, 44, -4, c.col(2), 3) + P("M34 -4L58 -12L56 4Z", c.col(2)) + P("M-8 2L4 -30L16 2Z", c.col(2)) + C(5, -34, 6, c.col(2)) + P("M0 -38L8 -60L13 -37Z", c.col(2)) + S("M-6 -6Q-26 -2 -30 10", c.col(2), 3), null, i % 2 === 1, -8)).join("");
@@ -898,7 +1332,85 @@
     return G(o.x, o.y, o.s || 1, C(0, -10, 230, c.halo(col, .32)) + R(-o.w / 2, -fs * .95, o.w, fs * 1.35, "#0a0a10", .85, ' rx="10"') + R(-o.w / 2, -fs * .95, o.w, fs * 1.35, "none", null, ` rx="10" stroke="${col}" stroke-width="4" stroke-opacity=".8"`) +
       `<text x="0" y="${f(fs * .2)}" text-anchor="middle" font-family="${o.font || SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="none" stroke="${col}" stroke-width="10" stroke-opacity=".35">${esc(o.t)}</text><text x="0" y="${f(fs * .2)}" text-anchor="middle" font-family="${o.font || SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#fff4fa">${esc(o.t)}</text>`, null, false, o.rot);
   };
+  // la bottega: palazzo con finestre, persiane e balcone; insegna, tenda a strisce, vetrina con banco, bottiglie, lampade; marciapiede bagnato
+  function botteHD(c, o){
+    const x = o.x, y = o.y || HOR, w = o.w || 300, h = o.h || 210, col = o.col || c.p.acc, glow = c.p.glow;
+    const yS = y - h, top = yS - (o.alto || 230), x0 = x - w / 2, x1 = x + w / 2;
+    const muro = o.muro || mix(c.p.mid, c.p.ink, .35), pietra = mix(muro, glow, .16), legno = o.legno || "#1a100a";
+    let e = "";
+    // marciapiede, luce che esce dal locale e riflessi sull'asfalto bagnato
+    e += R(x0 - 80, y, w + 160, 8, c.lin([[0, mix(muro, col, .25)], [1, mix(muro, "#000", .2)]])) + R(x0 - 80, y + 8, w + 160, 3, mix(muro, "#000", .5));
+    e += P(`M${f(x0 + 16)} ${y + 10}L${f(x1 - 16)} ${y + 10}L${f(x1 + 170)} ${VH}L${f(x0 - 170)} ${VH}Z`, c.lin([[0, col, .34], [1, col, 0]]));
+    let rif = "";
+    for(let k = 0; k < 20; k++){ const rx = x0 + 22 + c.rnd(0, w - 44), rl = c.rnd(70, 240); rif += R(rx, y + 12, c.rnd(2, 10), rl, c.linU([[0, col, .7], [1, col, 0]], 0, y + 12, 0, y + 12 + rl), f(c.rnd(.2, .6))); }
+    if(o.insegna) rif += R(x - w * .32, y + 14, w * .64, 46, c.linU([[0, o.neon || "#ffe6a8", .35], [1, o.neon || "#ffe6a8", 0]], 0, y + 14, 0, y + 60));
+    e += `<g filter="${c.sfoca(2.4)}">${rif}</g>`;
+    // il palazzo sopra
+    e += R(x0, top, w, yS - top + 2, c.lin([[0, mix(muro, glow, .08)], [1, mix(muro, col, .12)]]), null, ` filter="${c.intonaco()}"`);
+    e += R(x0 - 7, top - 9, w + 14, 11, c.lin([[0, mix(pietra, glow, .2)], [1, pietra]])) + R(x0 - 3, top + 2, w + 6, 3, mix(muro, "#000", .4));
+    for(let dx = x0 - 4; dx < x1 + 4; dx += 6) e += R(dx, top + 5, 3, 3, pietra, .55);
+    const piani = Math.max(1, Math.floor((yS - top - 34) / 78)), nf = Math.max(2, Math.round(w / 82)), fw = 26, fh = 46, ps = mix("#2e4a36", muro, .4);
+    for(let r = 0; r < piani; r++){
+      const fy = top + 30 + r * 78;
+      e += R(x0, fy + fh + 16, w, 3, pietra, .65);
+      for(let k = 0; k < nf; k++){
+        const fx = x0 + (k + .5) * w / nf - fw / 2, acc = c.R() < (o.luci == null ? .5 : o.luci);
+        e += R(fx - 4, fy - 6, fw + 8, fh + 10, pietra, .8) + R(fx - 5, fy - 9, fw + 10, 4, mix(pietra, glow, .15), .9);
+        e += R(fx, fy, fw, fh, acc ? c.lin([[0, "#fff2cc"], [.6, mix(c.p.acc, "#fff", .2)], [1, mix(c.p.acc, "#000", .2)]]) : c.lin([[0, mix(muro, "#000", .55)], [1, mix(muro, "#000", .35)]]));
+        if(acc) e += P(`M${f(fx)} ${f(fy)}Q${f(fx + fw * .34)} ${f(fy + fh * .45)} ${f(fx + fw * .14)} ${f(fy + fh)}H${f(fx)}Z`, "#8a4a22", .55) + P(`M${f(fx + fw)} ${f(fy)}Q${f(fx + fw * .66)} ${f(fy + fh * .45)} ${f(fx + fw * .86)} ${f(fy + fh)}H${f(fx + fw)}Z`, "#8a4a22", .55) + C(fx + fw / 2, fy + fh * .5, 30, c.halo(c.p.acc, .18));
+        e += R(fx + fw / 2 - .8, fy, 1.6, fh, mix(muro, "#000", .55), .85) + R(fx, fy + fh * .4, fw, 1.4, mix(muro, "#000", .55), .8);
+        if(c.R() < .75){ const ap = c.R() < .5; [[fx - 13, 1], [fx + fw + 1, -1]].forEach(([px]) => { e += R(px, fy - 1, 12, fh + 2, ap ? ps : mix(ps, "#000", .2)); for(let q = 0; q < 9; q++) e += R(px + 1, fy + 3 + q * 5, 10, 1.2, mix(ps, "#000", .45), .85); }); }
+        e += R(fx - 6, fy + fh + 4, fw + 12, 4, mix(pietra, glow, .1)) + R(fx - 6, fy + fh + 8, fw + 12, 2, "#000", .3);
+      }
+      if(r === piani - 1 && o.balcone !== false){
+        const by = fy + fh + 6, bx0 = x0 + 10, bx1 = x1 - 10;
+        e += R(bx0 - 4, by + 8, bx1 - bx0 + 8, 6, mix(pietra, glow, .1)) + R(bx0 - 4, by + 14, bx1 - bx0 + 8, 3, "#000", .35) + R(bx0, by - 22, bx1 - bx0, 2.4, "#0c0806");
+        for(let bx = bx0; bx <= bx1; bx += 5) e += R(bx, by - 22, 1.3, 30, "#0c0806", .9);
+        for(let bx = bx0 + 10; bx < bx1; bx += 30) e += `<circle cx="${f(bx)}" cy="${f(by - 8)}" r="5" fill="none" stroke="#0c0806" stroke-width="1.2"/>`;
+        if(o.piante !== false) for(let k = 0; k < 4; k++){ const px = c.rnd(bx0 + 10, bx1 - 10); e += R(px - 6, by - 8, 12, 9, "#5a2a14") + [0, 1, 2, 3, 4].map(() => E(px + c.rnd(-9, 9), by - 12 - c.rnd(0, 10), c.rnd(3, 6), c.rnd(2, 4), mix("#2f5a2a", muro, .35))).join(""); }
+      }
+    }
+    // la vetrina
+    const sy = yS + 50, sb = y - 22, gx0 = x0 + 20, gx1 = x1 - 20, gw = gx1 - gx0, gh = sb - sy;
+    e += R(x0, yS, w, h + 2, legno) + R(x0, yS, w, 46, c.lin([[0, mix(legno, glow, .16)], [1, mix(legno, "#000", .2)]])) + R(x0, yS + 46, w, 4, mix(legno, glow, .3), .8);
+    const cid = c.clip(R(gx0, sy, gw, gh, "#000"));
+    let dentro = R(gx0, sy, gw, gh, c.lin([[0, "#fff3d2"], [.45, col], [1, mix(col, "#1c0c04", .75)]])) + R(gx0, sy, gw, gh * .5, c.lin([[0, "#ffffff", .2], [1, "#ffffff", 0]]));
+    for(let k = 0; k < 3; k++){ const y2 = sy + 26 + k * 24; dentro += R(gx0 + 4, y2, gw - 8, 2.6, "#3a1a08", .9); for(let bx = gx0 + 8 + c.rnd(0, 6); bx < gx1 - 12; bx += c.rnd(5.5, 10)){ const bc = c.pick(["#6a2a10", "#24502a", "#8a5a1a", "#d8c8a0", "#5a1414", "#c89a3a", "#2a3a5a"]), bh = c.rnd(9, 16); dentro += R(bx, y2 - bh, 4.2, bh, bc, .92) + R(bx + 1.1, y2 - bh - 3.5, 2, 4, bc, .92) + R(bx + .8, y2 - bh + 2, 1, bh - 4, "#ffffff", .4); } }
+    const nl = Math.max(2, Math.round(gw / 85));
+    for(let k = 0; k < nl; k++){ const lx = gx0 + (k + .5) * gw / nl; dentro += L(lx, sy, lx, sy + 16, "#2a1206", 1.2) + C(lx, sy + 26, 26, c.halo("#fff3cf", .75)) + P(`M${f(lx - 9)} ${f(sy + 25)}L${f(lx - 4)} ${f(sy + 16)}H${f(lx + 4)}L${f(lx + 9)} ${f(sy + 25)}Z`, "#2a1206") + E(lx, sy + 25.5, 7, 2.2, "#fffbe6"); }
+    if(o.dentro){ const ds = o.ds || .6, testa = sy + gh * (o.dy || .26); dentro += figura(c, o.dentro, { x:gx0 + gw * (o.dx || .32), y:testa + 300 * ds, s:ds, col:"#160b04", rim:0, rimCol:"#ffe6b0", haloA:.12, ombra:false, alza:false, posa:o.posaDentro }); }
+    const by = sb - 30;
+    dentro += R(gx0, by, gw, 30, c.lin([[0, "#3a1a0a"], [1, "#120602"]])) + R(gx0, by, gw, 3.5, mix(col, "#fff", .35), .85);
+    if(o.caffe !== false){ const mx = gx0 + gw * ((o.dx || .32) > .5 ? .24 : .74); dentro += R(mx - 24, by - 28, 48, 28, c.lin([[0, "#7a7a7a"], [.5, "#f0f0f0"], [1, "#6a6a6a"]], 1, 0)) + P(`M${f(mx - 16)} ${f(by - 28)}Q${f(mx)} ${f(by - 48)} ${f(mx + 16)} ${f(by - 28)}Z`, c.lin([[0, "#9a9a9a"], [.5, "#f6f6f6"], [1, "#8a8a8a"]], 1, 0)) + C(mx, by - 50, 3.2, "#e8c86a") + [-13, 0, 13].map(q => R(mx + q - 3.5, by - 9, 7, 6, "#222")).join("") + [-10, 6, 18].map(q => R(mx + q + 30, by - 9, 6, 9, "#f6f2ea", .9)).join(""); }
+    if(o.oggetto) dentro += o.oggetto(gx0 + gw / 2, by);
+    dentro += P(`M${f(gx0 + gw * .08)} ${f(sy)}L${f(gx0 + gw * .2)} ${f(sy)}L${f(gx0 + gw * .02)} ${f(sb)}L${f(gx0 - gw * .1)} ${f(sb)}Z`, "#ffffff", .1) + P(`M${f(gx0 + gw * .28)} ${f(sy)}L${f(gx0 + gw * .32)} ${f(sy)}L${f(gx0 + gw * .14)} ${f(sb)}L${f(gx0 + gw * .1)} ${f(sb)}Z`, "#ffffff", .07);
+    if(o.scritta !== false) dentro += `<text x="${f(gx0 + gw / 2)}" y="${f(sy + gh * .62)}" text-anchor="middle" font-family="${SERIF}" font-size="11" letter-spacing="3" font-weight="700" fill="#f6dc98" opacity=".75">${esc(o.scritta || "CAFFÈ · LIQUORI · PASTICCERIA")}</text>`;
+    if(o.bagnato) for(let k = 0; k < 50; k++){ const px = gx0 + c.rnd(0, gw), py = sy + c.rnd(0, gh), l = c.rnd(2, 8); dentro += R(px, py, 1.1, l, "#ffffff", f(c.rnd(.2, .5))) + C(px + .5, py + l, 1.2, "#ffffff", f(c.rnd(.3, .6))); }
+    e += `<g clip-path="${cid}">${dentro}</g>`;
+    const porta = gx0 + gw * ((o.dx || .32) > .5 ? .26 : .7);
+    e += R(gx0 - 3, sy - 3, gw + 6, 4, mix(legno, glow, .25)) + R(porta - 3, sy, 6, gh, legno) + R(porta + 8, sy + gh * .45, 3, 30, "#d8b86a", .8) + R(gx0 - 4, sb, gw + 8, 22, c.lin([[0, mix(legno, glow, .1)], [1, legno]])) + R(gx0 - 4, sb, gw + 8, 2.4, mix(legno, glow, .35), .8);
+    e += R(x0, yS, 20, h + 2, c.lin([[0, mix(legno, glow, .2)], [1, legno]], 1, 0)) + R(x1 - 20, yS, 20, h + 2, c.lin([[0, legno], [1, mix(legno, glow, .2)]], 1, 0));
+    // l'insegna sulla fascia
+    if(o.insegna){
+      const fs = o.fs || 34, ny = yS + 34;
+      if(o.neon) e += `<text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="none" stroke="${o.neon}" stroke-width="7" stroke-opacity=".45" filter="${c.sfoca(3)}">${esc(o.insegna)}</text><text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#fff6fb" stroke="${o.neon}" stroke-width="1.2">${esc(o.insegna)}</text>`;
+      else e += `<text x="${x + 1.5}" y="${ny + 2}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#000" opacity=".6">${esc(o.insegna)}</text><text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="${c.lin([[0, "#fff4c8"], [.55, "#e8c06a"], [1, "#a8742a"]])}">${esc(o.insegna)}</text>`;
+      e += C(x, yS + 24, w * .55, c.halo(o.neon || "#ffe6a8", .14));
+    }
+    // la tenda a strisce, in ombra in alto e accesa sull'orlo
+    if(o.tenda !== false){
+      const ay = yS + 50, ah = 40, n = Math.max(9, Math.round(w / 24)), aw = w + 26, ax = x - aw / 2, tc = o.tenda || "#8a1c1c", bianco = mix("#f2e8d2", muro, .1);
+      let t = "";
+      for(let k = 0; k < n; k++){ const xa = ax + k * aw / n, xb = xa + aw / n, ta = ax + 8 + k * (aw - 16) / n, tb = ta + (aw - 16) / n; t += P(`M${f(ta)} ${f(ay)}H${f(tb)}L${f(xb)} ${f(ay + ah)}H${f(xa)}Z`, k % 2 ? tc : bianco) + P(`M${f(xa)} ${f(ay + ah)}h${f(aw / n)}v5q${f(-aw / n / 2)} 10 ${f(-aw / n)} 0z`, k % 2 ? tc : bianco); }
+      t += P(`M${f(ax + 8)} ${f(ay)}H${f(ax + aw - 8)}L${f(ax + aw)} ${f(ay + ah + 10)}H${f(ax)}Z`, c.lin([[0, "#000", .55], [.55, "#000", .1], [1, col, .25]]));
+      e += t + R(ax, ay + ah + 9, aw, 3, "#000", .25);
+    }
+    // tavolini fuori
+    if(o.tavolini){ const tk = "#0c0806"; [[x0 - 34, 1], [x1 + 34, -1]].forEach(([tx, d]) => { e += E(tx, y - 30, 16, 3.4, tk) + R(tx - 1.5, y - 30, 3, 28, tk) + E(tx, y - 1, 9, 2.2, tk); e += S(`M${f(tx + d * 22)} ${y}V${y - 20}M${f(tx + d * 34)} ${y}V${y - 20}M${f(tx + d * 20)} ${y - 20}H${f(tx + d * 36)}M${f(tx + d * 35)} ${y - 20}Q${f(tx + d * 37)} ${y - 40} ${f(tx + d * 33)} ${y - 46}`, tk, 2.4); }); }
+    return e;
+  }
   EL.bottega = (c, o) => {
+    if(c.hd) return botteHD(c, o);
     const x = o.x, y = o.y || HOR, w = o.w || 300, h = o.h || 210, col = o.col || c.p.acc, wall = c.col(2), top = y - h - (o.alto || 230);
     const wx = x - w / 2 + 22, ww = w - 44, wy = y - h + 46, wh = h - 58;
     let e = P(`M${f(wx - 30)} ${y}L${f(wx + ww + 30)} ${y}L${f(wx + ww + 120)} ${VH}L${f(wx - 120)} ${VH}Z`, c.lin([[0, col, .4], [1, col, 0]]));
@@ -1167,6 +1679,647 @@
   };
   EL.rifugio = EL.cascina;
 
+  /* ---------- elementi in alta definizione: cavallo, Sassi, limoni, Arena, set del cinema, fulmine ---------- */
+  const PRIMA = {};
+  ["cavallo", "sassi", "limoni", "gradinate", "palco"].forEach(n => PRIMA[n] = EL[n]);
+  // cavallo al galoppo: corpo morbido, zampe come arti veri, criniera e coda al vento
+  EL.cavallo = (c, o) => {
+    if(!c.hd) return PRIMA.cavallo(c, o);
+    const col = o.col || c.col(o.z == null ? 2 : o.z), glow = c.p.glow, luce = mix(col, glow, .45);
+    const corpo = [[-62,-152],[-20,-146],[12,-148],[36,-156],[52,-172],[68,-192],[84,-210],[96,-220],[98,-237],[104,-222],[112,-219],[124,-204],[134,-188],[142,-175],[145,-167],[140,-161],[131,-161],[120,-168],[106,-176],[94,-160],[84,-138],[74,-116],[66,-98],[50,-86],[20,-80],[-20,-79],[-50,-84],[-70,-94],[-88,-108],[-96,-126],[-90,-144]];
+    let e = "";
+    const zampa = (pts, r) => arto(pts.map((p, i) => [p[0], p[1], r[i]]));
+    const lont = zampa([[40,-110],[48,-86],[52,-58],[34,-44],[24,-50]], [15, 10, 7.5, 5.5, 6.5]) + zampa([[-70,-116],[-50,-86],[-72,-54],[-54,-28],[-44,-16]], [18, 12, 7.5, 5.5, 6.5]);
+    e += `<g fill="${mix(col, "#000", .25)}">${lont}</g>`;
+    e += forma([[-92,-140],[-110,-150],[-136,-153],[-164,-145],[-188,-130],[-172,-125],[-148,-126],[-120,-130],[-100,-131]]);
+    e += forma(corpo);
+    e += zampa([[48,-112],[56,-86],[78,-56],[96,-22],[104,-6]], [16, 11, 8, 6, 7]) + zampa([[-74,-118],[-60,-84],[-96,-58],[-124,-30],[-136,-18]], [20, 14, 8, 6, 7]);
+    e += forma([[96,-218],[82,-215],[66,-201],[50,-183],[34,-167],[22,-161],[38,-160],[54,-176],[70,-193],[86,-209]]);
+    e += `<ellipse cx="121" cy="-200" rx="2.4" ry="1.6" fill="${luce}" opacity=".8"/>`;
+    const ln = "M30 -126Q44 -108 54 -90M-70 -136Q-82 -114 -78 -92M-30 -146Q0 -140 26 -150M112 -196Q124 -184 136 -174M-92 -104Q-76 -90 -64 -86";
+    e += `<path d="${ln}" fill="none" stroke="${luce}" stroke-width="1.6" stroke-linecap="round" opacity=".38"/>`;
+    if(o.drappo) e += P("M-6 -148L30 -152L26 -116L-2 -112Z", o.drappo, .9) + S("M-6 -148L30 -152", "#ffffff", 1.4, .5);
+    if(o.fantino) e += `<g transform="translate(0 -6)">` + forma([[-12,-150],[-4,-178],[6,-196],[18,-214],[30,-226],[40,-224],[36,-212],[26,-196],[22,-176],[28,-160],[16,-150]], o.giubba || null) + C(36, -238, 10, o.giubba ? mix(o.giubba, col, .3) : col) + "</g>";
+    return G(o.x, o.y, o.s || 1, e, c.lin([[0, mix(col, glow, .1)], [1, col]]), o.flip);
+  };
+  // i Sassi: case di tufo a gradoni, finestre accese, scale, il Duomo in cima
+  EL.sassi = (c, o) => {
+    if(!c.hd) return PRIMA.sassi(c, o);
+    const col = c.col(1), glow = c.p.glow;
+    let e = P(`M-20 ${HOR + 6}L-20 ${HOR - 120}Q300 ${HOR - 330} 620 ${HOR - 140}L620 ${HOR + 6}Z`, c.lin([[0, mix(c.col(2), "#8a6a4a", .3)], [1, c.col(2)]]), null, ` filter="${c.roccia()}"`);
+    const tufo = ["#d2b088", "#c4a078", "#dcc09a", "#b8946c", "#cfae84"], cime = [];
+    for(let t = 0; t <= 1.0001; t += .02) cime.push([(1 - t) * (1 - t) * -20 + 2 * t * (1 - t) * 300 + t * t * 620, (1 - t) * (1 - t) * (HOR - 120) + 2 * t * (1 - t) * (HOR - 330) + t * t * (HOR - 140)]);
+    const yTop = x => { let b = cime[0]; cime.forEach(p => { if(Math.abs(p[0] - x) < Math.abs(b[0] - x)) b = p; }); return b[1]; };
+    const case_ = [];
+    for(let k = 0; k < (o.n || 300); k++){ const px = c.rnd(-16, 600), t0 = yTop(px + 10); if(t0 > HOR - 14) continue; case_.push([px, c.rnd(t0 + 8, HOR - 6)]); }
+    case_.sort((a, b) => a[1] - b[1]);
+    case_.forEach(([px, py]) => {
+      const pr = (py - (HOR - 330)) / 330, w = c.rnd(12, 22) * (.8 + pr * .5), h = c.rnd(9, 15) * (.8 + pr * .5), base = mix(c.pick(tufo), col, .62 - pr * .12), lato = px < (c.luceX == null ? 300 : c.luceX);
+      e += R(px, py, w, h, c.lin([[0, mix(base, glow, .12)], [1, base]])) + R(lato ? px + w - 3.5 : px, py, 3.5, h, mix(base, "#000", .38), .9) + R(px - 1, py - 1.6, w + 2, 2, mix(base, glow, .3), .85);
+      if(c.R() < .22) e += P(`M${f(px)} ${f(py)}Q${f(px + w / 2)} ${f(py - h * .5)} ${f(px + w)} ${f(py)}Z`, mix(base, glow, .08));
+      const acc = c.R() < (o.luci == null ? .42 : o.luci);
+      if(c.R() < .55) e += P(`M${f(px + w * .36)} ${f(py + h)}V${f(py + h * .5)}Q${f(px + w * .5)} ${f(py + h * .22)} ${f(px + w * .64)} ${f(py + h * .5)}V${f(py + h)}Z`, acc ? c.lin([[0, "#fff1c4"], [1, c.p.acc]]) : "#140a06", acc ? .95 : .8);
+      else e += R(px + w * .3, py + h * .3, 3, 4, acc ? "#ffe6a8" : "#140a06", .9) + (w > 16 ? R(px + w * .62, py + h * .3, 3, 4, c.R() < .5 && acc ? "#ffe6a8" : "#140a06", .9) : "");
+      if(acc) e += C(px + w / 2, py + h * .6, 9, c.halo(c.p.acc, .35));
+    });
+    for(let k = 0; k < 9; k++){ let sx = c.rnd(40, 560), sy = yTop(sx) + 20, d = "M" + f(sx) + " " + f(sy); for(let q = 0; q < 6; q++){ sx += c.rnd(-14, 14); sy += c.rnd(10, 18); if(sy > HOR - 6) break; d += "L" + f(sx) + " " + f(sy); } e += S(d, mix(c.pick(tufo), glow, .2), 1.4, .45); }
+    // il Duomo in cima, con il campanile
+    const dx = 310, dy = yTop(310) + 4, dk = mix(col, "#000", .2);
+    e += R(dx - 46, dy - 40, 92, 44, dk) + P(`M${dx - 50} ${dy - 40}L${dx} ${dy - 66}L${dx + 50} ${dy - 40}Z`, dk) + `<circle cx="${dx}" cy="${dy - 22}" r="8" fill="${c.p.acc}" opacity=".85"/><circle cx="${dx}" cy="${dy - 22}" r="8" fill="none" stroke="${dk}" stroke-width="2"/>`;
+    e += R(dx + 50, dy - 150, 26, 154, dk) + R(dx + 47, dy - 156, 32, 8, dk) + R(dx + 52, dy - 178, 22, 22, dk) + P(`M${dx + 50} ${dy - 178}L${dx + 63} ${dy - 200}L${dx + 76} ${dy - 178}Z`, dk) + R(dx + 57, dy - 140, 12, 20, c.p.acc, .6) + R(dx + 57, dy - 110, 12, 20, c.p.acc, .45);
+    return e;
+  };
+  // ramo di limoni: foglie con nervatura, limoni con la buccia lucida, zagare
+  EL.limoni = (c, o) => {
+    if(!c.hd) return PRIMA.limoni(c, o);
+    const foglia = (x, y, l, a, sc) => { const w = l * .34, d = `M0 0Q${f(l * .45)} ${f(-w)} ${f(l)} 0Q${f(l * .45)} ${f(w)} 0 0Z`; return `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(a)})"><path d="${d}" fill="${c.lin([[0, sc ? "#1e4a22" : "#2a5e2a"], [1, sc ? "#2f6a2a" : "#4a8a3a"]], 1, 0)}"/><path d="M0 0Q${f(l * .5)} ${f(-w * .08)} ${f(l * .94)} 0" fill="none" stroke="#a8d07a" stroke-width="1.4" opacity=".55"/></g>`; };
+    const limone = (x, y, r, a) => `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(a)})"><path d="M${f(-r * 1.25)} 0Q${f(-r * 1.2)} ${f(-r)} 0 ${f(-r)}Q${f(r * 1.15)} ${f(-r)} ${f(r * 1.3)} ${f(-r * .1)}L${f(r * 1.5)} 0L${f(r * 1.3)} ${f(r * .1)}Q${f(r * 1.15)} ${f(r)} 0 ${f(r)}Q${f(-r * 1.2)} ${f(r)} ${f(-r * 1.25)} 0Z" fill="${c.rad([[0, "#fff7b0"], [.45, "#f6d93a"], [.85, "#d8a814"], [1, "#a87a0a"]], .38, .32, .75)}"/>` + `<ellipse cx="${f(-r * .35)}" cy="${f(-r * .45)}" rx="${f(r * .38)}" ry="${f(r * .18)}" fill="#ffffff" opacity=".45" transform="rotate(-12 ${f(-r * .35)} ${f(-r * .45)})"/>` + [0, 1, 2, 3, 4, 5, 6].map(() => `<circle cx="${f(c.rnd(-r, r))}" cy="${f(c.rnd(-r * .7, r * .7))}" r=".9" fill="#b8901a" opacity=".5"/>`).join("") + `<path d="M${f(-r * 1.25)} 0l-6 -3" stroke="#3a5a1a" stroke-width="3" stroke-linecap="round"/></g>`;
+    let e = S("M-210 -60Q-90 -20 40 -58Q100 -76 150 -66", c.lin([[0, "#2a1a10"], [1, "#5a3a20"]], 1, 0), 9) + S("M-60 -38Q-50 -10 -64 18M40 -58Q52 -30 40 -8M100 -70Q120 -96 150 -108", "#4a3020", 4);
+    [[-180, -56, 54, -150, 1], [-140, -44, 60, 160, 0], [-110, -60, 50, -120, 1], [-40, -40, 58, -160, 0], [-20, -30, 50, 130, 1], [60, -60, 54, -130, 0], [86, -66, 58, 150, 1], [124, -86, 48, -100, 0], [140, -74, 52, 30, 1], [-88, -26, 46, 100, 0], [10, -48, 44, -60, 1], [150, -110, 40, -40, 0]].forEach(([x, y, l, a, sc]) => e += foglia(x, y, l, a, sc));
+    e += limone(-66, 36, 30, 96) + limone(36, 24, 34, 84) + limone(96, -12, 28, 70);
+    [[-10, -66], [120, -104]].forEach(([x, y]) => e += [0, 1, 2, 3, 4].map(k => { const a = k * 1.256; return E(x + Math.cos(a) * 6, y + Math.sin(a) * 6, 5, 3, "#fffaf0", .95, ` transform="rotate(${f(a * 57.3)} ${f(x + Math.cos(a) * 6)} ${f(y + Math.sin(a) * 6)})"`); }).join("") + C(x, y, 2.6, "#f2c23a"));
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  // l'Arena: anello di arcate, gradinate piene di candeline
+  EL.gradinate = (c, o) => {
+    if(!c.hd) return PRIMA.gradinate(c, o);
+    const y0 = o.y0 || 250, y1 = o.y1 || 560, col = c.col(1), glow = c.p.glow;
+    let e = P(`M-10 ${y0}Q300 ${y0 - 70} 610 ${y0}V${y1}H-10Z`, c.lin([[0, mix(col, glow, .1)], [1, col]]));
+    // l'anello interno con le arcate, in alto
+    const ra = y0 - 40;
+    e += P(`M-10 ${ra}Q300 ${ra - 74} 610 ${ra}V${y0 + 8}Q300 ${y0 - 64} -10 ${y0 + 8}Z`, mix(col, "#8a6a4a", .2), null, ` filter="${c.roccia()}"`);
+    for(let k = 0; k < 26; k++){ const t = (k + .5) / 26, x = -10 + 620 * t, yb = ra + 4 - 2 * t * (1 - t) * 74 * 2 + 30, w = 10 + 6 * Math.sin(t * Math.PI); e += P(`M${f(x - w / 2)} ${f(yb)}V${f(yb - 14)}Q${f(x)} ${f(yb - 24)} ${f(x + w / 2)} ${f(yb - 14)}V${f(yb)}Z`, mix(c.p.sky[1], "#000", .4), .9); }
+    for(let k = 0; k < 10; k++){ const y = y0 + 16 + k * (y1 - y0 - 20) / 10, hh = 70 - k * 6; e += S(`M-10 ${f(y)}Q300 ${f(y - hh * 2)} 610 ${f(y)}`, mix(col, glow, .2), 1.6, .5) + S(`M-10 ${f(y + 3)}Q300 ${f(y + 3 - hh * 2)} 610 ${f(y + 3)}`, "#000", 2, .35); }
+    // ventimila candeline
+    let cand = "";
+    for(let k = 0; k < (o.n || 520); k++){ const row = c.rnd(0, 10), t = c.R(), y = y0 + 12 + row * (y1 - y0 - 20) / 10, hh = 70 - row * 6, yy = y - 2 * t * (1 - t) * hh * 2; cand += C(-10 + 620 * t, yy, c.rnd(.8, 1.7) * (1 + row * .05), c.R() < .85 ? "#ffd27a" : "#fff4d0", f(c.rnd(.45, 1))); }
+    e += `<g filter="${c.sfoca(.4)}">${cand}</g>` + R(-10, y0, 620, y1 - y0, c.lin([[0, c.p.acc, .05], [1, c.p.acc, .12]]));
+    return e;
+  };
+  // il palco dell'Aida: pilone egizio, colonne a loto, sfingi, obelischi d'oro
+  EL.palco = (c, o) => {
+    if(!c.hd) return PRIMA.palco(c, o);
+    const y = o.y || HOR, oro = c.lin([[0, "#ffe6a8"], [.5, "#b8842a"], [1, "#4a2a0a"]], 1, 0), scuro = "#1a1008";
+    let e = P(`M-10 ${y + 10}L60 ${y - 30}H540L610 ${y + 10}V${VH}H-10Z`, c.lin([[0, "#5a4020"], [.3, "#2a1a0a"], [1, "#080402"]]));
+    for(let k = 1; k < 8; k++) e += L(60 + k * 60, y - 30, -60 + k * 105, VH, "#000", 1.2, .25);
+    // pilone sullo sfondo
+    e += P(`M150 ${y - 30}L176 ${y - 250}H262L270 ${y - 30}Z`, c.lin([[0, "#8a6a3a"], [1, "#3a2410"]]), .9) + P(`M330 ${y - 30}L338 ${y - 250}H424L450 ${y - 30}Z`, c.lin([[0, "#8a6a3a"], [1, "#3a2410"]]), .9) + R(262, y - 210, 76, 180, "#140a04", .8);
+    for(let k = 0; k < 7; k++) e += L(182 + k * 12, y - 236, 182 + k * 12, y - 60, "#ffe6a8", .8, .2) + L(344 + k * 12, y - 236, 344 + k * 12, y - 60, "#ffe6a8", .8, .2);
+    e += R(170, y - 262, 100, 14, "#4a3216") + R(330, y - 262, 100, 14, "#4a3216") + P(`M268 ${y - 226}Q300 ${y - 246} 332 ${y - 226}Z`, "#e8c06a", .7);
+    // colonne a loto
+    [96, 504].forEach(x => { e += R(x - 14, y - 220, 28, 196, c.lin([[0, "#6a4a22"], [.4, "#d8aa5a"], [1, "#3a2410"]], 1, 0)) + P(`M${x - 24} ${y - 220}Q${x} ${y - 262} ${x + 24} ${y - 220}Z`, c.lin([[0, "#e8c06a"], [1, "#6a4a1a"]])); for(let q = 0; q < 6; q++) e += R(x - 14, y - 200 + q * 30, 28, 2, "#2a1a08", .45); });
+    // obelischi
+    [150, 450].forEach(x => e += C(x, y - 200, 140, c.halo(c.p.acc, .22)) + P(`M${x - 18} ${y - 30}L${x - 11} ${y - 330}L${x} ${y - 354}L${x + 11} ${y - 330}L${x + 18} ${y - 30}Z`, oro) + [0, 1, 2, 3, 4, 5].map(q => R(x - 4, y - 300 + q * 42, 8, 14, scuro, .35)).join(""));
+    // sfingi ai lati del proscenio
+    [[60, 1], [540, -1]].forEach(([x, d]) => e += G(x, y + 6, .9, P("M-60 0V-30Q-58 -44 -30 -46H20Q26 -70 40 -78Q56 -82 62 -66L64 -36Q66 -18 70 0Z", c.lin([[0, "#c89a4a"], [1, "#4a3010"]])) + P("M28 -76L18 -50H62L56 -76Z", "#e8c06a", .8) + R(-60, -4, 132, 6, "#2a1a08"), null, d < 0));
+    for(let k = 0; k < 3; k++) e += R(200 - k * 20, y - 30 + k * 12, 200 + k * 40, 12, "#2a1c0a", .95) + R(200 - k * 20, y - 30 + k * 12, 200 + k * 40, 1.6, "#ffe6a8", .3);
+    // il golfo mistico: leggii accesi
+    for(let k = 0; k < 18; k++){ const x = 40 + k * 30 + c.rnd(-6, 6), yy = y + 36 + (k % 2) * 8; e += L(x, yy, x, yy + 16, scuro, 1.4) + R(x - 6, yy - 6, 12, 7, "#fff0c0", .7) + C(x, yy - 3, 10, c.halo("#ffe6a8", .4)); }
+    return e;
+  };
+  // macchina da presa sul cavalletto e fari da set
+  EL.cinepresa = (c, o) => {
+    const k = o.col || "#0c0a0c", m = mix(k, c.p.glow, .35);
+    let e = S("M0 -150L-60 0M0 -150L56 0M0 -150L4 -10", k, 5) + S("M-30 -76L30 -76", k, 2.4) + R(-16, -168, 32, 18, k);
+    e += R(-60, -236, 120, 70, k, null, ' rx="6"') + R(60, -222, 46, 40, k, null, ' rx="4"') + R(104, -230, 14, 56, k, null, ' rx="3"') + E(118, -202, 4, 22, mix(k, c.p.glow, .5), .7);
+    [[-28, -282, 40], [42, -276, 34]].forEach(([x, y, r]) => e += C(x, y, r, k) + `<circle cx="${x}" cy="${y}" r="${r * .72}" fill="none" stroke="${m}" stroke-width="1.6" opacity=".55"/>` + [0, 1, 2, 3, 4, 5].map(q => L(x, y, x + Math.cos(q * 1.047) * r * .6, y + Math.sin(q * 1.047) * r * .6, m, 1.4, .45)).join("") + C(x, y, 4, m));
+    e += S("M-60 -200H-96V-180", k, 4) + S("M-60 -230H60", m, 1.2, .5) + C(-40, -210, 4, "#ff3a2a") + C(-40, -210, 10, c.halo("#ff3a2a", .6));
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  EL.fariSet = (c, o) => (o.pos || [[90, 640, 1], [520, 650, -1]]).map(([x, y, d]) => {
+    const k = "#0c0a0c", col = o.col || "#fff4d8", hx = x, hy = y - 230;
+    return P(`M${hx + d * 20} ${hy - 6}L${hx + d * 560} ${hy - 180}L${hx + d * 560} ${hy + 260}Z`, c.linU([[0, col, .32], [1, col, 0]], hx, hy, hx + d * 560, hy)) + S(`M${x} ${y}L${x - 30} ${y + 40}M${x} ${y}L${x + 30} ${y + 40}M${x} ${y}V${hy + 20}`, k, 4) + R(hx - 26, hy - 24, 52, 44, k, null, ' rx="5"') + P(`M${hx + d * 26} ${hy - 26}l${d * 18} -14v72l${-d * 18} -14z`, k) + E(hx + d * 27, hy - 2, 4, 18, col) + C(hx + d * 30, hy - 2, 46, c.halo(col, .7));
+  }).join("");
+  function fulmineHD(c, o){
+    const x = o.x || 420, y2 = o.y2 || 330, main = seghetta(c, [x + c.rnd(-20, 20), -10], [x - c.rnd(30, 90), y2], 6, .2);
+    let rami = "";
+    for(let k = 0; k < 5; k++){ const i = Math.floor(c.rnd(.15, .8) * main.length), p = main[i], l = c.rnd(40, 120), a = c.rnd(.4, 1.3) * (c.R() < .5 ? -1 : 1); rami += linea(seghetta(c, p, [p[0] + Math.sin(a) * l, p[1] + Math.cos(a) * l * .7], 4, .22)); }
+    const d = linea(main), col = o.col || "#eaf2ff";
+    return C(x - 30, y2 * .45, 300, c.halo("#dfe9ff", .25)) + `<g filter="${c.sfoca(7)}">${S(d + rami, col, 12, .4)}</g><g filter="${c.sfoca(1.6)}">${S(d, col, 4.6, .85)}${S(rami, col, 2.2, .6)}</g>` + S(d, "#ffffff", 1.8) + S(rami, "#ffffff", .9, .85);
+  }
+
+  // un lampione solo: palo in ghisa, lanterna, alone e cono di luce nella nebbia
+  EL.lampione = (c, o) => {
+    const x = o.x, y = o.y || HOR, h = o.h || 220, k = o.colPalo || c.col(2), col = o.col || "#ffe6b0", lx = x + (o.d || 1) * 18;
+    return P(`M${f(lx - 8)} ${f(y - h + 14)}L${f(lx - (o.cono || 120))} ${f(y + 10)}H${f(lx + (o.cono || 120))}L${f(lx + 8)} ${f(y - h + 14)}Z`, c.lin([[0, col, .26], [1, col, 0]])) + E(lx, y + 6, (o.cono || 120) * .9, 12, c.halo(col, .45)) +
+      S(`M${x} ${y}V${y - h}q0 -10 ${(o.d || 1) * 10} -10h${(o.d || 1) * 8}`, k, 4) + R(x - 7, y - 26, 14, 26, k) + R(x - 9, y - 4, 18, 4, k) +
+      P(`M${f(lx - 9)} ${f(y - h + 2)}L${f(lx - 6)} ${f(y - h + 18)}H${f(lx + 6)}L${f(lx + 9)} ${f(y - h + 2)}Z`, c.lin([[0, "#fffbe8"], [1, col]])) + P(`M${f(lx - 11)} ${f(y - h + 2)}L${f(lx)} ${f(y - h - 8)}L${f(lx + 11)} ${f(y - h + 2)}Z`, k) + C(lx, y - h + 10, 60, c.halo(col, .7)) + C(lx, y - h + 10, 160, c.halo(col, .18));
+  };
+  // Piazza del Campo: la conchiglia di mattoni con le nove liste di travertino, bagnata
+  EL.campo = (c, o) => {
+    const y = o.y || HOR - 6, vx = o.vx || 300, vy = y - 30, mat = o.col || "#24140e";
+    let e = R(-10, y, VW + 20, VH - y, c.lin([[0, mix(mat, c.p.glow, .15)], [1, mix(mat, "#000", .5)]]));
+    let liste = "";
+    for(let k = -5; k <= 5; k++) liste += `M${vx + k * 6} ${y}Q${f(vx + k * 60)} ${f(y + 120)} ${f(vx + k * 170)} ${VH + 20}`;
+    e += S(liste, mix("#d8c8a8", c.p.glow, .2), 1.8, .22);
+    let mattoni = "";
+    for(let k = 0; k < 160; k++){ const yy = y + Math.pow(c.R(), 1.6) * (VH - y), xx = c.rnd(-10, 610), w = 3 + (yy - y) * .05; mattoni += `M${f(xx)} ${f(yy)}h${f(w)}`; }
+    e += S(mattoni, "#000", 1, .25);
+    for(let k = 1; k < 14; k++){ const yy = y + Math.pow(k / 14, 1.7) * (VH - y); e += S(`M-10 ${f(yy)}Q${vx} ${f(yy - 6 - k)} ${VW + 10} ${f(yy)}`, "#000", 1, .18); }
+    if(o.lx != null) e += R(o.lx - 26, y + 4, 52, VH - y, c.lin([[0, c.p.glow, .32], [1, c.p.glow, 0]]), null, ` filter="${c.sfoca(6)}"`);
+    e += R(-10, y, VW + 20, 34, c.lin([[0, "#d6b888", .32], [1, "#d6b888", .05]]));
+    return e;
+  };
+  // grappolo d'uva: acini con la pruina, foglia di vite dentellata, viticci
+  PRIMA.uva = EL.uva;
+  EL.uva = (c, o) => {
+    if(!c.hd) return PRIMA.uva(c, o);
+    let e = "";
+    if(o.ramo) e += S("M-150 -250Q-80 -236 -30 -200Q-6 -180 4 -150", c.lin([[0, "#2a1a0c"], [1, "#5a3a1a"]], 1, 0), 10) + S("M-60 -226q-20 -30 4 -46q22 -12 26 10q2 14 -12 12", "#5a7a2a", 2.4, .9) + S("M30 -186q30 -20 50 4q14 20 -6 26", "#5a7a2a", 2.2, .85);
+    // foglia di vite a cinque lobi
+    const lob = [[0, -1], [.78, -.62], [1, .18], [.5, .86], [-.5, .86], [-1, .18], [-.78, -.62]];
+    let fp = [];
+    lob.forEach(([x, y], i) => { const r = i % 2 ? 1 : .62; fp.push([x * 70 * r, y * 70 * r]); });
+    let bordo2 = "";
+    for(let k = 0; k < 40; k++){ const a = k / 40 * Math.PI * 2 - Math.PI / 2, rr = 64 * (.72 + .28 * Math.abs(Math.cos(a * 2.5))) * (k % 2 ? 1 : .93); bordo2 += (k ? "L" : "M") + f(Math.cos(a) * rr) + " " + f(Math.sin(a) * rr); }
+    e += `<g transform="translate(${o.ramo ? -46 : 40} ${o.ramo ? -214 : -186}) rotate(-24) scale(.95)"><path d="${bordo2}Z" fill="${c.rad([[0, "#5a8a3a"], [.7, "#2f5a22"], [1, "#1a3a14"]], .45, .45, .7)}"/>` + [0, 1, 2, 3, 4].map(k => { const a = -Math.PI / 2 + (k - 2) * .9; return `<path d="M0 30L${f(Math.cos(a) * 58)} ${f(Math.sin(a) * 58)}" stroke="#a8c878" stroke-width="1.6" opacity=".55"/>`; }).join("") + "</g>";
+    e += S("M0 -150Q8 -172 26 -180", "#4a3018", 6);
+    // acini dal fondo al davanti
+    const acini = [];
+    for(let r = 0; r < 7; r++){ const n = 6 - Math.floor(r * .72), w = 92 - r * 11; for(let k = 0; k < n; k++) acini.push([-w / 2 + (k + .5) * w / n + c.rnd(-4, 4), -132 + r * 17 + c.rnd(-3, 3), c.rnd(13, 16) - r * .6]); }
+    acini.sort((a, b) => a[1] - b[1] + (Math.abs(a[0]) - Math.abs(b[0])) * .02);
+    const g1 = c.rad([[0, "#c89ad8"], [.35, "#7a3a8a"], [.8, "#3a1446"], [1, "#1a0622"]], .34, .3, .72), pruina = c.rad([[0, "#ffffff", .0], [.7, "#e6dcf0", .18], [1, "#e6dcf0", .3]]);
+    acini.forEach(([x, y, r]) => e += C(x, y, r, g1) + C(x, y, r, pruina) + E(x - r * .35, y - r * .38, r * .26, r * .17, "#ffffff", .55, ` transform="rotate(-30 ${f(x - r * .35)} ${f(y - r * .38)})"`));
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  // il quadro: sotto la vernice pulita affiora un altro dipinto
+  function quadroSotto(c, o){
+    let e = P("M-170 -760L-40 -310H40L170 -760Z", c.lin([[0, "#fff3d0", 0], [1, "#fff3d0", .22]])) + C(0, -150, 300, c.halo("#ffe6b0", .22));
+    const cornice = c.lin([[0, "#fbe6a2"], [.3, "#c8962e"], [.55, "#f2d27a"], [1, "#5a3a0c"]], 1, 1);
+    e += R(-156, -316, 312, 382, cornice) + R(-144, -304, 288, 358, "none", null, ' stroke="#6a4a12" stroke-width="3"') + R(-128, -288, 256, 326, "#2a1c10");
+    for(let k = 0; k < 18; k++) e += C(-150 + k * 17.6, -310, 3, "#fff0b8", .5) + C(-150 + k * 17.6, 60, 3, "#fff0b8", .4);
+    const cl = c.clip(R(-116, -276, 232, 302, "#000"));
+    // il dipinto di sopra: Madonna col manto blu
+    let sopra = R(-116, -276, 232, 302, c.rad([[0, "#7a5a32"], [1, "#160c06"]], .45, .35, .75)) + `<circle cx="-6" cy="-176" r="58" fill="none" stroke="#e8c25a" stroke-width="5" opacity=".7"/>` + P("M-6 -232Q-60 -222 -68 -120Q-72 -40 -96 26H84Q60 -40 54 -120Q46 -222 -6 -232Z", c.lin([[0, "#2c4a7a"], [1, "#0c1a34"]])) + E(-6, -168, 26, 34, "#e6c8a0", .92) + P("M-30 -60Q-6 -90 22 -62Q8 -40 -10 -40Z", "#e6c8a0", .85);
+    // la zona ripulita, a strappo: sotto c'è un volto diverso, a seppia
+    const strappo = "M-116 -276H40L28 -250L50 -220L22 -190L44 -158L16 -120L38 -86L6 -40L26 26H116V-276Z";
+    const sottoCl = c.clip(P(strappo, "#000"));
+    let sotto = R(-116, -276, 232, 302, c.lin([[0, "#d8b888"], [1, "#8a6a42"]])) + E(70, -150, 34, 44, "#f2dcb8", .85) + P("M40 -190Q70 -230 104 -196Q112 -150 96 -120Q70 -100 46 -124Q34 -150 40 -190Z", "#5a3a1c", .55) + S("M56 -150q6 -4 12 0M82 -150q6 -4 12 0M70 -134q4 6 0 10M60 -114q14 8 26 0", "#3a2412", 2, .75) + S("M40 -90Q70 -60 110 -70", "#5a3a1c", 3, .6);
+    for(let k = 0; k < 30; k++){ const x = c.rnd(-10, 116), y = c.rnd(-270, 20); sotto += S(`M${f(x)} ${f(y)}l${f(c.rnd(-10, 10))} ${f(c.rnd(4, 12))}l${f(c.rnd(-8, 8))} ${f(c.rnd(4, 10))}`, "#4a2a10", .8, .5); }
+    e += `<g clip-path="${cl}">${sopra}<g clip-path="${sottoCl}">${sotto}</g>${S(strappo.replace(/^M-116 -276H40/, "M40 -276"), "#fff6dc", 2.4, .85)}</g>`;
+    e += R(-116, -276, 232, 302, c.lin([[0, "#ffffff", .1], [.4, "#ffffff", 0]], 1, 1));
+    return G(o.x, o.y, o.s || 1, e);
+  }
+  // Ponte Vecchio: tre arcate, le botteghe sospese, il corridoio vasariano
+  EL.pontevecchio = (c, o) => {
+    const col = o.col || c.col(o.z == null ? 1 : o.z), y = o.y || HOR, glow = c.p.glow, lit = c.p.acc;
+    let e = R(-230, -70, 460, 26, c.lin([[0, mix(col, glow, .14)], [1, col]]));
+    [[-150, 120], [0, 150], [150, 120]].forEach(([x, w]) => e += P(`M${x - w / 2} 6V-24Q${x} ${-50 - w * .1} ${x + w / 2} -24V6Z`, mix(c.p.sky[c.p.sky.length - 1], "#000", .3), .85));
+    for(let x = -224; x < 224; x += c.rnd(16, 26)){ const w = c.rnd(14, 24), h = c.rnd(30, 50), tinta = mix(c.pick(["#c8843a", "#d8a04a", "#b86a2a", "#e0b060"]), col, .55); e += R(x, -70 - h, w, h, tinta) + R(x - 1, -72 - h, w + 2, 3, mix(tinta, glow, .25)) + R(x + w * .3, -62 - h * .8, w * .4, h * .35, c.R() < .55 ? lit : "#140a04", c.R() < .55 ? .9 : .8) + R(x, -44, w, 18, mix(tinta, "#000", .3)); for(let q = 0; q < 3; q++) e += L(x + q * w / 2, -44, x + q * w / 2 + 4, -28, mix(tinta, "#000", .5), 1.2, .7); }
+    e += R(-230, -138, 460, 16, mix(col, glow, .08)) + R(-232, -140, 464, 3, mix(col, glow, .25));
+    for(let x = -220; x < 220; x += 14) e += R(x, -134, 6, 8, c.R() < .4 ? lit : "#140a04", .85);
+    e += R(-40, -170, 80, 34, col) + [-24, 0, 24].map(q => P(`M${q - 7} -138V-156Q${q} -164 ${q + 7} -156V-138Z`, lit, .5)).join("");
+    return G(o.x || 300, y, o.s || 1, e);
+  };
+  ["mole", "nave", "borgo", "luminarie", "villa"].forEach(n => PRIMA[n] = EL[n]);
+  // la Mole Antonelliana: colonnato, cupola a quattro facce con i lucernari, tempietto e guglia
+  EL.mole = (c, o) => {
+    if(!c.hd) return PRIMA.mole(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), glow = c.p.glow, lit = o.luci || "#ffd9a0", lato = mix(col, glow, .14);
+    let e = R(-60, -78, 120, 82, c.lin([[0, lato], [1, col]], 1, 0)) + R(-64, -82, 128, 6, mix(col, glow, .25));
+    for(let k = 0; k < 11; k++) e += R(-54 + k * 10.6, -72, 4, 66, k % 2 ? lit : "#000", k % 2 ? .55 : .35);
+    e += R(-50, -108, 100, 28, col) + R(-53, -110, 106, 4, mix(col, glow, .25));
+    for(let k = 0; k < 9; k++) e += R(-44 + k * 11, -104, 3, 20, lit, .35);
+    e += P("M-50 -108Q-46 -200 -15 -256H15Q46 -200 50 -108Z", c.lin([[0, col], [.5, mix(col, glow, .1)], [1, col]], 1, 0));
+    for(let r = 0; r < 6; r++){ const y = -126 - r * 22, w = 46 - r * 5.6; for(let k = -2; k <= 2; k++) e += R(k * w * .36 - 2, y, 4, 9, lit, r % 2 ? .45 : .7); }
+    e += S("M0 -110V-252M-25 -110Q-20 -200 -8 -252M25 -110Q20 -200 8 -252", mix(col, glow, .3), 1.2, .5);
+    e += R(-16, -292, 32, 38, col) + R(-19, -294, 38, 4, mix(col, glow, .25)) + [-10, -3, 4, 11].map(x => R(x - 1, -288, 2.4, 30, lit, .5)).join("");
+    e += R(-11, -316, 22, 24, col) + R(-13, -318, 26, 3, mix(col, glow, .25)) + P("M-7 -318L0 -446L7 -318Z", c.lin([[0, mix(col, glow, .2)], [1, col]], 1, 0)) + C(0, -452, 5, o.stella || c.p.acc) + C(0, -452, 26, c.halo(o.stella || c.p.acc, .7));
+    return G(o.x, o.y || HOR, o.s || 1, e);
+  };
+  // nave da crociera: scafo affilato, dieci ponti di cabine accese, plancia, fumaiolo, scialuppe
+  EL.nave = (c, o) => {
+    if(!c.hd) return PRIMA.nave(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), lt = c.p.acc, bianco = mix("#eef2f6", col, .38), glow = c.p.glow;
+    let e = C(0, -110, 340, c.halo(lt, .14));
+    e += P("M-272 -2L-264 -54H196Q238 -56 272 -70L282 -66Q266 -24 236 -2Z", c.lin([[0, mix(bianco, glow, .1)], [.55, bianco], [.56, "#1a2a44"], [1, "#0a1424"]])) + R(-264, -6, 500, 3, "#c8241e", .85);
+    for(let x = -250; x < 220; x += 7) e += C(x, -38, 1.6, lt, c.R() < .7 ? .9 : .2);
+    for(let k = 0; k < 9; k++){
+      const y = -72 - k * 17, x0 = -256 + k * 6, x1 = 214 - k * k * 2.6 - k * 6;
+      e += P(`M${x0} ${y}H${f(x1)}L${f(x1 + 14)} ${y + 17}H${x0}Z`, c.lin([[0, mix(bianco, glow, .14)], [1, bianco]])) + R(x0, y + 15, x1 - x0 + 14, 2, mix(bianco, "#000", .35), .6);
+      for(let x = x0 + 6; x < x1 - 4; x += 6.5){ const on = c.R() < .72; e += R(x, y + 5, 4, 7, on ? (c.R() < .12 ? "#ffefc8" : lt) : "#1a2230", on ? f(c.rnd(.7, 1)) : .85); }
+      if(k === 2 || k === 3) for(let x = x0 + 30; x < x1 - 40; x += 34) e += R(x, y + 9, 22, 7, "#e8701a", .95, ' rx="3.5"') + R(x + 2, y + 9, 18, 2, "#ffb86a", .7, ' rx="1"');
+    }
+    e += P("M130 -224H196L214 -206H130Z", "#0c121c") + R(132, -220, 74, 6, "#5ee1ff", .35);
+    e += P("M-170 -226L-160 -282H-104L-98 -226Z", c.lin([[0, mix(bianco, glow, .12)], [1, bianco]])) + R(-162, -270, 60, 12, o.logo || "#1a3a7a") + C(-132, -264, 5, "#ffd27a");
+    for(let k = 0; k < 5; k++) e += C(-128 + k * 16, -300 - k * 26, 18 + k * 9, "#8a8090", f(.22 - k * .035));
+    e += R(40, -250, 4, 36, col) + R(26, -252, 32, 3, col) + C(42, -256, 3, "#ff4a3a") + C(-262, -60, 3, "#ff3a2a") + C(272, -72, 3, "#3aff6a") + E(-40, -226, 80, 8, "#5ee1ff", .3);
+    if(o.rossa) e += R(o.rossa[0], o.rossa[1], 4, 7, "#ff2a2a") + C(o.rossa[0] + 2, o.rossa[1] + 3.5, 14, c.halo("#ff2a2a", .8));
+    return G(o.x, o.y || HOR, o.s || 1, e, null, o.flip);
+  };
+  // borgo di pietra sul colle: tetti di coppi, finestre accese, la chiesa col campanile
+  EL.borgo = (c, o) => {
+    if(!c.hd) return PRIMA.borgo(c, o);
+    const col = c.col(1), x0 = o.x || 300, glow = c.p.glow;
+    let e = P(`M-20 ${HOR + 6}L-20 ${HOR - 60}Q${x0 - 100} ${HOR - 230} ${x0} ${HOR - 250}Q${x0 + 120} ${HOR - 230} 620 ${HOR - 70}L620 ${HOR + 6}Z`, c.lin([[0, mix(c.col(2), glow, .06)], [1, c.col(2)]]), null, ` filter="${c.roccia()}"`);
+    const pietra = ["#8a7a68", "#9a8a74", "#7a6a5a", "#a89880"], case_ = [];
+    for(let k = 0; k < (o.n || 70); k++){ const px = x0 + c.rnd(-210, 200), py = HOR - 236 + Math.abs(px - x0) * .5 + c.rnd(4, 130); if(py < HOR - 6) case_.push([px, py]); }
+    case_.sort((a, b) => a[1] - b[1]);
+    case_.forEach(([px, py]) => {
+      const w = c.rnd(18, 32), h = c.rnd(14, 24), base = mix(c.pick(pietra), col, .7), lato = px < x0;
+      e += R(px, py, w, h, c.lin([[0, mix(base, glow, .1)], [1, base]])) + R(lato ? px + w - 4 : px, py, 4, h, mix(base, "#000", .4), .8);
+      e += P(`M${f(px - 3)} ${f(py + 1)}L${f(px + w / 2)} ${f(py - 9)}L${f(px + w + 3)} ${f(py + 1)}Z`, mix("#5a2a1a", col, .62)) + S(`M${f(px - 3)} ${f(py + 1)}L${f(px + w / 2)} ${f(py - 9)}`, mix("#c87a4a", glow, .2), 1, .45);
+      const acc = c.R() < (o.luci || .25);
+      e += R(px + w * .25, py + h * .3, 4, 6, acc ? "#ffe6a0" : "#120a06", .92) + (w > 24 ? R(px + w * .62, py + h * .3, 4, 6, acc && c.R() < .6 ? "#ffe6a0" : "#120a06", .92) : "");
+      if(acc) e += C(px + w * .3, py + h * .4, 12, c.halo(c.p.acc, .45));
+    });
+    e += EL.campanile(c, { x:x0 + 20, y:HOR - 236, s:.62, t:"chiesa", z:1, luce:(o.luci || 0) > .3 });
+    return e;
+  };
+  // luminarie del Salento: galleria di archi di lampadine, rosoni, pilastri ricamati
+  EL.luminarie = (c, o) => {
+    if(!c.hd) return PRIMA.luminarie(c, o);
+    const x = o.x || 300, y = o.y || HOR, w = o.w || 540, h = o.h || 520, V = y - h * .5, cols = ["#fff2c0", "#ffd27a", "#ffe9a8", "#ffffff"], vivi = ["#ff6a5a", "#7fd4ff", "#a8f08a", "#ff9ec6"];
+    let e = C(x, V, w * .8, c.halo("#ffcf7a", .3));
+    const lamp = (px, py, r, k) => `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r)}" fill="${k % 7 === 0 ? vivi[k % 4] : cols[k % 4]}"/>`;
+    for(let a = 5; a >= 0; a--){
+      const sk = Math.pow(.74, a), ww = w / 2 * sk, hh = h * sk, yb = V + (y - V) * sk, ys = yb - hh * .52, r = 1 + 2.6 * sk;
+      let g = "";
+      for(let q = 0; q <= 12; q++){ const py = yb - (yb - ys) * q / 12; g += lamp(x - ww, py, r, q) + lamp(x + ww, py, r, q + 3) + lamp(x - ww * .86, py, r * .8, q + 1) + lamp(x + ww * .86, py, r * .8, q + 2); if(q % 3 === 1){ g += lamp(x - ww * .93, py - 4 * sk, r * .9, q + 5) + lamp(x + ww * .93, py - 4 * sk, r * .9, q + 6); } }
+      [1, .84, .68].forEach((kk, ri) => { const N = Math.round(30 * kk + 6); for(let q = 0; q <= N; q++){ const t = Math.PI * q / N; g += lamp(x - Math.cos(t) * ww * kk, ys - Math.sin(t) * hh * .48 * kk, r * (ri ? .85 : 1), q + ri); } });
+      for(let q = 1; q < 14; q++){ const t = Math.PI * q / 14; for(let z = 0; z < 3; z++){ const kk = .68 + z * .08; g += lamp(x - Math.cos(t) * ww * kk, ys - Math.sin(t) * hh * .48 * kk, r * .7, q + z); } }
+      const ry = ys - hh * .48 * .9;
+      [10, 18, 26].forEach((rr, ri) => { const N = 8 + ri * 6; for(let q = 0; q < N; q++){ const t = q / N * Math.PI * 2; g += lamp(x + Math.cos(t) * rr * sk, ry + Math.sin(t) * rr * sk, r * .9, q + ri * 2); } });
+      g += C(x, ry, 6 * sk, "#ffffff");
+      e += `<g opacity="${f(.55 + .45 * sk)}">${g}</g>`;
+    }
+    return e;
+  };
+  // mirino: un laser rosso che cerca il protagonista
+  EL.mirino = (c, o) => {
+    const col = o.col || "#ff2a2a";
+    return `<g filter="${c.sfoca(2)}">${L(o.x1, o.y1, o.x2, o.y2, col, 4, .35)}</g>` + L(o.x1, o.y1, o.x2, o.y2, col, 1.2, .8) + C(o.x2, o.y2, 3.4, "#ffffff") + C(o.x2, o.y2, 7, col, .9) + C(o.x2, o.y2, 30, c.halo(col, .7));
+  };
+  ["ficodindia", "lupo", "parabola", "buconero", "tripode", "carcere"].forEach(n => PRIMA[n] = EL[n]);
+  // fico d'India: pale carnose con le areole, fichi maturi in cima
+  EL.ficodindia = (c, o) => {
+    if(!c.hd) return PRIMA.ficodindia(c, o);
+    const col = o.col || c.col(2), glow = c.p.glow;
+    let e = "";
+    const g = c.rad([[0, mix(col, "#4a6a3a", .35)], [.7, mix(col, "#2a4a2a", .2)], [1, col]], .42, .38, .7);
+    const pad = (x, y, r, rot, d) => {
+      e += E(x, y, r * .64, r, g, null, ` transform="rotate(${f(rot)} ${f(x)} ${f(y)})"`) + E(x, y, r * .64, r, "none", null, ` stroke="${mix(col, glow, .35)}" stroke-width="1.2" stroke-opacity=".5" transform="rotate(${f(rot)} ${f(x)} ${f(y)})"`);
+      for(let q = 0; q < 7; q++){ const a = c.rnd(0, 6.3), rr = c.rnd(.1, .8), px = x + Math.cos(a) * r * .6 * rr, py = y + Math.sin(a) * r * rr; e += C(px, py, 1.3, mix(col, "#e8e0a0", .5), .7); }
+      if(d > 0) [-1, 1].forEach(sd => { if(c.R() < .85){ const a = (rot + sd * c.rnd(25, 50)) * Math.PI / 180; pad(x + Math.sin(a) * r * 1.55, y - Math.cos(a) * r * 1.55, r * .8, rot + sd * c.rnd(20, 45), d - 1); } });
+      else for(let q = 0; q < 4; q++){ const a = (rot + c.rnd(-50, 50)) * Math.PI / 180, fx = x + Math.sin(a) * r * .95, fy = y - Math.cos(a) * r * .95, fr = r * .17; e += E(fx, fy, fr * .8, fr, c.rad([[0, "#ffb070"], [.6, "#e0502a"], [1, "#8a1a10"]], .35, .3, .75), null, ` transform="rotate(${f(rot)} ${f(fx)} ${f(fy)})"`); }
+    };
+    pad(o.x, o.y - (o.r || 50), o.r || 50, 0, o.d || 3);
+    return e;
+  };
+  // lupo in agguato: muso basso, gorgiera, occhi accesi
+  EL.lupo = (c, o) => {
+    if(!c.hd) return PRIMA.lupo(c, o);
+    const col = o.col || c.col(o.z == null ? 2 : o.z), glow = c.p.glow;
+    let e = `<g fill="${mix(col, "#000", .3)}">` + arto([[46, -70, 8], [44, -36, 5.5], [40, -8, 4]]) + arto([[-60, -72, 11], [-48, -42, 7], [-58, -12, 4]]) + `<ellipse cx="44" cy="-3" rx="7" ry="3.5"/><ellipse cx="-54" cy="-3" rx="7" ry="3.5"/></g>`;
+    e += forma([[-86,-86],[-104,-78],[-118,-58],[-126,-36],[-118,-32],[-106,-48],[-92,-64]]);
+    e += forma([[-88,-84],[-60,-98],[-20,-106],[20,-114],[40,-114],[56,-104],[64,-88],[62,-66],[44,-56],[10,-56],[-30,-58],[-62,-64],[-84,-72]]);
+    e += forma([[34,-112],[50,-110],[62,-104],[60,-126],[72,-106],[76,-128],[82,-104],[90,-98],[104,-90],[114,-84],[116,-79],[110,-75],[96,-74],[82,-74],[70,-74],[58,-80],[44,-92]]);
+    e += arto([[56, -70, 9], [60, -36, 6], [62, -8, 4.5]]) + arto([[-70, -74, 13], [-60, -44, 8], [-76, -14, 4.5]]) + `<ellipse cx="66" cy="-3" rx="7.5" ry="3.6"/><ellipse cx="-72" cy="-3" rx="7.5" ry="3.6"/>`;
+    e += `<path d="M44 -106l-6 -8M50 -100l-5 -8M56 -92l-3 -8M40 -112l-7 -5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>`;
+    e += `<path d="M-10 -104Q20 -112 46 -108M60 -84Q70 -76 76 -70" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.4" opacity=".4"/>` + C(92, -92, 2.6, o.occhi || c.p.acc) + C(92, -92, 9, c.halo(o.occhi || c.p.acc, .8));
+    return G(o.x, o.y, o.s || 1, `<g color="${col}">${e}</g>`, c.lin([[0, mix(col, glow, .12)], [1, col]]), o.flip);
+  };
+  // radiotelescopio: piedistallo, forcella, parabola con la superficie lucida, tre bracci e l'illuminatore
+  EL.parabola = (c, o) => {
+    if(!c.hd) return PRIMA.parabola(c, o);
+    const col = c.col(o.z == null ? 1 : o.z), glow = c.p.glow, lt = mix(col, glow, .35);
+    let e = "";
+    if(o.onde) for(let k = 1; k <= 4; k++) e += S(`M${-80 - k * 30} ${-280 - k * 34}Q-40 ${-350 - k * 40} ${20 + k * 34} ${-326 - k * 36}`, c.p.acc, 3, f(.7 - k * .13));
+    e += P("M-22 0L-10 -96H10L22 0Z", c.lin([[0, lt], [1, col]], 1, 0)) + R(-32, -6, 64, 8, col) + S("M-30 -96Q-34 -130 -6 -140M30 -96Q34 -130 6 -140", col, 7) + C(0, -134, 9, col);
+    e += `<g transform="rotate(-28 0 -170)"><ellipse cx="0" cy="-170" rx="112" ry="40" fill="${c.lin([[0, mix(col, glow, .3)], [.5, mix(col, glow, .12)], [1, col]])}"/>` + `<ellipse cx="0" cy="-166" rx="98" ry="31" fill="${c.rad([[0, mix(col, glow, .38)], [1, mix(col, glow, .1)]])}"/>` + [-.6, -.3, 0, .3, .6].map(k => `<path d="M${f(k * 98)} ${f(-166 - Math.sqrt(1 - k * k) * 31)}Q${f(k * 40)} -166 ${f(k * 98)} ${f(-166 + Math.sqrt(1 - k * k) * 31)}" fill="none" stroke="${col}" stroke-width="1" opacity=".35"/>`).join("") + `<ellipse cx="0" cy="-170" rx="112" ry="40" fill="none" stroke="${mix(col, glow, .55)}" stroke-width="2" opacity=".7"/>` + S("M-104 -158L0 -280M104 -158L0 -280M0 -130L0 -280", col, 2.6) + R(-8, -296, 16, 18, col) + C(0, -298, 4, c.p.acc) + "</g>";
+    return G(o.x, o.y || HOR, o.s || 1, e, null, o.flip);
+  };
+  // buco nero: orizzonte, anello di fotoni, disco di accrescimento e la sua immagine curvata sopra e sotto
+  EL.buconero = (c, o) => {
+    if(!c.hd) return PRIMA.buconero(c, o);
+    const caldo = c.lin([[0, "#ffd9a0", .95], [.3, "#ffffff", 1], [.7, "#ffb35a", .9], [1, "#c8501a", .7]], 1, 0);
+    let e = C(0, 0, 460, c.halo("#ff9a4a", .2)) + C(0, 0, 210, c.halo("#ffd0a0", .35));
+    e += `<g filter="${c.sfoca(2.2)}"><path d="M-170 0A170 150 0 0 1 170 0A146 128 0 0 0 -146 0Z" fill="${caldo}" opacity=".92"/></g>`;
+    e += `<path d="M-310 0A310 48 0 0 1 310 0L250 0A250 34 0 0 0 -250 0Z" fill="${caldo}" opacity=".75"/>`;
+    e += C(0, 0, 112, "#fff0d0", .9) + C(0, 0, 108, "#000000") + `<circle cx="0" cy="0" r="110" fill="none" stroke="#fffaf0" stroke-width="2" opacity=".9"/>`;
+    e += `<g filter="${c.sfoca(1.4)}"><path d="M-310 0A310 48 0 0 0 310 0L250 0A250 34 0 0 1 -250 0Z" fill="${caldo}"/><path d="M-118 8A118 60 0 0 0 118 8A112 44 0 0 1 -112 8Z" fill="#ffe6b0" opacity=".7"/></g>`;
+    e += `<path d="M-300 0A300 44 0 0 0 300 0" fill="none" stroke="#ffffff" stroke-width="1.6" opacity=".7"/>`;
+    return G(o.x, o.y, o.s || 1, e);
+  };
+  // tripode marziano: cappuccio a cupola, occhio rosso, tre zampe snodate, tentacoli
+  EL.tripode = (c, o) => {
+    if(!c.hd) return PRIMA.tripode(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), glow = c.p.glow, ros = o.raggio || "#ff3a2a";
+    let e = P(`M24 -436L-300 -20L-220 24Z`, c.linU([[0, ros, .75], [1, ros, 0]], 24, -436, -260, 0)) + `<g filter="${c.sfoca(3)}">${P(`M24 -436L-290 -16L-250 6Z`, ros, .5)}</g>`;
+    [[[-46, -430, 9], [-150, -300, 7], [-112, 0, 4.5]], [[46, -430, 9], [136, -312, 7], [92, 0, 4.5]], [[0, -420, 8], [24, -262, 6.5], [-18, 0, 4]]].forEach((g, i) => e += arto(g, i === 2 ? mix(col, "#000", .3) : null) + C(g[1][0], g[1][1], 11, i === 2 ? mix(col, "#000", .3) : col));
+    for(let k = 0; k < 4; k++){ const x0 = -40 + k * 26; e += S(`M${x0} -428q${f(c.rnd(-30, 30))} 60 ${f(c.rnd(-20, 20))} ${f(c.rnd(100, 160))}t${f(c.rnd(-30, 30))} ${f(c.rnd(40, 80))}`, col, 3.4); }
+    e += P("M-96 -440Q-90 -500 0 -510Q90 -500 96 -440Q60 -420 0 -418Q-60 -420 -96 -440Z", c.lin([[0, mix(col, glow, .25)], [.5, col], [1, mix(col, "#000", .3)]])) + S("M-90 -444Q0 -426 90 -444", mix(col, glow, .4), 2, .6) + S("M-60 -490Q0 -506 60 -490", mix(col, glow, .5), 1.6, .5);
+    e += R(14, -448, 20, 14, col) + C(24, -436, 10, "#ffd0c0") + C(24, -436, 6, "#ffffff") + C(24, -436, 60, c.halo(ros, .75)) + [-60, -30, 50, 74].map(x => C(x, -462, 2.6, ros, .9)).join("");
+    return G(o.x, o.y || HOR, o.s || 1, e);
+  };
+  // carcere: muro di tufo, finestre con le sbarre, filo spinato a spirale, torretta col faro che spazza il cielo
+  EL.carcere = (c, o) => {
+    if(!c.hd) return PRIMA.carcere(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), y = o.y || HOR, top = y - (o.h || 190), tx = o.tx || 470, glow = c.p.glow;
+    let e = "";
+    if(o.faro !== false) e += `<g filter="${c.sfoca(5)}">` + P(`M${tx} ${top - 96}L${tx - 420} ${top - 330}L${tx - 330} ${top - 420}Z`, c.linU([[0, glow, .55], [1, glow, 0]], tx, top - 96, tx - 380, top - 380)) + "</g>";
+    e += R(-10, top, VW + 20, y - top + 6, c.lin([[0, mix(col, glow, .1)], [1, col]]), null, ` filter="${c.intonaco()}"`) + R(-10, top, VW + 20, 5, mix(col, glow, .2));
+    for(let x = 26; x < VW; x += 86){ for(let r = 0; r < 2; r++){ const wy = top + 40 + r * 70, acc = c.R() < .3; e += R(x, wy, 30, 38, acc ? c.lin([[0, "#ffe6a0"], [1, c.p.acc]]) : "#000", acc ? .85 : .55); for(let b = 0; b < 4; b++) e += R(x + 3 + b * 7.4, wy, 2.2, 38, mix(col, "#000", .3)); e += R(x - 3, wy + 38, 36, 3, mix(col, glow, .15)); } }
+    let filo = "";
+    for(let x = -10; x < VW + 10; x += 9) filo += `M${x} ${top - 2}a6 9 0 1 1 9 0`;
+    e += S(filo, mix(col, glow, .25), 1.2, .7) + S(`M-10 ${top - 6}H${VW + 10}`, mix(col, glow, .2), 1);
+    e += R(tx - 22, top - 96, 44, 100, c.lin([[0, mix(col, glow, .12)], [1, col]], 1, 0)) + R(tx - 34, top - 112, 68, 18, col) + P(`M${tx - 38} ${top - 112}L${tx} ${top - 142}L${tx + 38} ${top - 112}Z`, col) + R(tx - 26, top - 108, 52, 4, mix(col, glow, .3));
+    e += C(tx - 10, top - 100, 8, "#ffffff") + C(tx - 10, top - 100, 46, c.halo(glow, .7));
+    return e;
+  };
+  ["bunker", "chiatta", "piroscafo", "scogli"].forEach(n => PRIMA[n] = EL[n]);
+  // bunker: cemento, feritoia con la mitragliatrice, terra e erba sopra, sacchetti di sabbia davanti
+  EL.bunker = (c, o) => {
+    if(!c.hd) return PRIMA.bunker(c, o);
+    const col = c.col(o.z == null ? 2 : o.z), glow = c.p.glow, cem = mix(col, "#8a8478", .3);
+    let e = P("M-150 4Q-120 -96 0 -104Q120 -96 150 4Z", mix(col, "#3a3a24", .3)) + [...Array(18)].map(() => { const x = c.rnd(-120, 120), y = -90 + Math.abs(x) * .55 * c.rnd(.6, 1); return S(`M${f(x)} ${f(y)}l-3 -9M${f(x + 3)} ${f(y)}l1 -10M${f(x + 6)} ${f(y)}l4 -8`, mix(col, glow, .2), 1.4, .6); }).join("");
+    e += P("M-104 2L-98 -64Q-50 -84 0 -86Q50 -84 98 -64L104 2Z", c.lin([[0, mix(cem, glow, .22)], [1, cem]]), null, ` filter="${c.intonaco()}"`) + S("M-98 -64Q-50 -84 0 -86Q50 -84 98 -64", mix(cem, glow, .5), 2, .6);
+    e += R(-62, -54, 124, 14, "#050505") + R(-62, -54, 124, 2, mix(cem, glow, .4), .7) + R(-6, -50, 50, 4, "#0a0a0a") + C(46, -48, 3, "#0a0a0a");
+    for(let r = 0; r < 3; r++) for(let k = 0; k < 9 - r; k++){ const x = -132 + r * 13 + k * 28 + c.rnd(-2, 2), y = -10 - r * 13; e += R(x, y, 26, 14, c.lin([[0, mix("#8a7a5a", col, .45)], [1, mix("#5a4a32", col, .55)]]), null, ' rx="6"') + S(`M${f(x + 4)} ${f(y + 7)}h18`, mix(col, "#000", .3), 1, .5); }
+    e += S("M120 4V-60M150 4V-50M120 -50L150 -40M120 -30L150 -22M120 -14L150 -6", mix(col, glow, .2), 1.6, .7);
+    return G(o.x, o.y || HOR + 40, o.s || 1, e);
+  };
+  // la chiatta che attraversa il Volga, piena di soldati con l'elmetto
+  EL.chiatta = (c, o) => {
+    if(!c.hd) return PRIMA.chiatta(c, o);
+    const col = c.col(2);
+    let e = "";
+    for(let r = 0; r < 2; r++) for(let k = 0; k < 11 - r; k++){ const x = -150 + k * 28 + r * 14 + c.rnd(-5, 5); e += figura(c, k % 4 === 1 ? "soldato" : "uomo", { x, y:-30 - r * 6 + c.rnd(-3, 3), s:.3 + r * .02 + c.rnd(-.02, .02), col, ombra:false, alza:false, cap:"elmetto", abito:k % 3 ? "cappotto" : "divisa", posa:k % 4 === 1 ? "porto" : c.pick(["fermo", "tasche", "spalla"]), arma:"fucile", flip:c.R() < .5 }); }
+    e += P("M-196 0L-176 -40H186L208 -6L196 2Z", c.lin([[0, mix(col, c.p.glow, .2)], [1, col]])) + S("M-180 -30H190M-184 -18H198", mix(col, c.p.glow, .3), 1, .5) + S("M-210 8Q0 28 220 8", "#ffffff", 3, .3);
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  // piroscafo a ruote del 1860: scafo nero con la fascia, ruota a pale, fumaiolo, due alberi con le vele raccolte
+  EL.piroscafo = (c, o) => {
+    if(!c.hd) return PRIMA.piroscafo(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), glow = c.p.glow, lt = mix(col, glow, .35);
+    let e = P("M-170 -2L-162 -36Q0 -44 160 -40L196 -54L200 -48L168 -30L150 -2Z", c.lin([[0, mix(col, glow, .12)], [1, col]])) + S("M-160 -26Q0 -32 158 -28", mix("#e8e0c8", col, .4), 3, .8) + S("M160 -40L236 -70", col, 2.4);
+    for(let k = 0; k < 9; k++) e += R(-140 + k * 30, -30, 8, 6, "#000", .5);
+    e += P("M-46 -36Q-46 -96 0 -98Q46 -96 46 -36Z", col) + [...Array(7)].map((_, k) => { const a = Math.PI * (k + 1) / 8; return L(0, -36, -Math.cos(a) * 42, -36 - Math.sin(a) * 58, lt, 1.2, .5); }).join("") + S("M-46 -36Q-46 -96 0 -98Q46 -96 46 -36", lt, 1.4, .6);
+    e += P("M-18 -40L-12 -196H6L10 -40Z", col) + R(-14, -190, 22, 8, mix(col, glow, .2));
+    e += `<g filter="${c.rumore("fumoP", ".02 .03", 3, 17, 2.2, -.8)}">${P("M-12 -196C-40 -260 -20 -320 -110 -380C-60 -330 -60 -270 10 -200Z", c.lin([[0, "#7a7068", .9], [1, "#7a7068", .2]]))}</g>`;
+    [[-100, -250], [90, -230]].forEach(([x, h]) => { e += L(x, -38, x, h, col, 3.4) + L(x - 46, h + 40, x + 46, h + 40, col, 2.2) + L(x - 34, h + 90, x + 34, h + 90, col, 2) + E(x, h + 44, 44, 5, mix(col, glow, .15)) + E(x, h + 93, 32, 4, mix(col, glow, .15)) + S(`M${x} ${h}L${x - 70} -36M${x} ${h}L${x + 66} -38M${x} ${h + 10}L${x - 40} -36`, col, 1, .7); });
+    e += L(150, -38, 150, -110, col, 2) + P("M150 -110h24v8h-24z", o.bandiera || "#c8241e", .9);
+    return G(o.x, o.y || HOR, o.s || 1, e, null, o.flip);
+  };
+  // scogliera: massi sfaccettati, bagnati, con la schiuma ai piedi
+  EL.scogli = (c, o) => {
+    if(!c.hd) return PRIMA.scogli(c, o);
+    const y = o.y || HOR + 80, x1 = o.x1 == null ? 230 : o.x1, col = o.col || c.col(2), glow = c.p.glow, lx = c.luceX == null ? 300 : c.luceX;
+    let x = o.x0 == null ? -30 : o.x0, e = "";
+    while(x < x1){
+      const w = c.rnd(60, 130), h = c.rnd(40, 120), cx = x + w / 2, top = y - h, pts = [[x, y + 60], [x + c.rnd(-4, 8), y - h * c.rnd(.3, .6)], [x + w * c.rnd(.15, .35), top + c.rnd(0, 14)], [cx + c.rnd(-10, 10), top - c.rnd(0, 12)], [x + w * c.rnd(.65, .85), top + c.rnd(0, 16)], [x + w + c.rnd(-6, 4), y - h * c.rnd(.25, .55)], [x + w, y + 60]];
+      e += P(linea(pts) + "Z", c.lin([[0, mix(col, glow, .2)], [.4, col], [1, mix(col, "#000", .3)]]));
+      const lato = lx > cx ? 1 : -1, apice = pts[3];
+      e += P(linea([apice, pts[lato > 0 ? 2 : 4], pts[lato > 0 ? 1 : 5], [pts[lato > 0 ? 1 : 5][0], y + 60], [apice[0] + lato * 4, y + 60]]) + "Z", "#000", .3);
+      e += S(linea([pts[lato > 0 ? 4 : 2], apice]), mix(col, glow, .55), 1.6, .55);
+      x += w * c.rnd(.6, .8);
+    }
+    let sch = "";
+    for(let k = 0; k < 40; k++){ const sx = c.rnd(o.x0 == null ? -30 : o.x0, x1), sy = y + c.rnd(-6, 40); sch += E(sx, sy, c.rnd(6, 20), c.rnd(1.5, 3.5), "#ffffff", f(c.rnd(.2, .55))); }
+    return e + `<g filter="${c.sfoca(1)}">${sch}</g>`;
+  };
+  ["gru", "portacontainer", "motoscafo", "banda"].forEach(n => PRIMA[n] = EL[n]);
+  const CONT = ["#a8452e", "#2f6f8f", "#c08a2a", "#4a7a3a", "#7a3a5a", "#3a4a8a", "#8a8a8a", "#c8641e"];
+  function container(c, x, y, w, h, col, buio){
+    const b = mix(col, "#000", buio || .45);
+    let e = R(x, y, w, h, c.lin([[0, mix(b, c.p.glow, .12)], [1, b]])) + R(x, y, w, 1.6, mix(b, "#fff", .25), .7);
+    for(let q = x + 3; q < x + w - 2; q += 3.2) e += R(q, y + 2, .9, h - 3, "#000", .22);
+    return e + R(x + w - 3, y + 2, 2, h - 3, "#000", .35);
+  }
+  // gru da banchina: gambe a portale, braccio a traliccio sul mare, carrello con un container appeso, luci
+  EL.gru = (c, o) => {
+    if(!c.hd) return PRIMA.gru(c, o);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), glow = c.p.glow, lt = mix(col, glow, .3);
+    let e = "";
+    for(let k = 0; k < 34; k++){ const x = c.rnd(-20, 600), lv = Math.floor(c.rnd(0, 4)), w = c.rnd(40, 56); e += container(c, x, HOR - 14 - lv * 14, w, 14, c.pick(CONT), .5); }
+    (o.xs || [130, 420]).forEach((x, i) => {
+      const yb = HOR, yp = HOR - 190, yb2 = HOR - 236, d = i % 2 ? 1 : -1;
+      e += S(`M${x - 46} ${yb}L${x - 40} ${yp}M${x + 46} ${yb}L${x + 40} ${yp}M${x - 46} ${yb}L${x + 40} ${yp - 60}M${x + 46} ${yb}L${x - 40} ${yp - 60}`, col, 7) + S(`M${x - 43} ${yb - 60}L${x + 43} ${yb - 120}M${x + 43} ${yb - 60}L${x - 43} ${yb - 120}`, col, 2.6);
+      e += R(x - 52, yp, 104, 16, col) + R(x - 52, yp, 104, 2, lt, .6);
+      const b0 = x + d * 250, b1 = x - d * 120;
+      e += R(Math.min(b0, b1), yb2, Math.abs(b0 - b1), 14, col);
+      let tr = "";
+      for(let q = 0; q < 24; q++){ const xa = b1 + (b0 - b1) * q / 24, xb = b1 + (b0 - b1) * (q + 1) / 24; tr += `M${f(xa)} ${yb2 + 14}L${f(xb)} ${yb2}`; }
+      e += S(tr, lt, 1.2, .5) + S(`M${x} ${yb2 - 80}L${b0} ${yb2}M${x} ${yb2 - 80}L${b1} ${yb2}M${x - 14} ${yp}L${x} ${yb2 - 80}L${x + 14} ${yp}`, col, 3);
+      e += R(b1 - (d > 0 ? 50 : 0), yb2 - 26, 50, 26, col) + R(b1 - (d > 0 ? 44 : -6), yb2 - 20, 38, 6, c.p.acc, .7);
+      const tx = x + d * c.rnd(90, 190);
+      e += R(tx - 12, yb2 + 14, 24, 10, col) + S(`M${tx - 8} ${yb2 + 24}V${yb2 + 110}M${tx + 8} ${yb2 + 24}V${yb2 + 110}`, lt, 1, .7) + container(c, tx - 26, yb2 + 110, 52, 18, CONT[i + 2], .3);
+      e += C(x, yb2 - 82, 3, "#ff4a3a") + C(x, yb2 - 82, 12, c.halo("#ff4a3a", .8)) + C(b0, yb2 - 2, 2.6, "#ff4a3a") + C(x - d * 30, yp + 8, 4, "#fff2c0") + C(x - d * 30, yp + 8, 70, c.halo("#ffe6a8", .45));
+    });
+    return e;
+  };
+  // portacontainer: scafo lungo, pile di container colorati, castello di poppa con le luci
+  EL.portacontainer = (c, o) => {
+    if(!c.hd) return PRIMA.portacontainer(c, o);
+    const col = c.col(o.z == null ? 1 : o.z), glow = c.p.glow;
+    let e = P("M-310 -50H272L304 -24L290 6H-292Z", c.lin([[0, mix(col, glow, .1)], [1, col]])) + R(-300, -16, 590, 3, "#a8241e", .7);
+    for(let r = 0; r < 5; r++) for(let k = 0; k < 15; k++){ if(r >= 3 && c.R() < .45) continue; e += container(c, -224 + k * 32.6, -70 - r * 19, 31, 19, CONT[(k * 3 + r * 5) % CONT.length], .32 + r * .04); }
+    e += R(-300, -168, 66, 118, c.lin([[0, mix("#e8e8e8", col, .5)], [1, mix("#c8c8c8", col, .6)]])) + R(-290, -194, 46, 28, mix("#e0e0e0", col, .5)) + R(-304, -178, 74, 8, mix("#e0e0e0", col, .45));
+    for(let r = 0; r < 5; r++) for(let k = 0; k < 6; k++) e += R(-294 + k * 10, -158 + r * 20, 6, 8, c.R() < .55 ? c.p.acc : "#141a22", .9);
+    e += R(-296, -176, 60, 5, "#5ee1ff", .3) + C(-268, -204, 2.6, "#ff4a3a") + C(290, -40, 2.4, "#3aff6a");
+    return G(o.x, o.y || HOR, o.s || 1, e);
+  };
+  // bufale: corpo pesante, gobba, corna a mezzaluna rivolte indietro, testa bassa
+  function bufaleHD(c, o){
+    const col = o.col || c.col(2), glow = c.p.glow;
+    let out = "";
+    (o.xs || [120, 470]).forEach((x, i) => {
+      let e = `<g fill="${mix(col, "#000", .3)}">` + arto([[34, -60, 12], [36, -28, 8], [38, -4, 6.5]]) + arto([[-58, -62, 14], [-60, -30, 8.5], [-62, -4, 6.5]]) + "</g>";
+      e += forma([[-92,-82],[-60,-96],[-20,-100],[18,-112],[40,-114],[56,-104],[66,-86],[64,-62],[44,-46],[0,-44],[-44,-46],[-82,-54],[-98,-68]]);
+      e += forma([[48,-104],[66,-100],[82,-92],[96,-78],[104,-62],[100,-52],[88,-50],[76,-58],[62,-70],[50,-86]]);
+      e += `<path d="M70 -98Q48 -116 30 -108Q46 -104 58 -92Z"/><path d="M84 -94Q110 -114 100 -128Q118 -110 92 -86Z"/><ellipse cx="66" cy="-86" rx="10" ry="4" transform="rotate(-20 66 -86)"/>`;
+      e += arto([[46, -60, 12.5], [48, -28, 8], [50, -4, 6.5]]) + arto([[-70, -64, 15], [-74, -30, 8.5], [-76, -4, 6.5]]) + `<ellipse cx="52" cy="-2" rx="8" ry="3.5"/><ellipse cx="-78" cy="-2" rx="8" ry="3.5"/>`;
+      e += `<path d="M-96 -76Q-112 -60 -108 -30" fill="none" stroke="currentColor" stroke-width="3"/><path d="M-60 -94Q-20 -104 20 -110M60 -82Q80 -74 98 -62" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.6" opacity=".4"/>` + C(92, -76, 1.8, o.occhi || glow, .8);
+      out += G(x, o.y || 700, o.s || .9, `<g color="${col}">${e}</g>`, c.lin([[0, mix(col, glow, .1)], [1, col]]), i % 2 === 1);
+    });
+    return out;
+  }
+  // pecore: vello a ciuffi, muso scuro, orecchie, zampe sottili; qualcuna bruca
+  function pecoreHD(c, o){
+    const lana = o.lana || mix("#e6e0d2", c.p.mid, .35), scuro = "#1c1612";
+    let out = "";
+    (o.xs || [180, 260, 420]).forEach((x, i) => {
+      const y = (o.y || 790) + (i % 2) * 14, s = o.s || .8, bruca = i % 2 === 1;
+      let e = [-22, 22].map(dx => R(dx - 2.5, -26, 5, 26, scuro)).join("") + [-14, 30].map(dx => R(dx - 2.5, -26, 5, 25, mix(scuro, "#000", .3))).join("");
+      const g = c.rad([[0, mix(lana, "#ffffff", .3)], [.7, lana], [1, mix(lana, "#000", .3)]], .4, .3, .7);
+      for(let k = 0; k < 14; k++){ const a = k / 14 * Math.PI * 2; e += C(Math.cos(a) * 34 + c.rnd(-3, 3), -48 + Math.sin(a) * 16 + c.rnd(-3, 3), c.rnd(10, 14), g); }
+      e += E(0, -50, 34, 18, g) + E(-6, -60, 22, 9, "#ffffff", .25);
+      e += bruca ? `<path d="M30 -46Q46 -40 52 -14Q46 -8 40 -12Q36 -30 26 -36Z" fill="${scuro}"/><ellipse cx="34" cy="-42" rx="9" ry="4" fill="${scuro}" transform="rotate(30 34 -42)"/>` : `<path d="M30 -54Q48 -62 58 -48Q56 -38 46 -38Q36 -40 28 -44Z" fill="${scuro}"/><ellipse cx="38" cy="-58" rx="10" ry="4" fill="${scuro}" transform="rotate(-25 38 -58)"/><circle cx="50" cy="-50" r="1.4" fill="#d8c8a0"/>`;
+      out += G(x, y, s, e, null, i % 2 === 1);
+    });
+    return out;
+  }
+  // motoscafo offshore: carena a V che esce dall'acqua, parabrezza, pilota, motori, coda di gallo di spruzzi
+  EL.motoscafo = (c, o) => {
+    if(!c.hd) return PRIMA.motoscafo(c, o);
+    const b = o.col || "#1c4aa0", glow = c.p.glow;
+    let e = `<g filter="${c.sfoca(1.6)}">` + P("M-170 -6Q-260 -70 -380 -40Q-300 -16 -250 8Q-300 30 -360 70Q-240 40 -170 10Z", "#ffffff", .5) + [...Array(26)].map(() => C(-170 - c.rnd(0, 220), -10 - c.rnd(-30, 60), c.rnd(2, 7), "#ffffff", f(c.rnd(.25, .7)))).join("") + "</g>";
+    e += P("M-176 -16L170 -40Q206 -38 214 -26L190 -6L150 6H-160Z", c.lin([[0, mix(b, "#ffffff", .25)], [.5, b], [1, mix(b, "#000", .5)]])) + P("M-174 -14L190 -36L196 -28L-170 -4Z", "#e8eef8", .85) + P("M-170 -2L180 -16L170 -8L-166 6Z", "#c8241e", .9);
+    e += P("M-60 -28L56 -38L80 -64Q20 -70 -30 -64Z", mix(b, "#000", .2)) + P("M-24 -60L40 -66L70 -60L56 -40L-20 -32Z", c.lin([[0, "#bfe6ff", .7], [1, "#2a4a6a", .8]])) + S("M-24 -60L40 -66L70 -60", "#ffffff", 1.4, .7);
+    e += figura(c, "ragazzo", { x:-6, y:-34, s:.22, col:"#0a0c14", ombra:false, alza:false, posa:"fermo" }) + figura(c, "testa", { x:22, y:-36, s:.2, col:"#0a0c14", ombra:false, alza:false, posa:"fermo" });
+    e += R(-196, -36, 26, 30, "#101418", null, ' rx="4"') + R(-210, -32, 22, 26, "#181c22", null, ' rx="4"') + S("M150 -2Q190 10 220 -14", "#ffffff", 4, .7) + S("M-180 4Q-60 16 140 0", "#ffffff", 2, .35);
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  // la banda: ognuno con la sua posa e i suoi vestiti
+  EL.banda = (c, o) => {
+    if(!c.hd || !o.look) return PRIMA.banda(c, o);
+    return (o.tipi || ["testa", "coppola", "ragazzo", "uomo", "ragazzo"]).map((t, i, a) => figura(c, t, Object.assign({}, o, o.look[i % o.look.length] || {}, { x:o.x + (i - (a.length - 1) / 2) * (o.passo || 76) * (o.s || 1), y:o.y + (i % 2) * 6 + ((o.look[i % o.look.length] || {}).dy || 0), s:(o.s || 1) * ((o.look[i % o.look.length] || {}).k || (i % 2 ? .95 : 1)) }))).join("");
+  };
+  ["vulcano", "castello8", "auto", "ombrelloni", "cantiere", "facciata", "vele"].forEach(n => PRIMA[n] = EL[n]);
+  // vulcano: fianchi frastagliati, versante in ombra, canaloni, colate di lava che si ramificano
+  EL.vulcano = (c, o) => {
+    if(!c.hd) return PRIMA.vulcano(c, o);
+    const col = o.col || c.col(o.z == null ? 0 : o.z), x = o.x || 300, y = o.y || HOR, s = o.s || 1, glow = c.p.glow, lx = c.luceX == null ? 300 : c.luceX;
+    let e = "";
+    if(o.fumo !== false){ const fc = o.fumoCol || "#9a8a80"; e += P(`M${f(x - 40 * s)} ${f(y - 220 * s)}C${f(x - 90 * s)} ${f(y - 380 * s)} ${f(x - 40 * s)} ${f(y - 520 * s)} ${f(x + 80 * s)} ${f(y - 600 * s)}C${f(x + 220 * s)} ${f(y - 640 * s)} ${f(x + 260 * s)} ${f(y - 520 * s)} ${f(x + 160 * s)} ${f(y - 440 * s)}C${f(x + 90 * s)} ${f(y - 380 * s)} ${f(x + 70 * s)} ${f(y - 300 * s)} ${f(x + 40 * s)} ${f(y - 220 * s)}Z`, c.lin([[0, fc, .85], [1, fc, .5]]), null, ` filter="${c.rumore("fumoV", ".01 .018", 4, 5, 2.6, -.7)}"`); }
+    const sx = seghetta(c, [x - 340 * s, y + 4], [x - 64 * s, y - 212 * s], 5, .05), cr = seghetta(c, [x - 64 * s, y - 212 * s], [x + 66 * s, y - 208 * s], 3, .08).map(([px, py], i, a) => [px, py + Math.sin(i / (a.length - 1) * Math.PI) * 12 * s]), dx = seghetta(c, [x + 66 * s, y - 208 * s], [x + 350 * s, y + 4], 5, .05);
+    const prof = sx.concat(cr.slice(1), dx.slice(1));
+    e += P(linea(prof) + "Z", c.lin([[0, mix(col, glow, .24)], [.5, col], [1, mix(col, c.p.ink, .2)]]), null, ` filter="${c.roccia()}"`);
+    const lato = lx > x ? -1 : 1, cost = seghetta(c, [x + lato * 10 * s, y - 210 * s], [x + lato * 60 * s, y + 4], 4, .1);
+    e += P(linea((lato < 0 ? sx.slice().reverse() : dx).concat(lato < 0 ? [[x - 340 * s, y + 4]] : [[x + 350 * s, y + 4]], cost.slice().reverse())) + "Z", c.lin([[0, mix(col, c.p.ink, .5), .7], [1, mix(col, c.p.ink, .5), .3]]));
+    let can = "";
+    for(let k = 0; k < 16; k++){ const t = c.rnd(.05, .95), p = k % 2 ? sx[Math.floor(t * (sx.length - 1))] : dx[Math.floor(t * (dx.length - 1))], l = (y - p[1]) * c.rnd(.3, .8); can += linea(seghetta(c, [p[0], p[1] + 3], [p[0] + (k % 2 ? -1 : 1) * l * .3, p[1] + l], 3, .2)); }
+    e += S(can, mix(col, c.p.ink, .4), 1.4 * s, .4) + S(linea(prof), c.linU([[0, glow, .1], [.5, glow, .45], [1, glow, .1]], x - 300 * s, 0, x + 300 * s, 0), 1.6);
+    if(o.lava){ const cy = y - 206 * s; e += C(x, cy, 110 * s, c.halo("#ff8a3a", .7)) + E(x, cy + 4 * s, 54 * s, 8 * s, "#ffc060", .95) + E(x, cy + 4 * s, 30 * s, 4 * s, "#fff2b0");
+      let lv = "";
+      [[-1, 150, 190], [-1, 60, 200], [1, 110, 180], [1, 30, 210]].forEach(([d, sp, l]) => { const pts = seghetta(c, [x + d * 30 * s, cy + 6 * s], [x + d * (30 + sp) * s, cy + l * s], 4, .14); lv += linea(pts); if(c.R() < .8){ const m = pts[Math.floor(pts.length * .5)]; lv += linea(seghetta(c, m, [m[0] + d * 40 * s, m[1] + 60 * s], 3, .2)); } });
+      e += `<g filter="${c.sfoca(3)}">${S(lv, "#ff6a1a", 9 * s, .5)}</g>` + S(lv, "#ff7a2a", 3.4 * s, .95) + S(lv, "#ffe08a", 1.2 * s, .9); }
+    if(o.cristalli){ const cy = y - 210 * s; e += C(x, cy, 120 * s, c.halo(c.p.acc, .75)); [[-26, 0, -20, 50], [-8, -4, -6, 70], [10, -2, 12, 58], [26, 2, 26, 40], [-40, 4, -34, 30], [40, 4, 44, 26]].forEach(([dx2, dy, tx, h]) => e += P(`M${f(x + (dx2 - 7) * s)} ${f(cy + dy * s)}L${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}Z`, c.lin([[0, "#ffffff"], [1, c.p.acc]]), .92) + S(`M${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}`, "#ffffff", 1, .7)); }
+    return e;
+  };
+  // Castel del Monte: corpo ottagonale in prospettiva, torri ottagonali agli spigoli, portale gotico, bifore
+  EL.castello8 = (c, o) => {
+    if(!c.hd) return PRIMA.castello8(c, o);
+    const col = c.col(o.z == null ? 1 : o.z), glow = c.p.glow, pietra = mix(col, "#c8a878", .22), luce = mix(pietra, glow, .3), ombra = mix(pietra, "#000", .35);
+    let e = P("M-320 70Q0 -36 320 70Z", c.lin([[0, mix(c.col(2), glow, .1)], [1, c.col(2)]]));
+    const facce = [[-150, -84, ombra], [-84, 84, pietra], [84, 150, mix(pietra, glow, .12)]];
+    facce.forEach(([a, b, cl]) => e += P(`M${a} 6V-112L${b} ${Math.abs(b) > 100 ? -104 : -112}V6Z`, c.lin([[0, mix(cl, glow, .1)], [1, cl]]), null, ` filter="${c.intonaco()}"`));
+    const torre = (x, w, h, cl) => { let t = R(x - w / 2, -h, w * .5, h + 8, mix(cl, "#000", .2)) + R(x, -h, w * .5, h + 8, cl) + R(x - w / 2 - 2, -h - 6, w + 4, 8, mix(cl, glow, .2)); for(let q = 0; q < 2; q++) t += R(x - 4, -h + 30 + q * 46, 8, 16, c.p.acc, q ? .35 : .6); return t; };
+    e += torre(-150, 44, 150, ombra) + torre(150, 44, 146, pietra) + torre(-84, 52, 162, mix(pietra, "#000", .1)) + torre(84, 52, 160, luce);
+    for(let x = -60; x <= 60; x += 60) if(x) e += P(`M${x - 10} -64V-82Q${x} -94 ${x + 10} -82V-64Z`, "#1a0e08", .85) + L(x, -86, x, -64, pietra, 1.6);
+    e += P("M-26 6V-44Q0 -76 26 -44V6Z", "#140a06") + P("M-34 6V-46Q0 -88 34 -46V6", "none", null, ` stroke="${mix("#d89a7a", glow, .2)}" stroke-width="5"`) + P("M-40 -50L0 -100L40 -50Z", "none", null, ` stroke="${luce}" stroke-width="3"`) + R(-3, -40, 6, 46, c.p.acc, .25);
+    e += P("M-12 -96V-104Q0 -116 12 -104V-96Z", c.p.acc, .6) + S("M-150 -112L150 -112", luce, 1.4, .6);
+    return G(o.x, o.y || HOR - 20, o.s || 1, e);
+  };
+  // auto da corsa anni '50: cofano lungo, parafanghi tondi, ruote a raggi, numero di gara, pilota con gli occhialoni
+  EL.auto = (c, o) => {
+    if(!c.hd) return PRIMA.auto(c, o);
+    const r1 = o.colA || "#d8302a", r2 = o.colB || "#6a0c10", glow = c.p.glow;
+    let e = "";
+    if(o.scia) e += `<g filter="${c.sfoca(5)}">` + P("M-200 -20Q-320 -60 -440 -30Q-380 -8 -330 4Q-400 20 -460 50Q-320 30 -200 10Z", mix("#e8d0a8", glow, .2), .55) + "</g>" + [...Array(6)].map((_, k) => L(-230 - k * 26, -56 + k * 12, -420 - k * 50, -56 + k * 12, "#ffffff", 2.6 - k * .35, .25)).join("");
+    e += P("M-196 -18Q-198 -48 -170 -58Q-150 -64 -120 -64Q-100 -84 -60 -86L-20 -88Q10 -112 54 -110Q80 -104 96 -84L150 -76Q186 -70 200 -46Q206 -28 198 -16L190 0H-190Z", c.lin([[0, mix(r1, "#ffffff", .3)], [.35, r1], [1, r2]]));
+    e += S("M-186 -50Q-60 -70 190 -52", "#ffffff", 2.6, .5) + S("M-120 -64Q-110 -40 -116 -12M120 -74Q132 -44 126 -12", r2, 2, .6);
+    e += P("M-14 -88Q6 -110 50 -108L64 -88Z", c.lin([[0, "#c8e6ff", .7], [1, "#2a3a4a", .8]])) + S("M-14 -88Q6 -110 50 -108", "#e8e8e8", 2);
+    e += C(40, -100, 13, "#1a1410") + P("M30 -112Q42 -126 56 -110Z", "#3a2a1a") + R(44, -106, 14, 7, "#c8e6ff", .8, ' rx="3"') + S("M28 -98Q8 -96 -18 -84", "#f2f2f2", 5, .9) + C(-10, -96, 11, "#e8dcc8") + P("M-20 -100Q-12 -114 2 -104Z", "#c8c0b0");
+    [[-118, 0], [128, 0]].forEach(([x]) => { e += C(x, -2, 38, "#0c0c0c") + C(x, -2, 27, "#9a9a9a") + C(x, -2, 25, "#2a2a2a"); for(let k = 0; k < 18; k++){ const a = k * Math.PI / 9; e += L(x, -2, x + Math.cos(a) * 25, -2 + Math.sin(a) * 25, "#c8c8c8", .9, .8); } e += C(x, -2, 7, "#d8d8d8") + C(x - 8, -12, 6, "#ffffff", .25); });
+    e += C(150, -46, 9, "#fff6d0") + C(150, -46, 30, c.halo("#fff6d0", .5)) + C(-20, -46, 23, "#f4f0e6") + `<text x="-20" y="-38" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="22" fill="#111">${esc(o.numero || 55)}</text>` + R(-196, -30, 16, 4, "#9a9a9a");
+    return G(o.x, o.y, o.s || 1, e, null, o.flip);
+  };
+  // ombrelloni dello stabilimento: file in prospettiva, tele a spicchi, lettini, cabine colorate
+  EL.ombrelloni = (c, o) => {
+    if(!c.hd) return PRIMA.ombrelloni(c, o);
+    const cols = o.cols || ["#e05a4a", "#2f7ac0", "#f2c64a", "#3a9a6a", "#f2f2f2"], y0 = o.y || HOR + 50, k2 = c.col(2);
+    let e = "";
+    for(let k = 0; k < 10; k++){ const x = -20 + k * 66, h = 40, cl = cols[k % 4]; e += R(x, y0 - 60, 56, h, c.lin([[0, mix(cl, "#ffffff", .2)], [1, mix(cl, "#000", .35)]]), .9) + P(`M${x - 4} ${y0 - 60}L${x + 28} ${y0 - 78}L${x + 60} ${y0 - 60}Z`, mix(cl, "#000", .2)) + R(x + 20, y0 - 44, 16, 24, "#1a120c", .8); }
+    for(let r = 0; r < 4; r++) for(let k = 0; k < 8; k++){
+      const s = .5 + r * .22, x = 20 + k * 80 + (r % 2) * 40 + c.rnd(-6, 6), y = y0 + r * 58, cl = cols[(k + r * 3) % cols.length], w = 50 * s, h = 22 * s;
+      e += R(x - 24 * s, y - 6 * s, 30 * s, 6 * s, mix("#f2e6d0", k2, .3), .9) + L(x, y, x, y - 72 * s, k2, f(2.4 * s));
+      let tela = `M${f(x - w)} ${f(y - 66 * s)}Q${f(x)} ${f(y - 66 * s - h * 2.1)} ${f(x + w)} ${f(y - 66 * s)}`;
+      for(let q = 0; q < 4; q++){ const xa = x + w - q * w / 2, xb = xa - w / 2; tela += `Q${f((xa + xb) / 2)} ${f(y - 62 * s)} ${f(xb)} ${f(y - 66 * s)}`; }
+      e += P(tela + "Z", c.lin([[0, mix(cl, "#ffffff", .3)], [1, mix(cl, "#000", .3)]])) + [-.5, 0, .5].map(q => S(`M${f(x)} ${f(y - 66 * s - h * 1.05)}L${f(x + q * w)} ${f(y - 64 * s)}`, mix(cl, "#000", .4), f(.8 * s), .5)).join("") + E(x, y - 66 * s - h * 1.02, 2.4 * s, 1.6 * s, mix(cl, "#000", .4));
+    }
+    return e;
+  };
+  // cantiere: solai di cemento, ponteggi con le reti, gru a torre a traliccio
+  EL.cantiere = (c, o) => {
+    if(!c.hd) return PRIMA.cantiere(c, o);
+    const col = c.col(o.z == null ? 1 : o.z), glow = c.p.glow, cem = mix(col, "#8a8478", .25);
+    let e = "";
+    for(let k = 0; k < 8; k++){ const y = HOR - 6 - k * 38; e += R(240, y - 6, 240, 8, c.lin([[0, mix(cem, glow, .2)], [1, cem]])); for(let x = 246; x <= 470; x += 44) e += R(x, y - 38, 6, 32, cem); if(k > 1 && k < 6) for(let x = 250; x < 470; x += 22) if(c.R() < .25) e += R(x, y - 30, 14, 20, c.p.acc, .5); }
+    let pont = "";
+    for(let k = 0; k < 9; k++) pont += `M236 ${HOR - k * 36}H486`;
+    for(let x = 236; x <= 486; x += 25) pont += `M${x} ${HOR}V${HOR - 300}`;
+    for(let k = 0; k < 8; k++) pont += `M236 ${HOR - k * 36}L261 ${HOR - (k + 1) * 36}`;
+    e += S(pont, mix(col, glow, .3), 1.2, .65) + R(236, HOR - 300, 250, 300, "#2a6a8a", .12);
+    const mx = 130;
+    e += R(mx - 9, HOR - 470, 18, 470, "none", null, ` stroke="${col}" stroke-width="3"`);
+    let tr = "";
+    for(let y = HOR; y > HOR - 470; y -= 18) tr += `M${mx - 9} ${y}L${mx + 9} ${y - 18}M${mx + 9} ${y}L${mx - 9} ${y - 18}`;
+    e += S(tr, col, 1.4, .85) + R(mx - 160, HOR - 488, 470, 10, col) + R(mx - 160, HOR - 500, 470, 4, col);
+    let jb = "";
+    for(let x = mx - 160; x < mx + 310; x += 14) jb += `M${x} ${HOR - 478}L${x + 7} ${HOR - 496}L${x + 14} ${HOR - 478}`;
+    e += S(jb, col, 1.2, .8) + P(`M${mx - 6} ${HOR - 500}L${mx} ${HOR - 548}L${mx + 6} ${HOR - 500}Z`, col) + S(`M${mx} ${HOR - 548}L${mx - 160} ${HOR - 494}M${mx} ${HOR - 548}L${mx + 300} ${HOR - 494}`, col, 1.4) + R(mx - 158, HOR - 476, 40, 30, col) + R(mx - 22, HOR - 470, 44, 30, col) + R(mx - 16, HOR - 464, 32, 12, c.p.acc, .6);
+    const tx = mx + 220; e += R(tx - 8, HOR - 478, 16, 8, col) + S(`M${tx - 4} ${HOR - 470}V${HOR - 340}M${tx + 4} ${HOR - 470}V${HOR - 340}`, col, 1) + R(tx - 30, HOR - 340, 60, 14, c.lin([[0, mix(cem, glow, .3)], [1, cem]])) + C(mx, HOR - 552, 3, "#ff4a3a") + C(mx, HOR - 552, 14, c.halo("#ff4a3a", .8)) + C(mx + 300, HOR - 500, 2.6, "#ff4a3a");
+    return e;
+  };
+  // la palazzina del condominio: intonaco, cornici in travertino, persiane, balconi, panni stesi, una storia in ogni finestra
+  EL.facciata = (c, o) => {
+    if(!c.hd) return PRIMA.facciata(c, o);
+    const X = o.x || 70, Y = o.y || 130, Wd = o.w || 460, Hd = HOR - Y, cols = 4, rows = 5, cw = Wd / cols, rh = Hd / rows, glow = c.p.glow, intonaco = o.tinta || "#c99a6a", trav = mix("#efe4cc", intonaco, .25);
+    let e = R(X, Y, Wd, Hd + 4, c.lin([[0, mix(intonaco, glow, .1)], [1, mix(intonaco, "#000", .25)]]), null, ` filter="${c.intonaco()}"`) + R(X - 14, Y - 22, Wd + 28, 24, c.lin([[0, mix(trav, glow, .2)], [1, trav]])) + R(X - 10, Y + 2, Wd + 20, 4, "#000", .3);
+    for(let r = 1; r < rows; r++) e += R(X - 4, Y + r * rh - 4, Wd + 8, 5, trav, .85);
+    const storie = ["tv", "gatto", "lite", "chitarra", "piante", "cena", "lettore", "vuoto"];
+    for(let r = 0; r < rows; r++) for(let k = 0; k < cols; k++){
+      const wx = X + k * cw + cw * .24, wy = Y + r * rh + rh * .18, ww = cw * .52, wh = rh * .6, speciale = r === 2 && k === 2;
+      const lit = !speciale && c.R() < .76, luce = c.pick(["#ffd68a", "#ffc46a", "#ffe8b0", "#ffd0a0"]), st = c.pick(storie);
+      e += R(wx - 5, wy - 6, ww + 10, wh + 10, trav, .9);
+      e += R(wx, wy, ww, wh, speciale ? "#050505" : lit ? (st === "tv" ? c.lin([[0, "#9ad0ff"], [1, "#3a6aa8"]]) : c.lin([[0, "#fff6dc"], [1, luce]])) : "#1a120c", lit ? .95 : 1);
+      const ps = mix("#3a6a4a", intonaco, .2);
+      e += R(wx - 13, wy - 4, 11, wh + 6, ps) + R(wx + ww + 2, wy - 4, 11, wh + 6, ps); for(let q = 0; q < 8; q++) e += R(wx - 12, wy + q * wh / 8, 9, 1, "#000", .25) + R(wx + ww + 3, wy + q * wh / 8, 9, 1, "#000", .25);
+      if(speciale) e += C(wx + ww * .38, wy + wh * .45, 3.4, "#fff36a") + C(wx + ww * .62, wy + wh * .45, 3.4, "#fff36a") + C(wx + ww * .5, wy + wh * .45, 30, c.halo("#fff36a", .25)) + `<text x="${f(wx + ww / 2)}" y="${f(wy + wh + 15)}" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="11" fill="#e8d8b8" opacity=".8">INT. 7</text>`;
+      else if(lit){
+        const px = wx + ww * c.rnd(.3, .7), py = wy + wh, k3 = "#1a0f08";
+        if(st === "gatto") e += E(wx + ww * .7, py - 5, 7, 5, k3) + C(wx + ww * .7 + 5, py - 11, 4, k3) + P(`M${f(wx + ww * .7 + 2)} ${f(py - 14)}l1 -4l2 3zM${f(wx + ww * .7 + 6)} ${f(py - 14)}l2 -4l1 4z`, k3);
+        else if(st === "lite") e += C(wx + ww * .3, py - wh * .55, wh * .13, k3) + P(`M${f(wx + ww * .14)} ${f(py)}Q${f(wx + ww * .3)} ${f(py - wh * .6)} ${f(wx + ww * .46)} ${f(py)}Z`, k3) + C(wx + ww * .72, py - wh * .5, wh * .12, k3) + P(`M${f(wx + ww * .58)} ${f(py)}Q${f(wx + ww * .72)} ${f(py - wh * .55)} ${f(wx + ww * .86)} ${f(py)}Z`, k3) + S(`M${f(wx + ww * .44)} ${f(py - wh * .5)}l${f(ww * .12)} -4`, k3, 2);
+        else if(st === "chitarra") e += C(px, py - wh * .55, wh * .14, k3) + P(`M${f(px - wh * .3)} ${f(py)}Q${f(px)} ${f(py - wh * .62)} ${f(px + wh * .3)} ${f(py)}Z`, k3) + E(px + wh * .2, py - wh * .2, wh * .16, wh * .1, "#6a3a1a") + L(px + wh * .3, py - wh * .22, px + wh * .6, py - wh * .42, "#3a1a0a", 2);
+        else if(st !== "vuoto" && st !== "piante") e += C(px, py - wh * .55, wh * .15, k3, .85) + P(`M${f(px - wh * .3)} ${f(py)}Q${f(px)} ${f(py - wh * .62)} ${f(px + wh * .3)} ${f(py)}Z`, k3, .85);
+        e += C(wx + ww / 2, wy + wh / 2, ww, c.halo(luce, .18));
+      }
+      if(r > 0 && (k + r) % 2 === 0){ e += R(wx - 16, wy + wh + 2, ww + 32, 6, trav) + R(wx - 16, wy + wh + 8, ww + 32, 2, "#000", .35) + R(wx - 14, wy + wh * .55, ww + 28, 2, "#1a120c"); for(let q = 0; q <= 8; q++) e += R(wx - 14 + q * (ww + 26) / 8, wy + wh * .55, 1.6, wh * .45 + 3, "#1a120c"); if(c.R() < .6) e += [0, 1, 2].map(q => E(wx - 10 + q * 10 + c.rnd(-2, 2), wy + wh * .5, 6, 5, c.pick(["#2a6a2a", "#3a7a2a", "#c84a7a"]))).join(""); }
+      if(r > 0 && r < rows - 1 && k === 0 && c.R() < .7){ e += S(`M${f(wx + ww + 14)} ${f(wy + 4)}Q${f(wx + cw * .9)} ${f(wy + 12)} ${f(wx + cw * 1.2)} ${f(wy + 4)}`, "#d8d0c0", .8, .7); for(let q = 0; q < 4; q++) e += R(wx + ww + 18 + q * 12, wy + 6, 8, c.rnd(10, 16), c.pick(["#f2f2f2", "#e05a4a", "#5a8ae0", "#f2c64a"]), .9); }
+    }
+    e += R(X + Wd * .4, HOR - 96, Wd * .2, 100, trav) + R(X + Wd * .4 + 8, HOR - 88, Wd * .2 - 16, 92, "#2a1608") + R(X + Wd * .4 + 12, HOR - 84, Wd * .2 - 24, 40, c.p.acc, .45) + R(X + Wd * .62, HOR - 60, 14, 22, "#c8c0b0") + [0, 1, 2, 3].map(q => C(X + Wd * .62 + 7, HOR - 56 + q * 5, 1.4, "#3a3a3a")).join("");
+    return e;
+  };
+  // le Vele: triangoli a gradoni, ballatoi, finestre accese, panni stesi
+  EL.vele = (c, o) => {
+    if(!c.hd) return PRIMA.vele(c, o);
+    const col = c.col(o.z == null ? 1 : o.z), glow = c.p.glow, cem = mix(col, "#8a8478", .2);
+    let e = "";
+    [[80, 300, 170], [290, 380, 210], [490, 320, 180]].forEach(([x, h, w]) => {
+      const n = 16;
+      let d = `M${x - w / 2} ${HOR + 4}`;
+      for(let k = 0; k < n; k++){ const y = HOR - h * k / n, half = w / 2 * (1 - k / n); d += `L${f(x - half)} ${f(y - h / n)}L${f(x - half + w / 2 / n)} ${f(y - h / n)}`; }
+      d += `L${x} ${HOR - h}`;
+      for(let k = n - 1; k >= 0; k--){ const y = HOR - h * k / n, half = w / 2 * (1 - k / n); d += `L${f(x + half - w / 2 / n)} ${f(y - h / n)}L${f(x + half)} ${f(y - h / n)}`; }
+      e += P(d + `L${x + w / 2} ${HOR + 4}Z`, c.lin([[0, mix(cem, glow, .14)], [1, cem]], 1, 0), null, ` filter="${c.intonaco()}"`);
+      for(let k = 1; k < n; k++){ const yy = HOR - h * k / n, half = w / 2 * (1 - k / n); e += R(x - half, yy - 2, half * 2, 2.4, mix(cem, glow, .3), .7); for(let q = 0; q < Math.floor(half / 7); q++) if(c.R() < .4) e += R(x - half + 4 + q * 14 + c.rnd(-2, 2), yy + 3, 5, 6, c.p.acc, f(c.rnd(.5, .95))); if(c.R() < .3) e += R(x - half * .5 + c.rnd(-10, 10), yy + 1, 10, 6, c.pick(["#f2f2f2", "#e05a4a", "#5a8ae0"]), .7); }
+      e += R(x - 2, HOR - h + 6, 4, h, "#000", .4);
+    });
+    return e;
+  };
+  // l'oratorio: pareti di stucchi bianchi, candelieri, l'altare di marmo
+  EL.oratorio = (c, o) => {
+    const glow = c.p.glow, st = mix("#f4ead8", c.p.mid, .45);
+    let e = R(0, 0, VW, VH, c.lin([[0, mix(c.p.mid, "#000", .2)], [1, c.p.ink]]));
+    [[40, 140], [460, 140]].forEach(([x, w]) => { e += R(x, 120, w, 520, mix(st, "#000", .55), .6); for(let k = 0; k < 4; k++){ const cy = 170 + k * 120; e += E(x + w / 2, cy, 46, 52, "none", null, ` stroke="${st}" stroke-width="3" stroke-opacity=".55"`) + C(x + w / 2, cy - 4, 14, st, .45) + E(x + w / 2, cy + 22, 20, 14, st, .35) + S(`M${x + 14} ${cy + 46}q${w / 4} 20 ${w / 2 - 14} 0t${w / 2 - 14} 0`, st, 2, .45); } });
+    e += R(150, 640, 300, 60, c.lin([[0, mix("#e8dcc8", glow, .2)], [1, "#5a4a3a"]])) + R(140, 630, 320, 12, mix("#f2e6d0", glow, .25));
+    [[96, 600], [504, 600]].forEach(([x, y]) => { e += R(x - 4, y, 8, 70, c.lin([[0, "#f2d27a"], [1, "#8a6a2a"]], 1, 0)) + E(x, y + 70, 14, 4, "#8a6a2a") + R(x - 3, y - 26, 6, 26, "#f6efe0") + P(`M${x} ${y - 44}Q${x - 6} ${y - 32} ${x} ${y - 26}Q${x + 6} ${y - 32} ${x} ${y - 44}Z`, "#ffd27a") + C(x, y - 34, 40, c.halo("#ffcf7a", .7)); });
+    return e;
+  };
+  PRIMA.barcaVela = EL.barcaVela;
+  // barca a vela sbandata: randa e fiocco gonfi con le cuciture, scafo di legno, scia
+  EL.barcaVela = (c, o) => {
+    if(!c.hd) return PRIMA.barcaVela(c, o);
+    const col = c.col(2), glow = c.p.glow, tela = o.tela || mix("#e8dcc4", c.p.mid, .42);
+    let e = `<g filter="${c.sfoca(1.4)}">` + S("M-150 16Q0 44 170 12", "#ffffff", 6, .45) + S("M-190 24Q-260 30 -330 52", "#ffffff", 3, .3) + "</g>";
+    e += P("M-138 -12Q0 -2 150 -24L118 18Q0 28 -110 20Z", c.lin([[0, mix(col, glow, .25)], [1, col]])) + S("M-132 -6Q0 4 144 -18", mix("#c8a070", glow, .2), 2, .7) + S("M-120 8Q0 16 126 0", "#000", 1, .35);
+    e += L(2, -16, 6, -350, col, 4) + L(6, -60, 120, -48, col, 2.6);
+    e += P("M8 -340Q62 -200 118 -52L10 -54Z", c.lin([[0, mix(tela, glow, .3)], [.6, tela], [1, mix(tela, "#000", .2)]], 1, 0)) + [1, 2, 3, 4, 5].map(k => S(`M${8 + k} ${-340 + k * 57}L${f(10 + (118 - 10) * k / 6)} ${f(-340 + 288 * k / 6 + 4)}`, mix(tela, "#000", .25), .8, .5)).join("");
+    e += P("M2 -320Q-50 -190 -116 -40L-2 -36Z", c.lin([[0, mix(tela, "#000", .1)], [1, mix(tela, glow, .2)]], 1, 0), .95) + S("M2 -320L-116 -40", mix(tela, glow, .4), 1.2, .6);
+    e += S("M6 -350L-130 -10M6 -350L150 -22", col, .9, .6) + R(-40, -30, 26, 12, col) + C(-30, -38, 6, col);
+    return G(o.x, o.y, o.s || 1, e, null, o.flip, o.rot);
+  };
   /* ---------- atmosfera ---------- */
   const FX = {
     pioggia(c, o){
@@ -1197,10 +2350,16 @@
     bolle(c, o){ let e = ""; for(let k = 0; k < (o.n || 30); k++){ const x = c.rnd(20, 580), y = c.rnd(80, 860), r = c.rnd(3, 12); e += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="none" stroke="#bff6ff" stroke-width="1.4" opacity="${f(c.rnd(.25, .6))}"/>`; } return e; },
     codice(c, o){ let e = ""; for(let k = 0; k < (o.n || 16); k++){ const x = c.rnd(10, 590), y0 = c.rnd(0, 400); for(let j = 0; j < 8; j++) e += `<text x="${f(x)}" y="${f(y0 + j * 22)}" font-family="monospace" font-size="16" fill="${c.R() < (o.rosso || .2) ? "#ff3a3a" : "#5effa0"}" opacity="${f(.5 - j * .05)}">${c.R() < .5 ? 1 : 0}</text>`; } return e; },
     cubi(c, o){ let e = ""; for(let k = 0; k < (o.n || 6); k++){ const x = c.rnd(60, 540), y = c.rnd(120, 520), s = c.rnd(18, 46); e += S(`M${f(x)} ${f(y)}h${f(s)}v${f(s)}h${f(-s)}ZM${f(x + s * .4)} ${f(y - s * .4)}h${f(s)}v${f(s)}h${f(-s)}ZM${f(x)} ${f(y)}l${f(s * .4)} ${f(-s * .4)}M${f(x + s)} ${f(y)}l${f(s * .4)} ${f(-s * .4)}M${f(x + s)} ${f(y + s)}l${f(s * .4)} ${f(-s * .4)}M${f(x)} ${f(y + s)}l${f(s * .4)} ${f(-s * .4)}`, c.p.acc, 1.6, f(c.rnd(.35, .75))); } return e; },
-    fulmine(c, o){ const x = o.x || 420; return P(`M${x} 0L${x - 40} 120L${x - 10} 124L${x - 60} 260L${x + 20} 110L${x - 16} 106L${x + 30} 0Z`, "#f4f8ff", .85) + C(x - 20, 140, 200, c.halo("#dfe9ff", .3)); },
+    fulmine(c, o){ if(c.hd) return fulmineHD(c, o); const x = o.x || 420; return P(`M${x} 0L${x - 40} 120L${x - 10} 124L${x - 60} 260L${x + 20} 110L${x - 16} 106L${x + 30} 0Z`, "#f4f8ff", .85) + C(x - 20, 140, 200, c.halo("#dfe9ff", .3)); },
     segnale(c, o){ let e = ""; for(let k = 1; k <= 6; k++) e += `<circle cx="${o.x || 300}" cy="${o.y || 220}" r="${30 * k}" fill="none" stroke="${c.p.acc}" stroke-width="2" opacity="${f(.6 - k * .08)}"/>`; return e; },
     polvere(c, o){ let e = ""; for(let k = 0; k < (o.n || 40); k++) e += C(c.rnd(0, 600), c.rnd(o.y0 || 300, VH), c.rnd(.8, 2.6), o.col || "#f2d6a8", f(c.rnd(.2, .6))); return e; },
-    bokeh(c, o){ let e = ""; for(let k = 0; k < (o.n || 14); k++) e += C(c.rnd(0, 600), c.rnd(0, 700), c.rnd(10, 46), c.R() < .5 ? c.p.acc : "#ffd9a8", f(c.rnd(.06, .18))); return e; },
+    bokeh(c, o){
+      if(!c.hd){ let e = ""; for(let k = 0; k < (o.n || 14); k++) e += C(c.rnd(0, 600), c.rnd(0, 700), c.rnd(10, 46), c.R() < .5 ? c.p.acc : "#ffd9a8", f(c.rnd(.06, .18))); return e; }
+      const gs = [o.col || c.p.acc, c.p.glow, "#ffd9a8"].map(col => c.rad([[0, col, .35], [.78, col, .5], [.9, col, .9], [1, col, 0]]));
+      let e = "";
+      for(let k = 0; k < (o.n || 14) * 2.4; k++){ const r = c.rnd(3, 13) * (o.k || 1) * (c.R() < .15 ? 2 : 1); e += C(c.rnd(-10, 610), c.rnd(o.y0 || 40, o.y1 || HOR - 30), r, c.pick(gs), f(c.rnd(.12, .45))); }
+      return `<g filter="${c.sfoca(.7)}">${e}</g>`;
+    },
     vento(c, o){ let e = ""; for(let k = 0; k < (o.n || 18); k++){ const y = c.rnd(80, 800), x = c.rnd(-120, 480), l = c.rnd(140, 320); e += S(`M${f(x)} ${f(y)}q${f(l / 2)} -22 ${f(l)} -8`, "#ffffff", f(c.rnd(1, 2.2)), f(c.rnd(.08, .22))); } return e; },
     nuvole(c, o){
       if(c.hd){ const y1 = (o.y || 240) + 60, base = mix(c.p.ink, c.p.mid, .5), luce = o.luce || c.p.glow;
@@ -1208,8 +2367,21 @@
         return `<g filter="${c.sfoca(.6)}">` + R(-20, -20 + 8, VW + 40, y1 + 20, c.lin([[0, luce, .0], [.6, luce, .35], [1, luce, 0]]), null, ` filter="${fl}"`) + "</g>" + R(-20, -20, VW + 40, y1 + 20, c.lin([[0, base, .95], [.7, base, .9], [1, base, 0]]), null, ` filter="${fl}"`); }
       let e = ""; const g = c.rad([[0, c.p.ink, .75], [.6, c.p.ink, .5], [1, c.p.ink, 0]]), gl = c.rad([[0, c.p.glow, .14], [1, c.p.glow, 0]]); for(let k = 0; k < (o.n || 8); k++){ const x = c.rnd(-60, 660), y = c.rnd(-20, o.y || 240), w = c.rnd(120, 240); for(let q = 0; q < 5; q++){ const dx = c.rnd(-w * .5, w * .5), dy = c.rnd(-w * .12, w * .1), r = c.rnd(w * .25, w * .45); e += E(x + dx, y + dy + r * .3, r * 1.3, r * .7, gl) + E(x + dx, y + dy, r * 1.3, r * .75, g); } } return e; },
     razzi(c, o){ let e = ""; (o.pos || [[140, 180], [460, 120], [330, 250]]).forEach(([x, y]) => e += S(`M${x - 60} ${HOR}Q${x - 40} ${y + 120} ${x} ${y}`, "#d8d0c0", 2, .25) + C(x, y, 120, c.halo(o.col || "#fff2c8", .45)) + C(x, y, 5, "#ffffff")); return e; },
-    soldi(c, o){ let e = ""; for(let k = 0; k < (o.n || 18); k++){ const x = c.rnd(0, 600), y = c.rnd(o.y0 || 80, o.y1 || 800), r = c.rnd(-60, 60); e += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)})">` + R(-20, -9, 40, 18, o.col || "#b8d8a0", .9) + R(-15, -5, 30, 10, "none", null, ` stroke="${o.col2 || "#5a7a4a"}" stroke-width="1.4"`) + C(0, 0, 3.4, o.col2 || "#5a7a4a") + "</g>"; } return e; },
-    carteCadenti(c, o){ let e = ""; for(let k = 0; k < (o.n || 16); k++){ const x = c.rnd(0, 600), y = c.rnd(60, 620), r = c.rnd(-70, 70), red = c.R() < .5; e += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)})">` + R(-12, -17, 24, 34, "#f6f2ea", .92, ' rx="3"') + C(0, 0, 4.5, red ? "#c41e2a" : "#111") + "</g>"; } return e; },
+    soldi(c, o){
+      if(c.hd){ const cols = o.cols || ["#b89a6a", "#8a9ab8", "#a88aa8", "#9ab08a"]; let e = "", sf = "";
+        for(let k = 0; k < (o.n || 18); k++){ const x = c.rnd(0, 600), y = c.rnd(o.y0 || 80, o.y1 || 800), r = c.rnd(-70, 70), sc = c.rnd(.7, 1.3), cl = c.pick(cols), sk = c.rnd(-.3, .3);
+          const b = `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)}) scale(${f(sc)} ${f(sc * c.rnd(.55, 1))}) skewX(${f(sk * 30)})">` + R(-24, -11, 48, 22, c.lin([[0, mix(cl, "#ffffff", .35)], [1, cl]]), .95) + R(-21, -8, 42, 16, "none", null, ` stroke="${mix(cl, "#000", .4)}" stroke-width=".8"`) + E(9, 0, 7, 8, mix(cl, "#000", .3), .7) + E(9, -1, 3.4, 4.4, mix(cl, "#fff", .3), .7) + R(-18, -5, 14, 1.4, mix(cl, "#000", .45)) + R(-18, -1, 10, 1.4, mix(cl, "#000", .45)) + R(-18, 3, 16, 1.4, mix(cl, "#000", .45)) + "</g>";
+          if(sc < .85) sf += b; else e += b; }
+        return `<g filter="${c.sfoca(1.4)}" opacity=".85">${sf}</g>` + e; }
+      let e = ""; for(let k = 0; k < (o.n || 18); k++){ const x = c.rnd(0, 600), y = c.rnd(o.y0 || 80, o.y1 || 800), r = c.rnd(-60, 60); e += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)})">` + R(-20, -9, 40, 18, o.col || "#b8d8a0", .9) + R(-15, -5, 30, 10, "none", null, ` stroke="${o.col2 || "#5a7a4a"}" stroke-width="1.4"`) + C(0, 0, 3.4, o.col2 || "#5a7a4a") + "</g>"; } return e; },
+    carteCadenti(c, o){
+      if(c.hd){ const semi = { c:"M0 -5C-3 -9 -8 -6 -6 -2L0 5L6 -2C8 -6 3 -9 0 -5Z", q:"M0 -7L5 0L0 7L-5 0Z", p:"M0 -7C-4 -2 -8 0 -6 4C-4 6 -2 5 -1 3L-2 7H2L1 3C2 5 4 6 6 4C8 0 4 -2 0 -7Z", f:"M0 -7A3 3 0 1 1 0 -1A3 3 0 1 1 -3 4A3 3 0 1 1 3 4A3 3 0 1 1 0 -1ZM-1 3L-2 8H2L1 3Z" };
+        const val = ["A", "K", "Q", "J", "7", "10", "3"], tipi = Object.keys(semi); let e = "";
+        for(let k = 0; k < (o.n || 16); k++){ const x = c.rnd(0, 600), y = c.rnd(60, 620), r = c.rnd(-70, 70), sc = c.rnd(.8, 1.3), dorso = c.R() < .22, sm = c.pick(tipi), rosso = sm === "c" || sm === "q", ic = rosso ? "#c41e2a" : "#141414";
+          e += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)}) scale(${f(sc)} ${f(sc * c.rnd(.6, 1))})">` + R(-13, -18, 26, 36, c.lin([[0, "#ffffff"], [1, "#e6e0d4"]]), .96, ' rx="3"') + R(-13, -18, 26, 36, "none", null, ' rx="3" stroke="#8a8478" stroke-width=".6"') +
+            (dorso ? R(-10, -15, 20, 30, "#7a1a22", .9, ' rx="2"') + S("M-10 -15L10 15M10 -15L-10 15M-10 0L0 -15L10 0L0 15Z", "#e8c86a", .7, .7) : `<path d="${semi[sm]}" fill="${ic}" transform="scale(1.3)"/><text x="-9.5" y="-10" font-family="Georgia, serif" font-weight="700" font-size="7" fill="${ic}">${c.pick(val)}</text><path d="${semi[sm]}" fill="${ic}" transform="translate(-8 -4) scale(.45)"/>`) + "</g>"; }
+        return e; }
+      let e = ""; for(let k = 0; k < (o.n || 16); k++){ const x = c.rnd(0, 600), y = c.rnd(60, 620), r = c.rnd(-70, 70), red = c.R() < .5; e += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(r)})">` + R(-12, -17, 24, 34, "#f6f2ea", .92, ' rx="3"') + C(0, 0, 4.5, red ? "#c41e2a" : "#111") + "</g>"; } return e; },
     cuori(c, o){ let e = ""; for(let k = 0; k < (o.n || 14); k++){ const x = c.rnd(40, 560), y = c.rnd(120, 620), s = c.rnd(.6, 1.6); e += G(x, y, s, P("M0 0c-6 -8 -18 -2 -10 8l10 9l10 -9c8 -10 -4 -16 -10 -8z", o.col || "#ff6aa8", f(c.rnd(.5, .9)))); } return e; },
     velocita(c, o){ let e = ""; for(let k = 0; k < (o.n || 14); k++){ const y = c.rnd(o.y0 || 480, o.y1 || 700), x = c.rnd(-50, 300); e += L(x, y, x + c.rnd(80, 220), y, "#ffffff", f(c.rnd(1, 2.4)), f(c.rnd(.12, .3))); } return e; }
   };
@@ -1402,7 +2574,7 @@
         if(!c.hd && a && a.cont) e += contorno(out, a.contCol || c.p.glow, a.cont[0], a.cont[1], a.contW, a.contA);
         if(c.hd && a && a.cont) out = `<g filter="${c.rim(f(a.cont[0] * 1.2), f(a.cont[1] * 1.2), a.contCol || c.p.glow)}">${out}</g>`;
         e += out; if(a && a.rif) c.rif += out;
-      }catch(err){}
+      }catch(err){ try{ console.warn("locandina", s.id, n, err && err.message); }catch(e2){} }
     });
     fx.forEach(([n, a]) => { if(!CIELO[n] && FX[n]) e += FX[n](c, a); });
     e += grading(c, conTesto);
@@ -1421,36 +2593,36 @@
 
   /* ---------- le 72 locandine, composte a mano ---------- */
   const STORIE = {
-    "bar-ferrante": { pal:"pioggia", tinta:{ acc:"#ffb45a", glow:"#ffd2a0" }, tag:"Il tuo capo è gentilissimo. Troppo.",
+    "bar-ferrante": { pal:"pioggia", hor:575, tinta:{ acc:"#ffb45a", glow:"#ffd2a0" }, tag:"Il tuo capo è gentilissimo. Troppo.",
       el:[["palazzi", { z:0, h:[230, 380], w:[40, 80], win:.06 }], ["duomo", { x:120, y:HOR - 50, s:.8, z:0 }], ["palazzi", { z:1, h:[110, 230], win:.1, tetti:true, x1:250 }],
-          ["bottega", { x:430, w:330, h:250, insegna:"Bar Ferrante", col:"#ffb45a", dentro:"uomo", dx:.62, ds:.8, fs:40 }], ["donna", { x:160, y:870, s:1.42, rim:1, ombrello:true, flip:true }]],
+          ["bottega", { x:438, w:316, h:250, alto:170, insegna:"Bar Ferrante", col:"#ffb45a", dentro:"uomo", dx:.62, ds:.6, fs:38, bagnato:true, tavolini:true }], ["donna", { x:160, y:870, s:1.42, rim:1, ombrello:true, flip:true }]],
       fx:[["pioggia", { n:80 }], ["bokeh", { n:10 }]] },
     trattoria: { pal:"oro", tag:"Sei mesi per salvare la trattoria di famiglia. Di fronte apre uno chef stellato.",
       el:[["luce", { x:300, y:520, r:46, t:"sole", alone:6 }], ["campanile", { x:300, s:1.25, t:"ghirlandina", z:0 }], ["palazzi", { z:1, h:[70, 140], win:.12, tetti:true }],
           ["bottega", { x:130, w:250, h:220, insegna:"Trattoria", col:"#ffc46a", dentro:"nonna", dx:.55, ds:.7, fs:36, alto:120 }], ["bottega", { x:475, w:250, h:220, insegna:"Conti", col:"#a8e6ff", tenda:"#1a2a3a", fs:38, alto:120 }],
           ["donna", { x:232, y:872, s:1.3, rim:-1, rimCol:"#ffc46a" }], ["testa", { x:372, y:876, s:1.36, flip:true, rim:1, rimCol:"#a8e6ff" }]], fx:[["bokeh", { n:8 }]] },
     palio: { pal:"pioggia", tinta:{ acc:"#ffcf7a", glow:"#e6eeff" }, tag:"Il fantino favorito muore la notte prima della corsa.",
-      el:[["luce", { x:390, y:350, r:78, t:"luna", alone:5 }], ["palazzi", { z:0, h:[120, 210], win:.12, tetti:true }], ["campanile", { x:110, s:1.3, t:"mangia", palazzo:true, z:1 }],
-          ["terra", { y:HOR - 6, h:-20, col:"#16120e" }], ["fascio", { x1:390, y1:350, x2:330, y2:VH, w1:40, w2:330, col:"#e6eeff", a:.14 }], ["cavallo", { x:300, y:505, s:1.5, z:2, cont:[2, -2], contW:4, contA:.95 }]],
+      el:[["luce", { x:420, y:300, r:64, t:"luna", alone:5 }], ["palazzi", { z:0, h:[120, 210], win:.12, tetti:true }], ["campanile", { x:110, s:1.3, t:"mangia", palazzo:true, z:1 }],
+          ["campo", { y:HOR - 6, lx:420 }], ["fascio", { x1:420, y1:300, x2:330, y2:VH, w1:40, w2:330, col:"#e6eeff", a:.12 }], ["cavallo", { x:320, y:598, s:1.12, z:2, cont:[2, -2], contW:4, contA:.95 }]],
       fx:[["pioggia", { n:70 }], ["nebbia", { n:3, k:.8 }]] },
     arena: { pal:"oro", tag:"Ventimila persone hanno visto tutto. Nessuno ha visto niente.",
       el:[["gradinate", { y0:230, y1:540 }], ["palco", { y:HOR }], ["riflettori", { x:300, y:560 }], ["tenore", { x:300, y:HOR - 22, s:1.05, rim:0, rimCol:"#ffe6b0" }]], fx:[["polvere", { n:30, y0:250 }]] },
     portofino: { pal:"pioggia", tinta:{ glow:"#e6eeff", acc:"#ffd27a" }, tag:"Una villa, una tempesta, un matrimonio. E un morto in piscina.",
-      el:[["nuvole", { n:7, y:180 }], ["fulmine", { x:190 }], ["promontorio", { x:120, y:380, z:1 }], ["villa", { x:430, y:392, s:.86, luci:true, palme:true }], ["faro", { x:200, y:HOR - 20, s:.5 }],
+      el:[["nuvole", { n:7, y:180 }], ["fulmine", { x:190 }], ["promontorio", { x:120, y:380, z:1 }], ["alberi", { t:"domestico", z:2, n:3, x1:180, x2:300, y:HOR - 60, h:[110, 150] }], ["villa", { x:430, y:392, s:.86, luci:true, palme:true, piscina:true }], ["faro", { x:200, y:HOR - 20, s:.5 }],
           ["mare", { lx:450, onde:true, ga:.35 }], ["sposa", { x:300, y:880, s:1.32, col:"#ece6dc" }]], fx:[["pioggia", { n:70 }]] },
     nebbia: { pal:"nebbia", tag:"Una ragazza sparita nella nebbia. Un paese che non vuole parlare.",
       el:[["alberi", { t:"pioppo", z:0, n:16, h:[130, 190], y:HOR - 40 }], ["nebbia", { n:6, y:HOR - 60 }], ["alberi", { t:"pioppo", z:1, n:7, h:[200, 260], y:HOR - 10, x1:-10, x2:610 }],
-          ["terra", { y:HOR - 30, h:24, z:1 }], ["bici", { x:400, y:HOR - 52, s:.95, z:2, cesto:true, rot:-4 }], ["nebbia", { n:5, y:HOR + 40 }], ["trench", { x:180, y:880, s:1.36, rim:1 }]], fx:[] },
+          ["cascina", { x:470, y:HOR - 40, s:.5, z:0 }], ["terra", { y:HOR - 30, h:24, z:1 }], ["lampione", { x:330, y:HOR - 28, h:250, cono:110 }], ["bici", { x:420, y:HOR - 52, s:.95, z:2, cesto:true, rot:-4 }], ["nebbia", { n:5, y:HOR + 40 }], ["trench", { x:180, y:880, s:1.36, rim:1 }]], fx:[] },
     matera: { pal:"tramonto", tag:"La star di Hollywood muore sul set. Ma il morto è davvero lui?",
-      el:[["sassi", {}], ["fasci", {}], ["ciak", { x:430, y:590, s:.95, rot:-10 }], ["trench", { x:170, y:880, s:1.36, rim:1 }]], fx:[["polvere", { n:24 }]] },
+      el:[["sassi", {}], ["fariSet", { pos:[[70, 700, 1], [560, 690, -1]] }], ["cinepresa", { x:440, y:HOR + 40, s:.82, flip:true }], ["ciak", { x:470, y:HOR + 150, s:.62, rot:-12 }], ["trench", { x:200, y:880, s:1.36, rim:1 }]], fx:[["polvere", { n:24 }]] },
     positano: { pal:"mare", tag:"Un'estate, un limoneto da salvare, due cuori in mezzo.",
       el:[["luce", { x:445, y:520, r:58, t:"sole" }], ["mare", { lx:445 }], ["costiera", { x:0 }], ["limoni", { x:470, y:190, s:1.05, flip:true }], ["coppia", { x:440, y:880, s:1.18, rim:0 }]], fx:[["bokeh", { n:8 }]] },
     bologna: { pal:"tramonto", tinta:{ far:"#6a2a22", mid:"#3a1410", ink:"#140806" }, tag:"Una stanza in affitto, tre coinquilini, un anno che cambierà tutto.",
       el:[["luce", { x:400, y:600, r:46, t:"sole", alone:6 }], ["palazzi", { z:0, h:[80, 180], tetti:true, x0:300 }], ["torri", { x:420, y:HOR - 10, s:1.05, z:1 }],
-          ["palazzi", { z:1, h:[60, 120], win:.2, tetti:true, x0:330 }], ["portico", { vx:340, vy:610 }], ["coppia", { x:340, y:880, s:1.15, rim:1 }]], fx:[["bokeh", { n:8 }]] },
+          ["palazzi", { z:1, h:[60, 120], win:.2, tetti:true, x0:330 }], ["portico", { vx:340, vy:610 }], ["bici", { x:150, y:770, s:.46, z:2, rot:-2 }], ["bici", { x:236, y:712, s:.32, z:2, flip:true }], ["coppia", { x:340, y:880, s:1.15, rim:1 }]], fx:[["bokeh", { n:8 }]] },
     firenze: { pal:"oro", tag:"Sotto il quadro c'è un altro quadro. E qualcuno lo vuole a tutti i costi.",
       el:[["luce", { x:150, y:600, r:44, t:"sole", alone:6 }], ["cupola", { x:165, s:1.12, cost:true, z:0, rif:1 }], ["campanile", { x:455, s:.9, t:"giotto", z:0, rif:1 }],
-          ["palazzi", { z:1, h:[50, 120], win:.18, tetti:true, rif:1 }], ["lago", { ra:.45 }], ["quadro", { x:300, y:432, s:.64, volto:true }]], fx:[] },
+          ["palazzi", { z:1, h:[50, 120], win:.18, tetti:true, rif:1 }], ["pontevecchio", { x:300, y:HOR + 4, s:.82, rif:1 }], ["lago", { ra:.45 }], ["quadro", { x:300, y:412, s:.62, sotto:true }]], fx:[] },
     langhe: { pal:"tramonto", tag:"Una nonna che non conoscevi. Una vigna. Un vicino insopportabile.",
       el:[["luce", { x:330, y:560, r:58, t:"sole" }], ["foschia", { y:HOR - 40, a:.25 }], ["colline", { vigne:true, amp:50 }], ["cascina", { x:430, y:HOR - 96, s:.62 }],
           ["coppia", { x:250, y:HOR - 52, s:.45, z:2, rim:0 }], ["uva", { x:120, y:400, s:1.3, ramo:true }]], fx:[] },
@@ -1462,11 +2634,11 @@
           ["ragazzo", { x:300, y:880, s:1.4, rim:0, rimCol:"#5ee1ff" }], ["pacco", { x:300, y:690, s:.55 }]], fx:[["pioggia", { n:60, col:"#ff9ad8" }]] },
     gransasso: { pal:"spazio", hor:300, tinta:{ acc:"#9fe8ff", far:"#2a3a62", glow:"#cfe0ff" }, tag:"Un messaggio arriva dal futuro. E porta la tua firma.",
       el:[["stelle", { n:50, y:300 }], ["foschia", { y:300, h:150, a:.35 }], ["montagne", { alt:210, cols:["#33456e", "#18223e"] }], ["roccia", { y:300, cols:["#10161e", "#030508"], strati:"#2a3442" }], ["fascio", { x1:300, y1:0, x2:300, y2:600, w1:2, w2:10, col:"#cff6ff", a:.8 }],
-          ["rivelatore", { x:300, y:590, r:205 }], ["trench", { x:300, y:880, s:1.05, rim:0, rimCol:"#9fe8ff" }]], fx:[["segnale", { x:300, y:590 }]] },
+          ["rivelatore", { x:300, y:590, r:205 }], ["testa", { x:300, y:880, s:1.05, rim:0, rimCol:"#9fe8ff", abito:"cappotto", posa:"tasche" }]], fx:[["segnale", { x:300, y:590 }]] },
     venezia2140: { pal:"abisso", tag:"Il mare si è preso Venezia. Le cupole stanno per cedere.",
       el:[["raggi", { n:6 }], ["venezia", { x:430, s:1.05, z:0 }], ["cupolaVetro", { crepe:true }], ["astronauta", { x:300, y:720, s:1.05, rot:-12, rim:0, rimCol:"#bff6ff" }], ["bolle", { n:40 }]], fx:[] },
     "robot-nonna": { pal:"alba", tag:"Doveva solo ricordarle le medicine. Ha scoperto la vita.",
-      el:[["luce", { x:300, y:470, r:52, t:"sole" }], ["cittaAlta", {}], ["foschia", { y:HOR, a:.2 }], ["nonna", { x:240, y:880, s:1.3, rim:0 }], ["robot", { x:372, y:880, s:1.2, rim:0 }]], fx:[["lucciole", { n:14 }]] },
+      el:[["luce", { x:300, y:470, r:52, t:"sole" }], ["cittaAlta", {}], ["foschia", { y:HOR, a:.2 }], ["nonna", { x:250, y:800, s:1.2, rim:0 }], ["robot", { x:372, y:800, s:1.06, rim:0 }]], fx:[["lucciole", { n:14 }]] },
     etna: { pal:"incubo", tinta:{ acc:"#7dff9a", glow:"#c8ffd8" }, tag:"Una luce cade sull'Etna. Da quella notte, tutti fanno lo stesso sogno.",
       el:[["stelle", { n:70 }], ["meteora", { x1:560, y1:40, x2:318, y2:380, col:"#b8ffcf", w:6 }], ["vulcano", { x:300, s:1.3, z:0, fumo:true, cristalli:true, fumoCol:"#6a7a90" }],
           ["palazzi", { z:1, h:[16, 50], w:[14, 30], win:.5, wc:"#ffcf7a" }], ["trench", { x:200, y:880, s:1.3, rim:1 }]], fx:[] },
@@ -1479,17 +2651,17 @@
       el:[["nuvole", { n:8, y:200 }], ["fulmine", { x:150 }], ["mare", { lx:300, onde:true, ga:.25 }], ["barcaVela", { x:370, y:HOR + 20, s:1.05, rot:-12 }], ["scogli", { x0:-40, x1:300, y:HOR + 30, col:"#2a1a1e" }], ["cassa", { x:150, y:640, s:.85 }]], fx:[["pioggia", { n:50 }]] },
     "napoli-sotto": { pal:"notte", hor:300, tag:"Sotto Napoli c'è un'altra Napoli. E una porta chiusa dal 1943.",
       el:[["luce", { x:500, y:200, r:22, t:"luna" }], ["vulcano", { x:430, y:300, s:.4, fumo:false }], ["palazzi", { y:300, z:1, h:[40, 110], win:.3, tetti:true }],
-          ["roccia", { y:300, cols:["#2e1e12", "#080402"] }], ["caverna", { x:300, top:420, w:480, murata:true, my:450 }], ["ragazzo", { x:190, y:810, s:1.0, rim:1, rimCol:"#ffb85a" }], ["lanterna", { x:238, y:700, s:.4 }], ["donna", { x:410, y:814, s:.96, rim:-1, rimCol:"#ffb85a" }]], fx:[["polvere", { n:36, y0:380, col:"#ffd9a0" }]] },
+          ["roccia", { y:300, cols:["#2e1e12", "#080402"] }], ["caverna", { x:300, top:340, w:500, murata:true, my:372 }], ["ragazzo", { x:190, y:730, s:1.0, rim:1, rimCol:"#ffb85a" }], ["lanterna", { x:238, y:620, s:.4 }], ["donna", { x:410, y:734, s:.96, rim:-1, rimCol:"#ffb85a" }]], fx:[["polvere", { n:36, y0:380, col:"#ffd9a0" }]] },
     millemiglia: { pal:"alba", tag:"Una contessa di 84 anni, un'Alfa del 1955 e mille miglia di guai.",
       el:[["luce", { x:150, y:500, r:52, t:"sole" }], ["colline", { cipressi:true, amp:46 }], ["strada", { d:"M-40 720Q120 650 220 616Q330 590 460 598Q560 606 640 566", w:64 }], ["auto", { x:330, y:588, s:1.05, scia:true }]], fx:[["polvere", { n:30, y0:520 }], ["velocita", { y0:470, y1:600 }]] },
-    "codice-rosso": { pal:"notte", tinta:{ acc:"#ff3a3a", glow:"#ff7a7a" }, tag:"Hai trovato il codice. Ora il codice ha trovato te.",
-      el:[["codice", { n:22, rosso:.6 }], ["alone", { x:300, y:420, r:260, col:"#ff3a3a", a:.35 }], ["palazzi", { z:0, h:[150, 280], win:.06, wc:"#ff5a5a" }], ["mole", { x:300, s:1.25, z:1 }], ["palazzi", { z:1, h:[70, 150], win:.1, wc:"#ffcf7a", tetti:true }], ["trench", { x:300, y:880, s:1.4, rim:0 }]], fx:[] },
+    "codice-rosso": { pal:"notte", hor:560, tinta:{ acc:"#ff3a3a", glow:"#ff7a7a" }, tag:"Hai trovato il codice. Ora il codice ha trovato te.",
+      el:[["alone", { x:300, y:420, r:260, col:"#ff3a3a", a:.3 }], ["palazzi", { z:0, h:[150, 280], win:.06, wc:"#ff5a5a" }], ["mole", { x:405, s:1.12, z:1, stella:"#ff3a3a" }], ["palazzi", { z:1, h:[70, 150], win:.12, wc:"#ffcf7a", tetti:true }], ["trench", { x:215, y:800, s:1.4, rim:1 }], ["mirino", { x1:640, y1:170, x2:236, y2:584 }]], fx:[["pioggia", { n:50, col:"#ffb0b0" }]] },
     crociera: { pal:"notte", hor:560, tinta:{ acc:"#ffd27a" }, tag:"Tremila passeggeri e un biglietto: prima di Barcellona morirà qualcuno.",
-      el:[["luce", { x:470, y:170, r:40, t:"luna" }], ["stelle", { n:40, y:560 }], ["faro", { x:70, y:560, s:.85, t:"lanterna" }], ["nave", { x:330, y:590, s:1.05, rif:1 }], ["mare", { lx:470, ra:.35 }], ["donna", { x:130, y:880, s:1.3, rim:1, rimCol:"#ffd27a" }]], fx:[] },
+      el:[["luce", { x:470, y:170, r:40, t:"luna" }], ["stelle", { n:40, y:560 }], ["faro", { x:70, y:560, s:.85, t:"lanterna" }], ["nave", { x:340, y:592, s:.92, rif:1, flip:true, rossa:[-60, -137] }], ["mare", { lx:470, ra:.35 }], ["donna", { x:130, y:880, s:1.3, rim:1, rimCol:"#ffd27a" }]], fx:[] },
     protezione: { pal:"ghiaccio", tinta:{ sky:["#040a14", "#0e2236", "#2a4a66", "#6a8aa6"] }, tag:"Nuovo nome, nuova vita, un paese tra i monti. Ma il passato ti ha trovato.",
       el:[["luce", { x:440, y:210, r:36, t:"luna" }], ["montagne", { alt:380 }], ["alberi", { t:"pino", z:1, n:16, h:[60, 120], y:HOR - 4 }], ["borgo", { x:220, luci:.35 }], ["fari", { x:420, y:HOR + 30 }], ["trench", { x:250, y:880, s:1.36, rim:1 }]], fx:[["neve", { n:40 }]] },
     borgo: { pal:"incubo", tag:"Alle 3:33 la campana suona. Non c'è nessuno a tirarla.",
-      el:[["luce", { x:320, y:270, r:74, t:"luna" }], ["stelle", { n:30 }], ["borgo", { x:300, luci:.4 }], ["nebbia", { n:5, y:HOR - 20 }], ["bambina", { x:300, y:780, s:1.15, rim:0 }]], fx:[] },
+      el:[["luce", { x:320, y:270, r:74, t:"luna" }], ["stelle", { n:30 }], ["borgo", { x:300, luci:.4 }], ["nebbia", { n:5, y:HOR - 20 }], ["bambina", { x:300, y:704, s:1.25, rim:0 }]], fx:[] },
     "villa-lago": { pal:"lago", tinta:{ sky:["#070b10", "#141f2a", "#2c3e4c", "#5a6a74"], glow:"#e8f0ff", acc:"#ffcf7a" }, tag:"Una villa, un inverno, una regola: non aprire mai la stanza della musica.",
       el:[["montagne", { alt:300, rif:1 }], ["alberi", { t:"cipresso", z:2, n:2, x1:150, x2:450, h:[230, 250], rif:1 }], ["villa", { x:300, s:1.2, una:true, rif:1 }], ["lago", { ra:.5 }]], fx:[["neve", { n:50 }], ["nebbia", { n:4 }]] },
     janare: { pal:"incubo", tinta:{ acc:"#b8ff9a" }, tag:"Studi le streghe del Sannio. Le streghe stanno studiando te.",
@@ -1504,12 +2676,12 @@
       el:[["vulcano", { x:440, s:.7, z:0, fumo:false }], ["carcere", { h:230 }], ["coppola", { x:300, y:890, s:1.45, rim:0 }], ["sbarre", { n:5, x0:70, x1:530, trav:[300] }]], fx:[["fumo", { n:5 }]] },
     montagna: { pal:"sangue", tag:"Siete cresciuti nello stesso paese. Lui è diventato il capo. Tu sei lo Stato.",
       el:[["luce", { x:300, y:400, r:72, t:"sole" }], ["borgo", { x:300, luci:.12 }], ["ficodindia", { x:60, y:HOR + 80, r:46 }], ["ficodindia", { x:550, y:HOR + 90, r:40 }],
-          ["coppola", { x:252, y:886, s:1.4, flip:true, rim:-1 }], ["uomo", { x:350, y:886, s:1.4, rim:1 }]], fx:[["polvere", { n:20 }]] },
+          ["coppola", { x:175, y:886, s:1.42, flip:true, rim:1, posa:"conserte", abito:"giacca" }], ["trench", { x:430, y:886, s:1.42, rim:-1 }]], fx:[["polvere", { n:20 }]] },
     "quarta-dimensione": { pal:"incubo", tinta:{ acc:"#9fd8ff", glow:"#e6f6ff" }, tag:"Lo studio del tuo professore ha cinque stanze. Stasera ne conti sei.",
-      el:[["stelle", { n:30 }], ["tesseratto", { x:300, y:270, r:110 }], ["pisa", { x:120, s:.85, z:0 }], ["palazzi", { z:1, h:[60, 140], win:.15, tetti:true }], ["porta", { x:350, y:HOR + 10, w:80, h:170 }], ["trench", { x:250, y:880, s:1.3, rim:1 }]], fx:[["cubi", { n:5 }]] },
+      el:[["stelle", { n:30 }], ["tesseratto", { x:300, y:270, r:110 }], ["pisa", { x:470, s:.85, z:0 }], ["palazzi", { z:1, h:[60, 140], win:.15, tetti:true }], ["porta", { x:350, y:HOR + 10, w:80, h:170 }], ["trench", { x:215, y:880, s:1.3, rim:1 }]], fx:[["cubi", { n:5 }]] },
     cacciatore: { pal:"verde", tinta:{ acc:"#6ec8ff", glow:"#d8ecff" }, tag:"Ti pagano per uccidere mostri. Ma i peggiori hanno un volto umano.",
       el:[["luce", { x:300, y:330, r:86, t:"luna", alone:5 }], ["montagne", { alt:240, neve:false }], ["castello", { x:300, y:HOR - 80, s:.62, z:1, rupe:true }], ["alberi", { t:"pino", z:2, n:12, h:[170, 280], x1:-30, x2:630 }],
-          ["lupo", { x:120, y:600, s:1.05, z:2, cont:[0, -3], contW:3 }], ["cacciatore", { x:390, y:886, s:1.42, rim:-1, rimCol:"#8ad8ff" }], ["lanterna", { x:318, y:740, s:.5, col:"#6ec8ff" }]], fx:[["nebbia", { n:4 }], ["lucciole", { n:14, col:"#6ec8ff" }]] },
+          ["lupo", { x:110, y:640, s:.95, z:2, cont:[0, -3], contW:3 }], ["cacciatore", { x:390, y:886, s:1.42, rim:-1, rimCol:"#8ad8ff" }], ["lanterna", { x:318, y:740, s:.5, col:"#6ec8ff" }]], fx:[["nebbia", { n:4 }], ["lucciole", { n:14, col:"#6ec8ff" }]] },
     infinito: { pal:"spazio", tag:"Una sonda porta nello spazio una poesia. Duecento anni dopo, qualcuno risponde.",
       el:[["galassia", {}], ["stelle", { n:80 }], ["pianeta", { x:500, y:220, r:150 }], ["sonda", { x:230, y:330, s:1.0 }], ["onde", { x:300, y:HOR - 160, r:46 }],
           ["parabola", { x:120, s:.7 }], ["parabola", { x:300, s:1.0 }], ["parabola", { x:480, s:.8, flip:true }]], fx:[] },
@@ -1526,15 +2698,15 @@
     stalingrado: { pal:"fuoco", hor:470, tag:"Attraversi il Volga sotto le bombe. Di là c'è la città più contesa del mondo.",
       el:[["rovine", { h:[130, 300], rif:1 }], ["lago", { ra:.6 }], ["chiatta", { x:300, y:590, s:1.2, cont:[0, -2], contCol:"#ffb35a", contW:3, contA:.7 }]], fx:[["razzi", { pos:[[120, 150], [470, 100]] }], ["fumo", { n:10 }], ["braci", { n:50 }]] },
     piave: { pal:"seppia", tag:"Hai diciotto anni. Il fronte è crollato a Caporetto. Ora tocca a voi.",
-      el:[["montagne", { alt:280, neve:false }], ["razzi", {}], ["soldato", { x:300, y:880, s:1.45, rim:0 }], ["trincea", { y:770 }]], fx:[["fumo", { n:7 }]] },
+      el:[["montagne", { alt:280, neve:false }], ["razzi", {}], ["soldato", { x:300, y:800, s:1.45, rim:0 }], ["trincea", { y:770 }]], fx:[["fumo", { n:7 }]] },
     ossola: { pal:"alba", tag:"Settembre 1944: i partigiani liberano l'Ossola. Durerà quaranta giorni.",
-      el:[["luce", { x:300, y:530, r:52, t:"sole" }], ["montagne", { alt:420 }], ["palazzi", { z:1, h:[20, 60], w:[16, 34], win:.3, tetti:true }], ["campanile", { x:210, y:HOR, s:.4, t:"chiesa", z:1 }],
-          ["bandiera", { x:330, y:640, s:.85, colori:["#2a8a4a", "#f2efe6", "#c8241e"] }], ["banda", { x:300, y:884, s:1.0, tipi:["coppola", "donna", "soldato", "ragazzo"], rim:0 }]], fx:[] },
+      el:[["luce", { x:300, y:470, r:52, t:"sole" }], ["montagne", { alt:270 }], ["palazzi", { z:1, h:[20, 60], w:[16, 34], win:.3, tetti:true }], ["campanile", { x:210, y:HOR, s:.4, t:"chiesa", z:1 }],
+          ["bandiera", { x:330, y:560, s:.85, colori:["#2a8a4a", "#f2efe6", "#c8241e"] }], ["banda", { x:300, y:812, s:1.26, tipi:["coppola", "donna", "soldato", "ragazzo"], rim:0, look:[{ posa:"porto", arma:"fucile", abito:"cappotto" }, { abito:"cappottoF", posa:"tasche" }, {}, { posa:"spalla", arma:"fucile" }] }]], fx:[] },
     mille: { pal:"alba", tag:"Mille volontari, due vecchi piroscafi, nessuna speranza.",
       el:[["luce", { x:430, y:600, r:56, t:"sole" }], ["mare", { lx:430 }], ["piroscafo", { x:430, y:HOR + 18, s:.9 }], ["piroscafo", { x:190, y:HOR + 10, s:.6, flip:true }], ["scogli", { x0:-30, x1:600, y:HOR + 150 }],
-          ["garibaldino", { x:250, y:890, s:1.42, rim:1 }], ["bandiera", { x:160, y:720, s:1.0, colori:["#2a8a4a", "#f2efe6", "#c8241e"], flip:true }]], fx:[] },
+          ["garibaldino", { x:250, y:800, s:1.42, rim:1 }], ["bandiera", { x:160, y:640, s:1.0, colori:["#2a8a4a", "#f2efe6", "#c8241e"], flip:true }]], fx:[] },
     canne: { pal:"sangue", tinta:{ glow:"#ffb070" }, tag:"Ottantamila Romani contro Annibale. Sopravvivere sarà la tua vergogna.",
-      el:[["luce", { x:300, y:600, r:82, t:"sole" }], ["lance", {}], ["polvere", { n:50, y0:420 }], ["legionario", { x:300, y:890, s:1.45, rim:0 }]], fx:[] },
+      el:[["luce", { x:300, y:600, r:82, t:"sole" }], ["lance", {}], ["polvere", { n:50, y0:420 }], ["legionario", { x:300, y:806, s:1.45, rim:0 }]], fx:[] },
     riviera: { pal:"neon", tag:"Tre criminali, una città di discoteche e influencer, un colpo impossibile.",
       el:[["neon", {}], ["banda", { x:300, y:740, s:1.05, tipi:["uomo", "donna", "ragazzo"], rim:0, rimCol:"#ff7ad8" }], ["supercar", { x:300, y:800, s:1.05 }]], fx:[] },
     "gioia-tauro": { pal:"notte", tinta:{ acc:"#ffb347", glow:"#ffd08a", sky:["#04060c", "#0e1426", "#2e2a36", "#6a4a3a"] }, tag:"Dentro un container di banane c'è abbastanza cocaina da comprare una città.",
@@ -1546,17 +2718,17 @@
       el:[["palazzi", { z:0, h:[180, 300], win:.06 }], ["cupoleRosse", { x:110, y:HOR, s:.85 }], ["bottega", { x:400, w:320, h:270, insegna:"Zucchero", col:"#ff9ec6", fs:46, alto:90 }],
           ["torta", { x:400, y:628, s:.66, cassata:true }], ["uomo", { x:190, y:886, s:1.42, rim:1 }]], fx:[] },
     motoscafi: { pal:"notte", hor:520, tinta:{ glow:"#cfe6ff", acc:"#7fb8ff" }, tag:"Di notte l'Adriatico diventa un'autostrada. Tu sei al timone.",
-      el:[["luce", { x:120, y:190, r:36, t:"luna" }], ["stelle", { n:40, y:520 }], ["palazzi", { z:0, h:[8, 26], w:[10, 24], win:.4, wc:"#ffd27a" }], ["mare", { lx:120, onde:true }], ["elicottero", { x:350, y:210, s:.8, h:520, cont:[0, -2], contW:3 }], ["motoscafo", { x:330, y:640, s:1.35, flip:true }]], fx:[] },
+      el:[["luce", { x:120, y:190, r:36, t:"luna" }], ["stelle", { n:40, y:520 }], ["palazzi", { z:0, h:[8, 26], w:[10, 24], win:.4, wc:"#ffd27a" }], ["mare", { lx:120, onde:true }], ["elicottero", { x:350, y:200, s:.8, h:440, cont:[0, -2], contW:3 }], ["motoscafo", { x:330, y:552, s:1.22, flip:true }]], fx:[] },
     "re-di-roma": { pal:"oro", tag:"Sei ragazzi di borgata decidono di prendersi Roma. Il prezzo sarà tutto.",
       el:[["luce", { x:300, y:560, r:50, t:"sole", alone:6 }], ["cupola", { x:300, s:1.3, z:0 }], ["palazzi", { z:1, h:[50, 140], win:.15, tetti:true }],
-          ["banda", { x:300, y:890, s:.98, tipi:["uomo", "coppola", "testa", "ragazzo", "uomo", "testa"], rim:0, passo:80 }]], fx:[["fumo", { n:6 }]] },
+          ["banda", { x:300, y:810, s:1.1, tipi:["uomo", "coppola", "testa", "ragazzo", "uomo", "testa"], rim:0, passo:76, look:[{ posa:"tasche", abito:"cappotto" }, { posa:"conserte", abito:"giubbotto" }, { posa:"fermo", abito:"giacca", k:1.04 }, { posa:"sigaretta" }, { posa:"tasche", abito:"trench", k:.97 }, { posa:"conserte", abito:"giubbotto", k:.95 }] }]], fx:[["fumo", { n:6 }]] },
     ostia: { pal:"mare", tag:"Il nuovo proprietario dello stabilimento non ha mai fatto un bagno in vita sua.",
       el:[["luce", { x:190, y:600, r:60, t:"sole" }], ["mare", { lx:190 }], ["pontile", { x:450, w:160, rotonda:true }], ["ombrelloni", { y:HOR + 60 }], ["torretta", { x:100, y:HOR + 150, s:1.0 }], ["uomo", { x:320, y:890, s:1.42, rim:0 }]], fx:[] },
     "rien-ne-va-plus": { pal:"nebbia", tinta:{ acc:"#ffd27a", glow:"#fff0d0", sky:["#0c1014", "#1e262c", "#3e4a52", "#6a7278"] }, tag:"Il cliente più generoso della sala ti chiede di aiutarlo a svuotarla.",
       el:[["venezia", { x:430, s:.95, z:0, luci:true, rif:1 }], ["palazzi", { z:1, h:[110, 190], win:.4, wc:"#ffd27a", x0:360, rif:1 }], ["lago", { ra:.4, gc:"#ffd27a" }], ["gondola", { x:220, y:HOR + 70, s:.9 }],
           ["nebbia", { n:5 }], ["uomo", { x:300, y:890, s:1.42, rim:0, rimCol:"#ffd27a" }]], fx:[["carteCadenti", { n:18 }]] },
     lambrate: { pal:"nebbia", tinta:{ acc:"#ffcf7a", glow:"#ffe8c0", sky:["#0e1012", "#24282a", "#4a4e4c", "#7a7a70"] }, tag:"Una notte entrano tre rapinatori. E il capo ti lascia la sua parte del bottino.",
-      el:[["palazzi", { z:0, h:[110, 220], win:.1 }], ["binario", { y:560 }], ["lampioni", { x:110 }], ["nebbia", { n:6, y:HOR - 30 }], ["banda", { x:300, y:886, s:1.2, tipi:["uomo", "uomo", "uomo"], rim:0, passo:90 }]], fx:[["soldi", { n:16, y0:100, y1:600 }]] },
+      el:[["palazzi", { z:0, h:[110, 220], win:.1 }], ["binario", { y:560 }], ["lampioni", { x:110 }], ["nebbia", { n:6, y:HOR - 30 }], ["banda", { x:300, y:886, s:1.2, tipi:["uomo", "uomo", "uomo"], rim:0, passo:90, look:[{ posa:"valigia", abito:"trench" }, { posa:"tasche", abito:"cappotto", k:1.03 }, { posa:"pistola", abito:"giacca" }] }]], fx:[["soldi", { n:16, y0:100, y1:600 }]] },
     supramonte: { pal:"tramonto", tinta:{ far:"#7a5a58", mid:"#3a2828" }, tag:"Ti chiedono di custodire una cosa in una grotta. La cosa è un ragazzino rapito.",
       el:[["luce", { x:430, y:540, r:48, t:"sole" }], ["montagne", { alt:380, neve:false, cols:["#8a6a64", "#4a3434"] }], ["grotta", { x:420, y:HOR - 60, w:110, h:84 }], ["alberi", { t:"ulivo", z:2, n:4, h:[120, 170], y:HOR + 30 }],
           ["pecore", { xs:[150, 230, 470], y:810, s:.8 }], ["pastore", { x:280, y:890, s:1.4, rim:1 }]], fx:[] },
@@ -1568,7 +2740,7 @@
     gela: { pal:"fuoco", tag:"Metà dei tuoi alunni di terza media ha già un soprannome da adulto.",
       el:[["ciminiere", {}], ["stella", { x:300, y:330, r:120, col:"#f2ead8", w:10, a:.5 }], ["ragazzo", { x:250, y:886, s:1.15, rim:0 }], ["ragazzo", { x:360, y:888, s:1.05, rim:0 }]], fx:[["fumo", { n:8 }]] },
     caravaggio: { pal:"oro", tinta:{ sky:["#040302", "#0e0804", "#1e1208", "#3a2410"] }, tag:"Nel 1969 hanno rubato un Caravaggio. Un vecchio morente sa dov'è.",
-      el:[["quadro", { x:300, y:604, s:1.14, vuoto:true }]], fx:[["polvere", { n:40, y0:80 }]] },
+      el:[["oratorio", {}], ["quadro", { x:300, y:604, s:1.14, vuoto:true }]], fx:[["polvere", { n:40, y0:80 }]] },
     fuorigioco: { pal:"notte", tag:"Sei il capitano. Un amico ti offre centomila euro per perdere una partita.",
       el:[["stadio", {}], ["pallone", { x:300, y:420, s:1.0 }], ["ragazzo", { x:300, y:890, s:1.45, rim:0, numero:"10" }]], fx:[["soldi", { n:14, y0:60, y1:560, col:"#dcd0a8", col2:"#7a6a3a" }]] },
     lugano: { pal:"lago", hor:560, tinta:{ glow:"#fff0d0" }, tag:"Il tuo nuovo cliente paga in contanti. Dieci milioni alla volta.",
@@ -1583,10 +2755,10 @@
           ["spallone", { x:150, y:618, s:.55, rim:1 }], ["spallone", { x:240, y:574, s:.55, rim:1 }], ["spallone", { x:330, y:530, s:.55, rim:1 }], ["spallone", { x:415, y:484, s:.55, rim:1 }],
           ["nebbia", { n:6, y:HOR + 60 }], ["lanterna", { x:520, y:820, s:.35 }]], fx:[["neve", { n:40 }]] },
     bandito: { pal:"oro", tag:"Il bandito più amato e più ricercato dell'isola ti offre un fucile e un sogno.",
-      el:[["luce", { x:300, y:590, r:70, t:"sole" }], ["montagne", { alt:240, neve:false }], ["bandito", { x:300, y:840, s:1.45, rim:0 }], ["grano", { y:700 }]], fx:[["polvere", { n:30 }]] },
+      el:[["luce", { x:300, y:590, r:70, t:"sole" }], ["montagne", { alt:240, neve:false }], ["bandito", { x:300, y:784, s:1.45, rim:0 }], ["grano", { y:700 }]], fx:[["polvere", { n:30 }]] },
     mulberry: { pal:"seppia", tag:"Sbarchi a Ellis Island con una valigia di cartone. New York ha due strade.",
       el:[["luce", { x:300, y:560, r:46, t:"sole", alone:6 }], ["grattacieli", { t:[[330, 470], [470, 400]] }], ["liberty", { x:120, s:.8, z:1 }], ["mare", { lx:300 }], ["piroscafo", { x:430, y:HOR + 24, s:.75 }],
-          ["coppola", { x:250, y:890, s:1.42, rim:0 }], ["valigia", { x:330, y:880, s:.62 }]], fx:[["fumo", { n:5 }]] },
+          ["coppola", { x:250, y:800, s:1.42, rim:0, posa:"valigia" }]], fx:[["fumo", { n:5 }]] },
     ferracane: { pal:"sangue", tag:"Ti hanno ucciso il padre e la madre. Tutti sanno chi è stato. Nessuno parla.",
       el:[["luce", { x:300, y:600, r:66, t:"sole" }], ["vulcano", { x:300, s:1.25, z:0, lava:true, fumoCol:"#5a3a34" }], ["alberi", { t:"agrumi", z:1, n:9, h:[60, 96], y:HOR + 16, foglie:"#140505", frutti:"#e8741a" }],
           ["velo", { x:180, y:872, s:1.2, rim:0 }], ["coppola", { x:340, y:890, s:1.45, rim:0 }], ["rosa", { x:520, y:540, s:.62, rot:-18 }]], fx:[["braci", { n:20 }]] },
@@ -1609,6 +2781,7 @@
     return P(`M-10 ${HOR + 30}Q300 ${HOR - 30} 610 ${HOR + 30}V${VH}H-10Z`, c.col(2)) + e;
   };
   EL.quadro = (c, o) => {
+    if(c.hd && o.sotto) return quadroSotto(c, o);
     let e = P("M-170 -760L-40 -310H40L170 -760Z", c.lin([[0, "#fff3d0", 0], [1, "#fff3d0", .22]])) + C(0, -150, 300, c.halo("#ffe6b0", .22));
     e += R(-150, -310, 300, 370, c.lin([[0, "#f6d47a"], [.5, "#b8862a"], [1, "#6a4a12"]], 1, 1)) + R(-128, -288, 256, 326, "#2a1c10");
     if(o.vuoto){
@@ -1623,11 +2796,13 @@
     return G(o.x, o.y, o.s || 1, e);
   };
   EL.pecore = (c, o) => {
+    if(c.hd) return pecoreHD(c, o);
     let e = "";
     (o.xs || [180, 260, 420]).forEach((x, i) => { const y = (o.y || 790) + (i % 2) * 14, s = o.s || .8; e += G(x, y, s, [-30, -10, 10, 30].map(dx => C(dx, -40, 22, "#d8d2c4")).join("") + C(0, -58, 24, "#e6e0d2") + E(44, -50, 14, 11, "#2a2420") + [-24, -8, 10, 26].map(dx => R(dx, -24, 5, 24, "#2a2420")).join("") + R(-46, -78, 104, 50, c.lin([[0, "#000", 0], [1, "#000", .45]])), null, i % 2 === 1); });
     return e;
   };
   EL.bufale = (c, o) => {
+    if(c.hd) return bufaleHD(c, o);
     let e = "";
     (o.xs || [120, 470]).forEach((x, i) => e += G(x, o.y || 700, o.s || .9, E(0, -60, 70, 34, c.col(2)) + E(70, -70, 22, 18, c.col(2)) + S("M64 -84Q50 -110 80 -112M80 -86Q100 -110 108 -96", c.col(2), 6) + [-46, -20, 24, 44].map(dx => R(dx, -34, 10, 34, c.col(2))).join(""), null, i % 2 === 1));
     return e;
@@ -1725,6 +2900,9 @@
       let size = st.size * u * (L.length === 1 ? 1 : L.length === 2 ? .92 : .8);
       L.forEach(l => size = Math.min(size, MAXW / (largo(k, l, st.ls * 100 * u) / (100 * u))));
       let sc = size * (L.length === 1 ? 1.12 : L.length === 2 ? 1 : .8);
+      // un titolo troppo alto copre la scena: oltre i 230 punti di altezza perde punti
+      const alto = L.length * size * (st.up ? .98 : 1.02);
+      if(alto > 230 * u) sc *= Math.pow(230 * u / alto, 1.6);
       L.slice(0, -1).forEach(l => { if(PICCOLE.test(l.split(" ").pop())) sc *= .9; });
       L.forEach(l => { if(l.length <= 2) sc *= .6; });
       if(!best || sc > best.sc) best = { L, size, sc };
@@ -1843,7 +3021,7 @@
     k.translate(Math.random() * 192, Math.random() * 192); k.fillRect(-192, -192, Wpx + 384, Hpx + 384); k.restore();
   }
 
-  const VERSIONE_ARTE = "2.8.1";
+  const VERSIONE_ARTE = "2.9.0";
   let dbP = null;
   function archivio(){
     if(dbP) return dbP;

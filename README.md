@@ -9,6 +9,14 @@ Nella versione 2.8 ogni storia ha la sua **locandina da cinema**, composta a man
 - **atmosfera**: nebbia, fumo e nuvole generate dal rumore, riflessi sull'acqua, pioggia a più strati, grana da pellicola
 - **impaginazione**: nomi del cast in alto, frase di lancio, titolo lavorato (oro, cromo, neon, consumato), titoli di coda
 
+Nella versione 2.9 le locandine sono molto più dettagliate:
+
+- **personaggi**: corpi in proporzione, con vestiti (giacca, cappotto, trench, divisa, mantello, abito da sposa), cappelli e capelli, pose (mani in tasca, braccia conserte, ombrello, fucile, valigia, abbraccio) e oggetti
+- **paesaggi**: montagne frattali con neve, facce in ombra, canaloni e boschi; colline con campi e filari; abeti, cipressi, pioppi, ulivi, pini domestici e latifoglie
+- **luoghi e oggetti**: bottega con vetrina, insegna e tenda; Mole, Ponte Vecchio, Sassi, Castel del Monte, Arena con le candeline, luminarie del Salento, Vele, nave da crociera, gru del porto, piroscafi del 1860, cavallo al galoppo, buco nero, tripode
+- **luce**: raggi del sole, luna con mari e crateri, fulmini ramificati, laser, lampioni nella nebbia
+- **titoli**: un titolo troppo alto viene impaginato su meno righe, così copre meno la scena
+
 Le locandine vengono disegnate sul telefono la prima volta e poi conservate, quindi si aprono subito. Le storie create da chi gioca ricevono una locandina costruita dal loro genere. Nella scheda della storia si tocca la locandina per vederla a tutto schermo.
 
 Nelle versioni 2.6 e 2.7:
