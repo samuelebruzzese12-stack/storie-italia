@@ -1,14 +1,15 @@
 # Storie d'Italia – Chat AI offline
 
-App Android di storie interattive con personaggi AI, ambientate in Italia: 70 storie tra gialli, romantiche, vita reale, fantascienza, avventura, azione, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
+App Android di storie interattive con personaggi AI, ambientate in Italia: 72 storie tra gialli, romantiche, vita reale, fantascienza, avventura, azione, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
 L'AI funziona **direttamente sul telefono**: gratis, senza abbonamenti, anche senza internet.
 
-Nella versione 2.6:
+Nelle versioni 2.6 e 2.7:
 
 - **voce narrante**: il narratore e ogni personaggio leggono ad alta voce con un tono diverso (sintesi vocale del telefono, anche offline);
 - **suoni d'atmosfera**: pioggia, mare, vicoli, spazio, fronte, neon e altri 12 ambienti generati dal vivo, senza file audio;
 - **Risolvi il caso**: nei gialli e nei thriller accusi il colpevole, con 3 tentativi, punteggio e stelle;
-- **finale da condividere**: l'AI scrive l'epilogo e l'app crea un'immagine da mandare agli amici.
+- **finale da condividere**: l'AI scrive l'epilogo e l'app crea un'immagine da mandare agli amici;
+- **sigle originali**: in «L'onore dei Ferracane» (saga siciliana) e in «'O Prufessore» (saga napoletana) la sigla parte all'inizio e nei momenti più forti della storia.
 
 ## Scaricare l'app
 

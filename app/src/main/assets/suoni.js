@@ -6,9 +6,10 @@
 (function(W){
   "use strict";
   const AC = W.AudioContext || W.webkitAudioContext;
-  let ctx = null, master = null, duckG = null, cur = null, curId = "", vol = .55, enabled = true, timer = null, idleT = null;
+  let ctx = null, master = null, duckG = null, ambG = null, cur = null, curId = "", vol = .55, enabled = true, timer = null, idleT = null;
+  let temaBus = null, temaFino = 0, voceAttiva = false;
   const fading = [];
-  let NB = {}, TX = {};
+  let NB = {}, TX = {}, PL = {};
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
 
@@ -26,7 +27,8 @@
     lim.threshold.value = -4; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .25;
     master = c.createGain(); master.gain.value = 0;
     duckG = c.createGain(); duckG.gain.value = 1;
-    duckG.connect(master); master.connect(comp); comp.connect(lim);
+    ambG = c.createGain(); ambG.gain.value = 1;
+    duckG.connect(ambG); ambG.connect(master); master.connect(comp); comp.connect(lim);
     if(hp){ const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = .7; lim.connect(f); f.connect(c.destination); }
     else lim.connect(c.destination);
   }
@@ -283,6 +285,148 @@
     }, beat, beat, .1);
   }
 
+  /* ---------- sigle originali, composte per l'app ---------- */
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  // corda pizzicata (Karplus-Strong): mandolino, chitarra, contrabbasso
+  function corda(m, dur, damp){
+    const key = m + ":" + dur + ":" + damp;
+    if(PL[key]) return PL[key];
+    const sr = ctx.sampleRate, n = Math.floor(sr * dur), N = Math.max(2, Math.round(sr / mtof(m) - .5));
+    const b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0), ring = new Float32Array(N);
+    let lp = 0;
+    for(let i = 0; i < N; i++){ lp += .6 * ((Math.random() * 2 - 1) - lp); ring[i] = lp; }
+    let p = 0;
+    for(let i = 0; i < n; i++){ const a = ring[p], c = ring[(p + 1) % N]; d[i] = a; ring[p] = damp * .5 * (a + c); p = (p + 1) % N; }
+    const fo = Math.min(n, 600); for(let i = 0; i < fo; i++) d[n - 1 - i] *= i / fo;
+    return (PL[key] = b);
+  }
+  function pizzica(bus, m, t, vol, p0, dur, damp, rate){
+    const s = ctx.createBufferSource(), g = gn(vol), p = pan(p0 || 0);
+    s.buffer = corda(m, dur || .6, damp || .996); if(rate) s.playbackRate.value = rate;
+    link(s, g, p, bus); s.start(t); s.stop(t + (dur || .6));
+  }
+  function mandolino(bus, m, t, dur, vol){
+    for(let k = 0, tt = t; tt < t + dur - .03; k++, tt += .08){
+      const v = vol * (k % 2 ? .62 : .8) * (1 - .3 * (tt - t) / Math.max(dur, .1));
+      pizzica(bus, m, tt, v, -.18, .5, .9965, .9989);
+      pizzica(bus, m, tt + .004, v * .9, .18, .5, .9965, 1.0021);
+    }
+  }
+  function archi(bus, notes, t, dur, vol){
+    const lp = biq("lowpass", 1500, .6), g = gn(0); link(lp, g, bus);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .45);
+    g.gain.setValueAtTime(vol, t + dur - .05); g.gain.linearRampToValueAtTime(0, t + dur + .6);
+    notes.forEach(m => [-7, 7].forEach(det => { const o = osc("sawtooth", mtof(m), det); o.connect(lp); o.start(t); o.stop(t + dur + .7); }));
+  }
+  function canto(bus, m, t, dur, vol, tipo){
+    const fisa = tipo === "fisa", f = biq(fisa ? "bandpass" : "lowpass", fisa ? 1300 : 2300, fisa ? .7 : .5), g = gn(0);
+    const vib = osc("sine", fisa ? 5.8 : 5.1), vd = gn(fisa ? 7 : 11);
+    vib.connect(vd);
+    (fisa ? [["square", -9, .5], ["square", 9, .5], ["sawtooth", -1200, .22]] : [["triangle", 0, .6], ["square", 3, .12]]).forEach(([w, det, a]) => {
+      const o = osc(w, mtof(m), det), og = gn(a); vd.connect(o.detune); link(o, og, f); o.start(t); o.stop(t + dur + .3);
+    });
+    link(f, g, bus);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .05);
+    g.gain.setValueAtTime(vol * .85, t + Math.max(.06, dur - .05)); g.gain.linearRampToValueAtTime(0, t + dur + .22);
+    vib.start(t); vib.stop(t + dur + .3);
+  }
+  function timpano(bus, t, vol, m){
+    const f0 = mtof(m || 38), o = osc("sine", f0), g = gn(0); link(o, g, bus);
+    o.frequency.setValueAtTime(f0 * 1.35, t); o.frequency.exponentialRampToValueAtTime(f0, t + .08);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .005); g.gain.setTargetAtTime(0, t + .02, .45);
+    o.start(t); o.stop(t + 2.6);
+    const s = src(noise("brown")), lp = biq("lowpass", 180, .7), ng = gn(0); link(s, lp, ng, bus);
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(vol * .8, t + .005); ng.gain.setTargetAtTime(0, t + .01, .12);
+    s.start(t, rnd(0, 3)); s.stop(t + 1);
+  }
+  const ACC = {
+    Dm:[50, 57, 62, 65], Gm:[55, 58, 62, 67], A7:[57, 61, 64, 67], Bb:[58, 62, 65, 70],
+    Am:[57, 60, 64, 69], E7:[52, 59, 62, 68]
+  };
+  const BASSO = { Dm:38, Gm:43, A7:45, Bb:46, Am:45, E7:40 };
+  // ogni battuta: accordi (uno o due) e melodia [nota MIDI, durata in battiti]
+  const TEMI = {
+    // dramma siciliano: mandolino, archi, clarinetto, timpani (re minore)
+    onore:{ bpm:84, guida:"mando", doppio:"clar", corto:4, vol:1, battute:[
+      { a:["Dm"], m:[[74, 1.5], [73, .5], [74, 1], [76, 1]], tim:1 },
+      { a:["Gm"], m:[[77, 2], [76, 1], [74, 1]] },
+      { a:["A7"], m:[[73, 1], [70, 1], [69, 1], [67, 1]] },
+      { a:["A7"], m:[[69, 4]] },
+      { a:["Dm"], m:[[69, 1], [74, 1], [77, 1], [81, 1]], tim:1 },
+      { a:["Bb"], m:[[79, 1.5], [77, .5], [76, 1], [74, 1]] },
+      { a:["Gm", "A7"], m:[[70, 1], [73, 1], [76, 1], [79, 1]] },
+      { a:["Dm"], m:[[77, 1], [76, 1], [74, 2]] },
+      { a:["Dm"], m:[[74, 4]], tim:1, fine:1 }
+    ] },
+    // noir napoletano: fisarmonica, mandolino, chitarra, sesta napoletana (la minore)
+    prufessore:{ bpm:76, guida:"fisa", doppio:"mando", corto:4, vol:1, chitarra:1, battute:[
+      { a:["Am"], m:[[76, 1.5], [74, .5], [72, 1], [71, 1]], tim:1 },
+      { a:["Am"], m:[[69, 2], [72, 1], [76, 1]] },
+      { a:["Dm"], m:[[77, 1.5], [76, .5], [74, 1], [69, 1]] },
+      { a:["Bb"], m:[[74, 2], [77, 1], [74, 1]] },
+      { a:["E7"], m:[[71, 1.5], [72, .5], [74, 1], [68, 1]], tim:1 },
+      { a:["Am"], m:[[69, 3], [64, 1]] },
+      { a:["Dm", "Bb"], m:[[65, 1], [69, 1], [74, 1], [77, 1]] },
+      { a:["E7"], m:[[76, 2], [68, 1], [71, 1]] },
+      { a:["Am"], m:[[69, 4]], tim:1, fine:1 }
+    ] }
+  };
+  const LEVEL_T = { onore:.88, prufessore:.76 };
+  function suonaTema(T, bus, t0, corto){
+    const beat = 60 / T.bpm, bars = corto ? T.battute.slice(T.corto) : T.battute;
+    let t = t0;
+    bars.forEach((b, bi) => {
+      const len = 4 * beat, half = b.a.length > 1 ? 2 * beat : len;
+      b.a.forEach((ac, k) => {
+        const ta = t + k * half, dur = b.fine ? len + 1.6 : half;
+        archi(bus, ACC[ac], ta, dur, .022);
+        pizzica(bus, BASSO[ac], ta, .9, 0, 1.4, .993);
+        if(!b.fine) pizzica(bus, BASSO[ac] + 7, ta + 2 * beat * (half === len ? 1 : .5), .6, 0, 1.2, .993);
+        if(T.chitarra && !b.fine){
+          const n = ACC[ac], pat = [n[0], n[2], n[1], n[2]];
+          for(let q = 0; q < half / beat; q++) pizzica(bus, pat[q % 4], ta + q * beat, .42, .35, .7, .994);
+        }
+      });
+      if(b.tim) timpano(bus, t, .7, BASSO[b.a[0]]);
+      let tm = t;
+      b.m.forEach(([m, d]) => {
+        const dur = d * beat * (b.fine ? 1.25 : 1);
+        if(T.guida === "mando") mandolino(bus, m, tm, dur, .42); else canto(bus, m, tm, dur, .16, "fisa");
+        const seconda = bi >= 4 || corto;
+        if(seconda && T.doppio === "clar") canto(bus, m - 12, tm, dur, .12, "clar");
+        if(seconda && T.doppio === "mando") mandolino(bus, m, tm, dur, .22);
+        tm += d * beat;
+      });
+      t += len;
+    });
+    return t + 1.6;
+  }
+  function stopTema(fast){
+    if(!temaBus || !ctx) return;
+    const b = temaBus, tt = ctx.currentTime;
+    temaBus = null; temaFino = 0;
+    b.gain.cancelScheduledValues(tt); b.gain.setValueAtTime(b.gain.value, tt); b.gain.linearRampToValueAtTime(0, tt + (fast ? .3 : 1.2));
+    setTimeout(() => { try{ b.disconnect(); }catch(e){} }, fast ? 500 : 1500);
+    ambG.gain.setTargetAtTime(1, tt, .6);
+  }
+  function tema(id, corto){
+    const T = TEMI[id];
+    if(!T || !enabled || !ensure()) return false;
+    if(temaBus && ctx.currentTime < temaFino) return false;
+    clearTimeout(idleT);
+    resume(); apply();
+    const t0 = ctx.currentTime + .15, bus = gn(0);
+    bus.connect(master);
+    const v = (T.vol || 1) * (LEVEL_T[id] || 1) * (voceAttiva ? .55 : 1);
+    bus.gain.setValueAtTime(0, t0 - .1); bus.gain.linearRampToValueAtTime(v, t0 + .08);
+    const fine = suonaTema(T, bus, t0, corto);
+    bus.gain.setValueAtTime(v, fine - .8); bus.gain.linearRampToValueAtTime(0, fine + .6);
+    ambG.gain.setTargetAtTime(.3, ctx.currentTime, .4);
+    temaBus = bus; temaFino = fine + .7; bus._v = v / (voceAttiva ? .55 : 1);
+    startTimer();
+    return true;
+  }
+
   /* ---------- strati ---------- */
   const L = {
     pioggia(sc, a){ bed(sc, "pink", [biq("highpass", 450, .5), biq("lowpass", 6500, .5)], .34 * a, [{ rate:.07, depth:.06 * a }]); loopTex(sc, "gocce", biq("highpass", 1100, .6), .5 * a); },
@@ -365,6 +509,7 @@
   function tick(){
     if(!ctx) return;
     const now = ctx.currentTime, ahead = now + .6;
+    if(temaBus && now > temaFino){ const b = temaBus; temaBus = null; ambG.gain.setTargetAtTime(1, now, .8); setTimeout(() => { try{ b.disconnect(); }catch(e){} }, 300); }
     if(cur && !cur.stopping) cur.evs.forEach(e => {
       let guard = 0;
       while(e.next < ahead && guard++ < 24){
@@ -402,9 +547,10 @@
   }
   function stop(){
     if(cur){ fadeOut(cur, 1.4); cur = null; curId = ""; }
+    stopTema(false);
     clearTimeout(idleT);
     idleT = setTimeout(() => {
-      if(cur || !ctx) return;
+      if(cur || temaBus || !ctx) return;
       clearInterval(timer); timer = null;
       try{ ctx.suspend().catch(() => {}); }catch(e){}
     }, 2200);
@@ -419,15 +565,19 @@
   // misura il volume medio di un ambiente (usata dai test per bilanciare i livelli)
   async function measure(id, sec, hp, keep){
     const OAC = W.OfflineAudioContext || W.webkitOfflineAudioContext;
-    if(!OAC || !SCENE[id]) return null;
-    const saved = { ctx, master, duckG, NB, TX };
+    if(!OAC || !(SCENE[id] || TEMI[id])) return null;
+    const saved = { ctx, master, duckG, ambG, NB, TX, PL };
     const off = new OAC(2, Math.floor(48000 * sec), 48000);
-    ctx = off; NB = {}; TX = {}; wire(off, hp); master.gain.value = 1;
-    const sc = Scene(id); SCENE[id].b(sc); sc.out.gain.value = LEVEL[id] || 1;
-    for(const e of sc.evs){ let guard = 0; while(e.next < sec && guard++ < 400){ if(e.next >= 0){ try{ e.fn(Math.max(e.next, .01)); }catch(err){} } e.next += rnd(e.min, e.max); } }
+    ctx = off; NB = {}; TX = {}; PL = {}; wire(off, hp); master.gain.value = 1;
+    if(TEMI[id]){
+      const b = gn(LEVEL_T[id] || 1); b.connect(master); suonaTema(TEMI[id], b, .1, false);
+    }else{
+      const sc = Scene(id); SCENE[id].b(sc); sc.out.gain.value = LEVEL[id] || 1;
+      for(const e of sc.evs){ let guard = 0; while(e.next < sec && guard++ < 400){ if(e.next >= 0){ try{ e.fn(Math.max(e.next, .01)); }catch(err){} } e.next += rnd(e.min, e.max); } }
+    }
     let buf;
     try{ buf = await off.startRendering(); }
-    finally{ ({ ctx, master, duckG, NB, TX } = saved); }
+    finally{ ({ ctx, master, duckG, ambG, NB, TX, PL } = saved); }
     let sum = 0, peak = 0, n = 0, bad = 0;
     for(let c = 0; c < 2; c++){ const d = buf.getChannelData(c); for(let i = 0; i < d.length; i++){ const v = d[i]; if(!isFinite(v)){ bad++; continue; } sum += v * v; n++; if(Math.abs(v) > peak) peak = Math.abs(v); } }
     return { rms:Math.sqrt(sum / Math.max(1, n)), peak, bad, buf:keep ? buf : undefined };
@@ -442,7 +592,15 @@
     setVolume(v){ vol = Math.max(0, Math.min(1, +v)); apply(); },
     volume(){ return vol; },
     setEnabled(on){ enabled = !!on; if(!enabled) stop(); else apply(); },
-    duck(on){ if(ctx && duckG) duckG.gain.setTargetAtTime(on ? .35 : 1, ctx.currentTime, .3); },
+    duck(on){
+      voceAttiva = !!on;
+      if(!ctx || !duckG) return;
+      duckG.gain.setTargetAtTime(on ? .35 : 1, ctx.currentTime, .3);
+      if(temaBus && temaBus._v) temaBus.gain.setTargetAtTime(temaBus._v * (on ? .55 : 1), ctx.currentTime, .3);
+    },
+    tema, stopTema(){ stopTema(true); },
+    temaAttivo(){ return !!(temaBus && ctx && ctx.currentTime < temaFino); },
+    temi(){ return Object.keys(TEMI); },
     unlock(){ resume(); },
     setLevels(o){ Object.assign(LEVEL, o || {}); },
     _measure:measure

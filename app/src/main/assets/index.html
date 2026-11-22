@@ -480,7 +480,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
       <div class="li" id="optFx">🎬 Animazioni <span class="r" id="fxVal">Complete</span></div>
       <div class="li" id="optVoce">🔊 Lettura ad alta voce <span class="sw" id="swVoce"></span></div>
       <div class="li" id="optVoceRate">🗣️ Velocità della voce <span class="r" id="voceRateVal">Normale</span></div>
-      <div class="li" id="optAmb">🎵 Suoni d'atmosfera <span class="sw on" id="swAmb"></span></div>
+      <div class="li" id="optAmb">🎵 Suoni e sigle <span class="sw on" id="swAmb"></span></div>
       <div class="li" id="optAmbVol">🔈 Volume dei suoni <span class="r" id="ambVolVal">Medio</span></div>
       <div class="li" id="optBrain" style="display:none">🧠 Cervello AI <span class="r" id="brainVal">—</span></div>
       <div class="li" id="optCreate">✨ Crea la tua storia</div>
@@ -650,7 +650,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const VERSION = "2.6";
+const VERSION = "2.7";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
@@ -669,6 +669,8 @@ let settings = { len:"media", qr:true, fx:"full", voce:false, voceRate:"normale"
 const VOCE_RATE = { lenta:.85, normale:1, veloce:1.2 };
 const CASI = window.CASI || {};
 const FINAL = { finale:1, finale_caso:1, caso_ok:1, caso_meta:1, caso_fail:1 };
+const MUSICA = /\[\s*MUSICA\s*\]/gi;
+const MOMENTO = /\b(spar[aoòi]\w*|colp[oi] di pistola|lupara|ammazz\w*|uccis\w*|assassin\w*|sangue|tradit\w*|tradiment\w*|vendett\w*|arrest\w*|manette|giur[oaàò]\w*|bacio|baci[aò]\w*|incinta|condann\w*|addio)(?![\wÀ-ÿ])/i;
 let custom = [];
 let sample = null, db = null, uid = null;
 let current = "home", stack = [];
@@ -948,7 +950,8 @@ REGOLE:
 - Le scelte di ${x.name} hanno conseguenze reali e coerenti. I personaggi hanno obiettivi propri, ricordano e reagiscono.
 - Rispetta SEMPRE la memoria e i fatti già successi: non contraddirli mai.
 - Niente violenza esplicita o descrizioni crude, niente contenuti sessuali espliciti, niente istruzioni reali pericolose (armi, droghe, veleni, hacking). Se l'utente insiste, fai deviare la storia restando nel personaggio.
-- Non uscire mai dal personaggio e non dire di essere un'AI. Eccezione: se l'utente scrive tra doppie parentesi ((così)), sta parlando con te fuori dalla storia: rispondi in breve fuori dalla storia, poi torna al racconto.`;
+- Non uscire mai dal personaggio e non dire di essere un'AI. Eccezione: se l'utente scrive tra doppie parentesi ((così)), sta parlando con te fuori dalla storia: rispondi in breve fuori dalla storia, poi torna al racconto.${s.tema ? `
+- MUSICA: nei momenti più forti (un omicidio, un tradimento scoperto, un giuramento, un arresto, una vendetta compiuta, un bacio proibito, un addio) scrivi [MUSICA] su una riga da sola, subito prima della frase più drammatica: in quel momento parte la sigla della storia. Non più di una volta ogni tre risposte.` : ""}`;
 }
 function memText(m, x){
   if(!m || (!m.riassunto && !(m.fatti || []).length)) return "(nessun ricordo ancora: la storia è appena iniziata)";
@@ -1357,7 +1360,7 @@ function openDetail(id){
   pvSex = x ? x.sex : (s.sex === "m" ? "m" : "f");
   $("dArt").innerHTML = coverSVG(s, 400, 290);
   $("dMeta").textContent = `${g.e} ${g.n} · ${s.city}${s.place ? " · " + s.place : ""} · ${s.era || "Oggi"}`;
-  $("dChips").innerHTML = [`${g.e} ${g.n}`, `📍 ${s.city}`, `🕰️ ${s.era || "Oggi"}`, "🧠 Memoria", s.love ? "❤️ Storia d'amore" : "", s.custom ? "✨ Creata da te" : ""].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join("");
+  $("dChips").innerHTML = [`${g.e} ${g.n}`, `📍 ${s.city}`, `🕰️ ${s.era || "Oggi"}`, "🧠 Memoria", s.love ? "❤️ Storia d'amore" : "", s.tema ? "🎵 Con la sigla" : "", s.custom ? "✨ Creata da te" : ""].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join("");
   $("fSex").style.display = s.sex === "x" ? "flex" : "none";
   setSeg("sexSeg", pvSex);
   $("pname").value = x ? x.name : s.names[pvSex];
@@ -1401,6 +1404,7 @@ function startStory(id, fresh){
   renderChat(); show("chat");
   if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720), meta:(s.pick && st.home ? homeLabel(st.home) : s.city) + " · " + (s.era || "Oggi") });
   ambStart(s);
+  if(s.tema && (!siglaAt[s.id] || Date.now() - siglaAt[s.id] > 15 * 60000)) setTimeout(() => { if(st === x && current === "chat") sigla(s, false); }, 350);
   if(!st.messages.length) generate("open");
   else{
     warmup();
@@ -1495,11 +1499,16 @@ async function generate(mode = "chat"){
   const onText = ({ text }) => {
     if(!text || text === "Thinking...") return;
     partial = text; setStatus(isFin ? "sta scrivendo il finale…" : "sta scrivendo…", true); bub.classList.add("streaming");
-    bub.innerHTML = fmt(isFin ? cutFinale(cleanOut(text)) : splitOptions(cleanOut(text)).text, s); scrollEnd();
+    bub.innerHTML = fmt((isFin ? cutFinale(cleanOut(text)) : splitOptions(cleanOut(text)).text).replace(MUSICA, ""), s); scrollEnd();
   };
   const finish = raw => {
-    const sp = isFin ? splitFinale(cleanOut(raw)) : splitOptions(cleanOut(raw)), text = sp.text;
+    const sp = isFin ? splitFinale(cleanOut(raw)) : splitOptions(cleanOut(raw));
+    let musica = false;
+    if(MUSICA.test(sp.text)) musica = true;
+    MUSICA.lastIndex = 0;
+    const text = sp.text.replace(/[ \t]*\[\s*MUSICA\s*\][ \t]*\n?/gi, "").replace(/\n{3,}/g, "\n\n").trim();
     if(!text){ row.remove(); toast("Risposta vuota. Tocca ↻ per riprovare."); return; }
+    if(s.tema && !musica && MOMENTO.test(text)) musica = true;
     const msg = { r:"a", t:text };
     if(mode !== "chat" && mode !== "open") msg.md = mode;
     x.messages.push(msg); x.opts = sp.opts; x.turns = (x.turns || 0) + 1; delete x.pendingMode;
@@ -1507,6 +1516,8 @@ async function generate(mode = "chat"){
     storeObj(x);
     if(x === st && current === "chat"){ const nr = aiRow(text, x.messages.length - 1); nr.classList.add("still"); row.replaceWith(nr); } else row.remove();
     if(window.FX) setTimeout(() => FX.check(statsNow()), 600);
+    // la sigla nei momenti forti: al massimo una volta ogni tre risposte
+    if(s.tema && musica && x === st && current === "chat" && (x.turns - (x.siglaTurn == null ? -9 : x.siglaTurn)) >= 3 && sigla(s, true)){ x.siglaTurn = x.turns; storeObj(x); }
     if(settings.voce && x === st && current === "chat") setTimeout(() => speakMsg(x.messages.length - 1, true), 150);
     if(isFin) setTimeout(() => { if(x === st && current === "chat") openFinale(x); }, 1100);
     if(x.turns % (LOCAL ? 4 : 3) === 0) setTimeout(() => updateMemory(x), 50);
@@ -1639,6 +1650,14 @@ function stopVoice(){
 function ambVolLabel(){ const v = settings.ambVol; return v <= .4 ? "Basso" : v <= .7 ? "Medio" : "Alto"; }
 function ambStart(s){ if(window.SUONI && settings.amb && s) SUONI.play(SUONI.sceneFor(s)); }
 function ambStop(){ if(window.SUONI) SUONI.stop(); }
+// sigle originali delle storie che ne hanno una (corta nei momenti forti, intera all'inizio)
+const siglaAt = {};
+function sigla(s, corto){
+  if(!s || !s.tema || !settings.amb || !window.SUONI || !SUONI.tema) return false;
+  const ok = SUONI.tema(s.tema, corto);
+  if(ok){ siglaAt[s.id] = Date.now(); if(corto) toast("🎵"); }
+  return ok;
+}
 function toggleVoce(){
   settings.voce = !settings.voce; saveSettings();
   if(settings.voce){
@@ -1656,7 +1675,7 @@ function toggleAmb(){
   settings.amb = !settings.amb; saveSettings();
   if(window.SUONI) SUONI.setEnabled(settings.amb);
   if(settings.amb && st && current === "chat") ambStart(story(st.sid));
-  toast(settings.amb ? "🎵 Suoni d'atmosfera accesi" : "Suoni d'atmosfera spenti");
+  toast(settings.amb ? "🎵 Suoni e sigle accesi" : "Suoni e sigle spenti");
 }
 
 /* ===================== MENU DELLA CHAT ===================== */
@@ -1670,7 +1689,7 @@ function chatMenu(){
     <div class="menu" id="cmenu">
       ${voceOK() ? `<div class="li" data-m="voce">🔊 Leggi le risposte ad alta voce <span class="sw ${settings.voce ? "on" : ""}"></span></div>
       <div class="li" data-m="rate">🗣️ Velocità della voce <span class="r">${cap(settings.voceRate)}</span></div>` : ""}
-      ${snd ? `<div class="li" data-m="amb">🎵 Suoni d'atmosfera <span class="sw ${settings.amb ? "on" : ""}"></span></div>
+      ${snd ? `<div class="li" data-m="amb">🎵 Suoni e sigle <span class="sw ${settings.amb ? "on" : ""}"></span></div>
       <div class="vol"><span>🔈</span><input type="range" id="ambRange" min="0" max="100" step="5" value="${Math.round(settings.ambVol * 100)}" aria-label="Volume dei suoni"><span>🔊</span></div>
       <p class="ambnow">In sottofondo: ${esc(SUONI.name(SUONI.sceneFor(s)))}</p>` : ""}
       ${caseRow}
@@ -2002,7 +2021,8 @@ function licensesHTML(){
   <ul><li>Qwen2.5 7B Instruct e Qwen2.5 1.5B Instruct – Alibaba Cloud, licenza Apache 2.0.</li>
   <li>Llama 3.2 3B Instruct – <b>Built with Llama</b>. Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.</li></ul>
   <h5>Caratteri</h5><p>Inter e Playfair Display – SIL Open Font License.</p>
-  <h5>Dati</h5><p>Elenco dei comuni della Campania: ISTAT, licenza CC BY 3.0 IT.</p></div>`;
+  <h5>Dati</h5><p>Elenco dei comuni della Campania: ISTAT, licenza CC BY 3.0 IT.</p>
+  <h5>Musica e suoni</h5><p>Le sigle delle storie e i suoni d'atmosfera sono originali, composti e generati dall'app.</p></div>`;
 }
 
 /* ===================== SETUP AI OFFLINE ===================== */
