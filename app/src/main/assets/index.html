@@ -664,6 +664,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 <script src="storie_vita.js"></script>
 <script src="storie_azione.js"></script>
 <script src="campania.js"></script>
+<script>window.LOCANDINE_DATAURL = !window.AndroidAI;</script>
 <script src="locandine.js"></script>
 <script src="casi.js"></script>
 <script src="voce.js"></script>
@@ -1221,7 +1222,7 @@ function lcFill(root){
     try{ if(box && !box.style.backgroundImage) box.style.backgroundImage = LOCANDINA.sfondo(s); }catch(e){}
     const pronta = LOCANDINA.pronta(s, modo, px);
     if(pronta){ im.src = pronta; im.classList.add("ok"); return; }
-    LOCANDINA.img(s, modo, px).then(url => { if(!im.isConnected) return; im.onload = () => im.classList.add("ok"); im.src = url; }, torna);
+    LOCANDINA.img(s, modo, px).then(url => { if(!im.isConnected) return; im.onload = () => im.classList.add("ok"); im.onerror = torna; im.src = url; }, torna);
   });
 }
 function lcCover(s){

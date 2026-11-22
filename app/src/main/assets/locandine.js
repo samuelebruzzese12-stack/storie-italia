@@ -1878,14 +1878,15 @@
     const key = chiave(s, modo, Wpx);
     if(pronte.has(key)) return Promise.resolve(pronte.get(key));
     if(attese.has(key)) return attese.get(key);
+    const indirizzo = b => W.LOCANDINE_DATAURL ? new Promise((ok, ko) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = ko; fr.readAsDataURL(b); }) : URL.createObjectURL(b);
     const pr = (async () => {
       const salvata = await leggi(key);
-      if(salvata) return URL.createObjectURL(salvata);
+      if(salvata) return indirizzo(salvata);
       const fatta = coda = coda.catch(() => {}).then(() => new Promise(r => setTimeout(r, 0))).then(() => dipingi(s, modo, Wpx));
       const b = await fatta;
       if(typeof b === "string") return b;
       salva(key, b);
-      return URL.createObjectURL(b);
+      return indirizzo(b);
     })().then(url => { pronte.set(key, url); attese.delete(key); return url; }, err => { attese.delete(key); throw err; });
     attese.set(key, pr);
     return pr;
