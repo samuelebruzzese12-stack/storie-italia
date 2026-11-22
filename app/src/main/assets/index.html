@@ -1908,13 +1908,20 @@ async function shareFinale(x){
     const text = `Ho finito «${resolve(s.t, x)}» su Storie d'Italia: ${x.finale.titolo}!`;
     if(LOCAL && AndroidAI.shareImage){ AndroidAI.shareImage(url.slice(url.indexOf(",") + 1), text); return; }
     let done = false;
+    const bin = atob(url.slice(url.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
     try{
-      const bin = atob(url.slice(url.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
-      for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
       const file = new File([u8], "storie-italia-finale.jpg", { type:"image/jpeg" });
       if(navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], text }); done = true; }
     }catch(e){ if(e && e.name === "AbortError") done = true; }
-    if(!done) openSheet(`<h4>📤 Il tuo finale</h4><div class="sub">Tieni premuto sull'immagine per salvarla o mandarla agli amici.</div><img class="fin-prev" src="${url}" alt="Immagine del finale"><a class="btn" href="${url}" download="storie-italia-finale.jpg" style="display:block;text-align:center">Scarica l'immagine</a>`);
+    // dentro Claude: salvataggio con conferma (nell'app per iPhone apre la condivisione)
+    if(!done && typeof claude !== "undefined"){
+      try{
+        const dl = await claude.use("downloads");
+        if(dl){ const r = await dl.save({ filename:"storie-italia-finale.jpg", data:u8 }); done = true; if(r && r.status === "saved") toast("📥 Immagine del finale salvata"); }
+      }catch(e){ if(e && e.code === "declined") done = true; }
+    }
+    if(!done) openSheet(`<h4>📤 Il tuo finale</h4><div class="sub">Tieni premuto sull'immagine per salvarla o mandarla agli amici.</div><img class="fin-prev" src="${url}" alt="Immagine del finale">`);
   }catch(e){ toast("Non riesco a creare l'immagine, riprova."); }
   finally{ b.disabled = false; b.textContent = "📤 Condividi"; }
 }

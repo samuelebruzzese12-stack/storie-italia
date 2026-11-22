@@ -1,5 +1,5 @@
 # Tiene attivo il progetto Supabase gratuito delle segnalazioni (si mette in pausa dopo 7 giorni senza attività)
-# e controlla che l'app possa davvero inviare una segnalazione.
+# e controlla che la chiave pubblica dell'app non possa leggere le segnalazioni.
 name: Segnalazioni attive
 
 on:
@@ -23,12 +23,6 @@ jobs:
         run: |
           curl -fsS -X POST "$URL/rest/v1/rpc/ping" -H "apikey: $KEY" -H "Content-Type: application/json" -d '{}'
           echo
-      - name: Prova di invio (come fa l'app)
-        if: github.event_name == 'push'
-        run: |
-          curl -fsS -X POST "$URL/rest/v1/segnalazioni" -H "apikey: $KEY" -H "Content-Type: application/json" -H "Prefer: return=minimal" \
-            -d '{"storia":"__prova__","motivo":"altro","nota":null,"messaggio":"Prova automatica di invio da GitHub","modello":"ci","versione":"2.6"}'
-          echo "Invio riuscito"
       - name: La chiave non deve poter leggere le segnalazioni
         if: github.event_name == 'push'
         run: |
