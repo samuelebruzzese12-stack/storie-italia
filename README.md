@@ -3,6 +3,13 @@
 App Android di storie interattive con personaggi AI, ambientate in Italia: 70 storie tra gialli, romantiche, vita reale, fantascienza, avventura, azione, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
 L'AI funziona **direttamente sul telefono**: gratis, senza abbonamenti, anche senza internet.
 
+Nella versione 2.6:
+
+- **voce narrante**: il narratore e ogni personaggio leggono ad alta voce con un tono diverso (sintesi vocale del telefono, anche offline);
+- **suoni d'atmosfera**: pioggia, mare, vicoli, spazio, fronte, neon e altri 12 ambienti generati dal vivo, senza file audio;
+- **Risolvi il caso**: nei gialli e nei thriller accusi il colpevole, con 3 tentativi, punteggio e stelle;
+- **finale da condividere**: l'AI scrive l'epilogo e l'app crea un'immagine da mandare agli amici.
+
 ## Scaricare l'app
 
 Apri la sezione **Releases** di questo repository:
@@ -23,7 +30,7 @@ In **Settings › Secrets and variables › Actions** del repository servono due
 
 Senza questi secrets viene creato solo l'APK di prova. **Conserva la chiave in un posto sicuro:** serve per tutti gli aggiornamenti futuri.
 
-Facoltativi, per ricevere le segnalazioni degli utenti: `REPORT_URL` e `REPORT_KEY`.
+Le segnalazioni degli utenti arrivano alla tabella `segnalazioni` del progetto Supabase **storie-italia** (UE, Francoforte): l'app può solo inserire, nessuno può leggere con la chiave pubblica, e le righe più vecchie di 12 mesi si cancellano da sole. Il workflow `segnalazioni.yml` tiene attivo il progetto gratuito. Per usare un altro progetto basta impostare i secrets `REPORT_URL` e `REPORT_KEY`.
 
 ## Primo avvio
 
@@ -38,6 +45,8 @@ L'app scarica una sola volta il "cervello" AI (meglio con il Wi-Fi) e consiglia 
 ## Com'è fatta
 
 - `app/src/main/assets/storie.js`, `storie_nuove.js`, `storie_guerra.js`, `storie_malavita.js`, `storie_vita.js` e `storie_azione.js` – il catalogo delle storie (personaggi, segreti, scene d'apertura)
+- `app/src/main/assets/casi.js` – le soluzioni dei gialli e dei thriller per «Risolvi il caso»
+- `app/src/main/assets/voce.js` e `suoni.js` – voce narrante e suoni d'atmosfera
 - `app/src/main/assets/campania.js` – i 550 comuni della Campania (fonte ISTAT, licenza CC BY 3.0 IT) con aree, città, quartieri e rioni
 - `app/src/main/assets/effetti.js` e `effetti.css` – animazioni e grafica
 - `app/src/main/assets/index.html` – l'interfaccia e la logica (memoria, segnalazioni, crea storia)

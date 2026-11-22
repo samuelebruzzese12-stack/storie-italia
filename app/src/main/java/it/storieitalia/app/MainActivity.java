@@ -3,7 +3,9 @@ package it.storieitalia.app;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.DownloadManager;
+import android.content.ClipData;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -13,6 +15,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
+import android.util.Base64;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
@@ -28,10 +34,16 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -65,6 +77,10 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private volatile String loadedId = null;
     private volatile boolean loading = false;
+
+    // voce narrante (sintesi vocale del telefono)
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
 
     // tasto "indietro" (Android 13+ usa il nuovo sistema predittivo)
     private Object backCallback = null;
@@ -146,7 +162,15 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        // la voce si ferma quando l'app va in secondo piano
+        if (tts != null) tts.stop();
+    }
+
+    @Override
     protected void onDestroy() {
+        if (tts != null) { tts.stop(); tts.shutdown(); tts = null; }
         NativeLlm.stop();
         ai.shutdownNow();
         net.shutdownNow();
@@ -188,6 +212,76 @@ public class MainActivity extends Activity {
         long done = prefs.getLong("size_" + id, -1);
         if (done > 0 && f.length() == done) return true;
         return f.length() >= Long.parseLong(m[5]) * 1000L * 1000L * 90 / 100;
+    }
+
+    // ---------------------------------------------------------------- voce narrante
+    private void ttsSetup() {
+        if (tts != null) { if (ttsReady) ttsNotify(true, 0); return; }
+        tts = new TextToSpeech(this, status -> ui.post(() -> {
+            if (tts == null) return;
+            if (status != TextToSpeech.SUCCESS) { ttsNotify(false, -3); return; }
+            int r = tts.setLanguage(Locale.ITALY);
+            if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) { ttsNotify(false, r); return; }
+            ttsReady = true;
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String id) { ttsEvent(id, "start"); }
+                @Override public void onDone(String id) { ttsEvent(id, "done"); }
+                @Override @SuppressWarnings("deprecation") public void onError(String id) { ttsEvent(id, "error"); }
+                @Override public void onError(String id, int code) { ttsEvent(id, "error"); }
+                @Override public void onStop(String id, boolean interrupted) { ttsEvent(id, "stop"); }
+            });
+            ttsNotify(true, r);
+        }));
+    }
+
+    private void ttsEvent(String id, String ev) {
+        js("window.__ttsEv && window.__ttsEv(" + JSONObject.quote(id) + ",'" + ev + "')");
+    }
+
+    /** Comunica alla pagina se la voce è pronta e quali voci italiane offline ci sono sul telefono. */
+    private void ttsNotify(boolean ok, int code) {
+        JSONArray arr = new JSONArray();
+        if (ok && tts != null) {
+            try {
+                Set<Voice> vs = tts.getVoices();
+                List<String> names = new ArrayList<>();
+                if (vs != null) for (Voice v : vs) {
+                    if (v == null || v.getLocale() == null || !"it".equals(v.getLocale().getLanguage())) continue;
+                    if (v.isNetworkConnectionRequired()) continue;
+                    Set<String> f = v.getFeatures();
+                    if (f != null && f.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+                    names.add(v.getName());
+                }
+                Collections.sort(names);
+                for (String n : names) { JSONObject j = new JSONObject(); j.put("n", n); arr.put(j); }
+            } catch (Exception ignored) {
+            }
+        }
+        js("window.__ttsReady && window.__ttsReady(" + ok + "," + JSONObject.quote(arr.toString()) + "," + code + ")");
+    }
+
+    /** Legge una sequenza di parti: ognuna con la sua voce, il suo tono e la sua velocità. */
+    private void ttsSpeak(String json) {
+        if (tts == null || !ttsReady) return;
+        try {
+            JSONArray a = new JSONArray(json);
+            Set<Voice> all = tts.getVoices();
+            int max = TextToSpeech.getMaxSpeechInputLength() - 10;
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject p = a.getJSONObject(i);
+                String text = p.optString("t", "");
+                if (text.isEmpty()) continue;
+                if (text.length() > max) text = text.substring(0, max);
+                String vn = p.optString("v", "");
+                Voice chosen = null;
+                if (!vn.isEmpty() && all != null) for (Voice v : all) if (v != null && vn.equals(v.getName())) { chosen = v; break; }
+                if (chosen != null) tts.setVoice(chosen); else tts.setLanguage(Locale.ITALY);
+                tts.setPitch((float) p.optDouble("p", 1.0));
+                tts.setSpeechRate((float) p.optDouble("r", 1.0));
+                tts.speak(text, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD, null, p.optString("u", "u" + i));
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private static boolean reportConfigured() {
@@ -321,7 +415,8 @@ public class MainActivity extends Activity {
                     c.setDoOutput(true);
                     c.setRequestProperty("Content-Type", "application/json");
                     c.setRequestProperty("apikey", BuildConfig.REPORT_KEY);
-                    c.setRequestProperty("Authorization", "Bearer " + BuildConfig.REPORT_KEY);
+                    // le nuove chiavi pubblicabili di Supabase vanno solo in "apikey"; le vecchie chiavi JWT anche come Bearer
+                    if (BuildConfig.REPORT_KEY.startsWith("eyJ")) c.setRequestProperty("Authorization", "Bearer " + BuildConfig.REPORT_KEY);
                     c.setRequestProperty("Prefer", "return=minimal");
                     try (OutputStream out = c.getOutputStream()) { out.write(json.getBytes(StandardCharsets.UTF_8)); }
                     int code = c.getResponseCode();
@@ -331,6 +426,68 @@ public class MainActivity extends Activity {
                     if (c != null) c.disconnect();
                 }
                 js("window.__reportDone && window.__reportDone(" + rid + "," + ok + ")");
+            });
+        }
+
+        // ------------------------------------------------ voce narrante
+        @JavascriptInterface
+        public void ttsInit() { ui.post(MainActivity.this::ttsSetup); }
+
+        @JavascriptInterface
+        public void ttsSpeak(String json) { ui.post(() -> MainActivity.this.ttsSpeak(json)); }
+
+        @JavascriptInterface
+        public void ttsStop() { ui.post(() -> { if (tts != null) tts.stop(); }); }
+
+        /** Apre la schermata di Android per scaricare la voce italiana. */
+        @JavascriptInterface
+        public void ttsInstall() {
+            ui.post(() -> {
+                try {
+                    Intent i = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception e) {
+                    try {
+                        Intent i = new Intent("com.android.settings.TTS_SETTINGS");
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
+
+        // ------------------------------------------------ condivisione del finale
+        /** Salva l'immagine del finale nella cache dell'app e apre la condivisione di Android. */
+        @JavascriptInterface
+        public void shareImage(String b64, String text) {
+            net.submit(() -> {
+                try {
+                    byte[] data = Base64.decode(b64, Base64.DEFAULT);
+                    File dir = new File(getCacheDir(), "condivisi");
+                    if (!dir.exists()) dir.mkdirs();
+                    File[] old = dir.listFiles();
+                    if (old != null) for (File f : old) f.delete();
+                    String name = "finale-" + System.currentTimeMillis() + ".jpg";
+                    try (FileOutputStream fo = new FileOutputStream(new File(dir, name))) { fo.write(data); }
+                    Uri uri = Uri.parse("content://" + getPackageName() + ".condividi/" + name);
+                    ui.post(() -> {
+                        try {
+                            Intent i = new Intent(Intent.ACTION_SEND);
+                            i.setType("image/jpeg");
+                            i.putExtra(Intent.EXTRA_STREAM, uri);
+                            if (text != null && !text.isEmpty()) i.putExtra(Intent.EXTRA_TEXT, text);
+                            i.setClipData(ClipData.newRawUri("", uri));
+                            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(Intent.createChooser(i, "Condividi il finale"));
+                        } catch (Exception e) {
+                            js("window.__toast && window.__toast('Non riesco ad aprire la condivisione')");
+                        }
+                    });
+                } catch (Exception e) {
+                    js("window.__toast && window.__toast('Non riesco a preparare l\\'immagine')");
+                }
             });
         }
 

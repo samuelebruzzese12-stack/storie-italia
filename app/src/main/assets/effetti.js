@@ -283,7 +283,9 @@ const BADGES = [
   { id:"chiac",  e:"💬", n:"Chiacchierone", d:"Arriva a 100 messaggi in tutte le storie.", k:"msgs",    v:100 },
   { id:"mara",   e:"🏃", n:"Maratoneta",    d:"Arriva a 60 messaggi in una sola storia.", k:"longest", v:60 },
   { id:"detec",  e:"🔍", n:"Detective",     d:"Scopri 10 indizi con la memoria dell'AI.", k:"clues",   v:10 },
-  { id:"autore", e:"✍️", n:"Autore",        d:"Crea una storia tutta tua.",              k:"created", v:1 }
+  { id:"autore", e:"✍️", n:"Autore",        d:"Crea una storia tutta tua.",              k:"created", v:1 },
+  { id:"caso",   e:"🕵️", n:"Caso chiuso",   d:"Risolvi il caso di un giallo o di un thriller.", k:"solved", v:1 },
+  { id:"fine",   e:"🏁", n:"Fino alla fine", d:"Porta una storia fino al finale.",        k:"endings", v:1 }
 ];
 const BK = "si2:badges";
 function unlocked(){ try{ return JSON.parse(localStorage.getItem(BK) || "[]"); }catch(e){ return []; } }

@@ -4,6 +4,13 @@
     <!-- Internet serve solo per scaricare il "cervello" AI e inviare le segnalazioni. L'AI funziona offline. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Voce narrante: da Android 11 serve per trovare il motore di sintesi vocale del telefono. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:label="Storie d'Italia"
         android:icon="@mipmap/ic_launcher"
@@ -26,5 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Condivisione dell'immagine del finale (solo lettura, solo su richiesta dell'utente) -->
+        <provider
+            android:name=".ImmaginiProvider"
+            android:authorities="${applicationId}.condividi"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

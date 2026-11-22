@@ -335,6 +335,61 @@ input,textarea{font:inherit;color:inherit}
 .drow .danger{background:var(--red);color:#fff;font-weight:700}
 .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-90px);background:#2a2a34;border:1px solid var(--line);padding:10px 15px;border-radius:12px;font-size:13px;z-index:80;max-width:90%;transition:transform .35s var(--ease);text-align:center}
 .toast.on{transform:translate(-50%,0)}
+/* ---------- VOCE, SUONI, CASI E FINALI ---------- */
+.macts{display:flex;gap:2px;margin-top:2px}
+.spk{font-size:11px;color:#8d8da0;padding:4px 7px;border-radius:8px;display:inline-flex;align-items:center;gap:5px}
+.spk:active{background:var(--panel2)}
+.spk.on{color:var(--accent2)}
+.spk .eq{display:none;gap:2px;align-items:flex-end;height:10px}
+.spk.on .eq{display:inline-flex}.spk.on .ic{display:none}
+.spk .eq i{width:2px;height:4px;background:currentColor;border-radius:1px;animation:eqb .8s ease-in-out infinite}
+.spk .eq i:nth-child(2){animation-delay:.2s}.spk .eq i:nth-child(3){animation-delay:.4s}
+@keyframes eqb{0%,100%{height:3px}50%{height:10px}}
+.row-ai.speaking .msg.ai{border-color:rgba(243,200,115,.55);box-shadow:0 0 0 3px rgba(224,168,63,.12),0 0 22px rgba(224,168,63,.12);transition:box-shadow .3s,border-color .3s}
+.msg.ai.fin{border-color:rgba(243,200,115,.45);background:linear-gradient(180deg,rgba(224,168,63,.10),var(--ai) 60%)}
+.qr button.caso{background:linear-gradient(135deg,#3a2a10,#24190c);border-color:#7a5a22;color:var(--accent2);font-weight:700}
+.menu{background:var(--panel2);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:4px}
+.menu .li.gold{color:var(--accent2);font-weight:600}
+.vol{display:flex;align-items:center;gap:10px;padding:2px 14px 12px;font-size:14px}
+.vol input{flex:1;accent-color:var(--accent);height:28px}
+.ambnow{font-size:12px;color:var(--muted);padding:0 14px 12px;border-bottom:1px solid var(--line)}
+.casoq{font-family:var(--serif);font-size:20px;line-height:1.3;margin:2px 0 10px}
+.casoinfo{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.casoinfo span{font-size:12px;background:var(--panel2);border:1px solid var(--line);padding:5px 10px;border-radius:99px;color:#cfcfd8}
+.opzs{display:flex;flex-direction:column;gap:8px}
+.opz{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.4;color:var(--text);transition:border-color .2s,background .2s,transform .15s}
+.opz b{flex:none;width:24px;height:24px;border-radius:50%;background:#2e2e3a;display:grid;place-items:center;font-size:12px;color:var(--accent2)}
+.opz.on{border-color:var(--accent);background:rgba(224,168,63,.12)}
+.opz.on b{background:var(--accent);color:#1a1205}
+.opz:active{transform:scale(.99)}
+#casoWhy{width:100%;margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:11px 13px;font-size:14px;min-height:64px;outline:none;resize:vertical}
+#casoWhy:focus{border-color:var(--accent)}
+.btn:disabled{opacity:.45}
+.verita{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.55;margin-top:6px}
+.verita b{display:block;color:var(--accent2);margin-bottom:4px}
+.fin{position:fixed;inset:0;z-index:38;display:none;overflow-y:auto;background:#07070a}
+.fin.on{display:block;animation:finIn .6s var(--ease)}
+@keyframes finIn{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
+.fin-bg{position:fixed;inset:0;opacity:.6;transform:scale(1.08);filter:saturate(1.15)}
+.fin-bg svg{width:100%;height:100%;display:block}
+.fin::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(7,7,10,.25),rgba(7,7,10,.8) 42%,#07070a 82%);z-index:1;pointer-events:none}
+.fin-in{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:calc(96px + env(safe-area-inset-top)) 22px calc(30px + env(safe-area-inset-bottom));text-align:center}
+.fin-x{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:3;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:17px;display:grid;place-items:center}
+.fin-kick{font-size:12px;letter-spacing:.32em;color:var(--accent2);font-weight:700;animation:fadeUp .6s .15s both}
+.fin-in h2{font-family:var(--serif);font-size:36px;line-height:1.08;margin-top:10px;animation:fadeUp .7s .25s both}
+.fin-meta{font-size:13px;color:#cfcfd8;margin-top:6px;animation:fadeUp .7s .35s both}
+.fin-name{font-size:12px;color:var(--muted);margin-top:24px;letter-spacing:.12em;text-transform:uppercase;animation:fadeUp .7s .45s both}
+.fin-tit{font-family:var(--serif);font-style:italic;font-size:26px;color:var(--accent2);margin-top:6px;line-height:1.22;animation:fadeUp .8s .55s both}
+.fin-case{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:8px 14px;border-radius:99px;background:rgba(224,168,63,.14);border:1px solid rgba(224,168,63,.35);font-size:13.5px;font-weight:600;animation:fadeUp .8s .65s both}
+.fin-case.no{background:rgba(239,123,116,.12);border-color:rgba(239,123,116,.35);color:#f3b1ac}
+.fin-breve{font-size:15px;line-height:1.6;color:#e2e2ea;margin-top:18px;animation:fadeUp .8s .75s both}
+.fin-stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px;animation:fadeUp .8s .85s both}
+.fin-stats span{font-size:12.5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:6px 11px;border-radius:99px}
+.fin-btns{margin-top:12px;animation:fadeUp .8s .95s both}
+.fin-prev{width:100%;border-radius:16px;margin-top:4px;border:1px solid var(--line);display:block}
+.story .fb{display:inline-block;font-size:10.5px;font-weight:700;font-style:normal;color:var(--accent2);background:rgba(224,168,63,.12);border:1px solid rgba(224,168,63,.3);padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.stats{grid-template-columns:repeat(4,1fr);gap:8px}
+body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="stylesheet" href="effetti.css">
@@ -415,6 +470,7 @@ input,textarea{font:inherit;color:inherit}
       <div class="stat"><b id="stStories">0</b><span>storie</span></div>
       <div class="stat"><b id="stMsg">0</b><span>messaggi</span></div>
       <div class="stat"><b id="stClue">0</b><span>indizi</span></div>
+      <div class="stat"><b id="stEnd">0</b><span>finali</span></div>
     </div>
     <div class="sec-h" style="margin:24px 16px 0"><h2>🏅 Traguardi</h2><span class="bdgc" id="bdgCount"></span></div>
     <div class="badges" id="badges"></div>
@@ -422,6 +478,10 @@ input,textarea{font:inherit;color:inherit}
       <div class="li" id="optLen">✍️ Lunghezza risposte <span class="r" id="lenVal">Media</span></div>
       <div class="li" id="optQR">💡 Suggerimenti rapidi <span class="sw on" id="swQR"></span></div>
       <div class="li" id="optFx">🎬 Animazioni <span class="r" id="fxVal">Complete</span></div>
+      <div class="li" id="optVoce">🔊 Lettura ad alta voce <span class="sw" id="swVoce"></span></div>
+      <div class="li" id="optVoceRate">🗣️ Velocità della voce <span class="r" id="voceRateVal">Normale</span></div>
+      <div class="li" id="optAmb">🎵 Suoni d'atmosfera <span class="sw on" id="swAmb"></span></div>
+      <div class="li" id="optAmbVol">🔈 Volume dei suoni <span class="r" id="ambVolVal">Medio</span></div>
       <div class="li" id="optBrain" style="display:none">🧠 Cervello AI <span class="r" id="brainVal">—</span></div>
       <div class="li" id="optCreate">✨ Crea la tua storia</div>
     </div>
@@ -505,6 +565,7 @@ input,textarea{font:inherit;color:inherit}
     <div class="who"><b id="cTitleBar">Storia</b><span id="status">online</span></div>
     <button class="ico" id="memBtn" aria-label="Memoria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5v1a3 3 0 0 0 6 0V3.5"/><path d="M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5v1a3 3 0 0 1-6 0"/></svg></button>
     <button class="ico" id="regenBtn" aria-label="Rigenera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <button class="ico" id="moreBtn" aria-label="Voce, suoni e finale"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg></button>
   </div>
   <div id="log"></div>
   <div class="qr" id="qr"></div>
@@ -552,6 +613,25 @@ input,textarea{font:inherit;color:inherit}
 
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="fin" id="finale" role="dialog" aria-label="Il finale della storia">
+  <div class="fin-bg" id="finBg"></div>
+  <button class="fin-x" id="finClose" aria-label="Chiudi">✕</button>
+  <div class="fin-in">
+    <div class="fin-kick">🏁 FINE</div>
+    <h2 id="finTitle"></h2>
+    <div class="fin-meta" id="finMeta"></div>
+    <div class="fin-name" id="finName"></div>
+    <div class="fin-tit" id="finTit"></div>
+    <div class="fin-case" id="finCase"></div>
+    <p class="fin-breve" id="finBreve"></p>
+    <div class="fin-stats" id="finStats"></div>
+    <div class="fin-btns">
+      <button class="btn" id="finShare">📤 Condividi</button>
+      <button class="btn ghost" id="finRead">📖 Rileggi il finale</button>
+      <button class="btn ghost" id="finAgain">🔁 Gioca di nuovo</button>
+    </div>
+  </div>
+</div>
 <div class="dialog" id="dlg"><div class="box"><p id="dlgText"></p><div class="drow"><button id="dlgNo">Annulla</button><button class="danger" id="dlgYes">Conferma</button></div></div></div>
 <div class="toast" id="toast"></div>
 
@@ -562,12 +642,15 @@ input,textarea{font:inherit;color:inherit}
 <script src="storie_vita.js"></script>
 <script src="storie_azione.js"></script>
 <script src="campania.js"></script>
+<script src="casi.js"></script>
+<script src="voce.js"></script>
+<script src="suoni.js"></script>
 <script src="effetti.js"></script>
 <script>
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const VERSION = "2.5";
+const VERSION = "2.6";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
@@ -582,7 +665,10 @@ const PERS_LABEL = { timida:["Timido","Timida"], sveglia:["Sveglio","Sveglia"], 
 const LOVE = "STORIA D'AMORE: nasce lentamente, con sguardi, battute, piccoli gesti e tensione. Segue SOLO le scelte dell'utente: può corteggiare chi vuole oppure nessuno. Al massimo baci e abbracci; ogni scena intima finisce con una dissolvenza, mai esplicita.";
 const REASONS = [["offensivo","Offensivo o d'odio"],["violento","Troppo violento"],["sessuale","Sessuale o inappropriato"],["pericoloso","Pericoloso"],["altro","Altro"]];
 
-let settings = { len:"media", qr:true, fx:"full" };
+let settings = { len:"media", qr:true, fx:"full", voce:false, voceRate:"normale", amb:true, ambVol:.55 };
+const VOCE_RATE = { lenta:.85, normale:1, veloce:1.2 };
+const CASI = window.CASI || {};
+const FINAL = { finale:1, finale_caso:1, caso_ok:1, caso_meta:1, caso_fail:1 };
 let custom = [];
 let sample = null, db = null, uid = null;
 let current = "home", stack = [];
@@ -879,11 +965,46 @@ function formatRule(x){
 OPZIONI: prima idea | seconda idea | terza idea
 (tre cose brevi, massimo 6 parole ciascuna, che ${x.name} potrebbe dire o fare, in prima persona).`;
 }
+// regole per il finale: niente OPZIONI, ma un soprannome e un riassunto da mostrare e condividere
+function finaleRule(x){
+  return `Scrivi solo la scena: narrazione tra *asterischi* e dialoghi nel formato Nome: "battuta". Niente premesse né note e NON scrivere la riga OPZIONI. Alla fine aggiungi, su due righe separate, esattamente:
+TITOLO: un soprannome epico per ${x.name}, massimo 6 parole
+IN BREVE: due frasi che raccontano tutta la storia di ${x.name}`;
+}
+// compiti speciali: finale, accusa giusta, giusta a metà, sbagliata, ultima possibilità
+function modeTask(x, s, mode){
+  const c = casoOf(s), N = x.name, ver = c ? resolve(c.verita, x) : "";
+  const T = {
+    caso_ok:`${N} ha appena dato la sua soluzione del mistero ed è GIUSTA. Scrivi la scena finale della rivelazione: i personaggi reagiscono, il colpevole viene messo alle strette e smascherato e tutta la verità viene a galla: ${ver} Chiudi la storia in modo memorabile, dando merito a ${N}.`,
+    caso_meta:`La soluzione di ${N} è giusta solo IN PARTE: ha intuito qualcosa, ma non tutto. Scrivi la scena finale in cui viene a galla tutta la verità: ${ver} Fai capire cosa aveva intuito ${N} e cosa [gli|le] era sfuggito, poi chiudi la storia.`,
+    caso_no:`La soluzione di ${N} è SBAGLIATA. Scrivi la scena in cui la sua accusa crolla davanti a tutti (un alibi, una prova contraria, la reazione dell'accusato), SENZA rivelare la verità e senza dire chi è il vero colpevole. Alla fine lascia a ${N} un nuovo piccolo indizio per continuare a indagare.`,
+    caso_fail:`Anche questa soluzione di ${N} è SBAGLIATA ed era l'ultima possibilità. Scrivi la scena finale in cui la verità viene comunque a galla, senza merito di ${N}: ${ver} Chiudi la storia con un finale amaro ma memorabile.`,
+    finale_caso:`${N} ha deciso di chiudere la storia senza accusare nessuno. Scrivi il FINALE: la verità viene comunque a galla: ${ver} Chiudi le trame principali in modo coerente con quello che è successo, con un ultimo momento memorabile per ${N}.`,
+    finale:`Scrivi il FINALE della storia: chiudi le trame principali in modo coerente con tutto quello che è successo, con un ultimo momento memorabile per ${N}. Non lasciare questioni in sospeso.`
+  };
+  return T[mode] ? resolve(T[mode], x) : "";
+}
+function splitFinale(t){
+  let titolo = "", breve = "", where = "";
+  const keep = [];
+  String(t || "").split("\n").forEach(ln => {
+    const mt = ln.match(/^\s*\**\s*TITOLO\s*\**\s*:\s*(.*)$/i), mb = ln.match(/^\s*\**\s*IN BREVE\s*\**\s*:\s*(.*)$/i), mo = /^\s*\**\s*OPZIONI\s*\**\s*:/i.test(ln);
+    if(mt){ titolo = mt[1]; where = "t"; return; }
+    if(mb){ breve = mb[1]; where = "b"; return; }
+    if(mo){ where = "o"; return; }
+    if(where === "b" && ln.trim()){ breve += " " + ln.trim(); return; }
+    if(where === "t" || where === "o") return;
+    keep.push(ln);
+  });
+  const tidy = v => String(v || "").replace(/[*"“”«»[\]()]/g, "").replace(/\s+/g, " ").trim();
+  return { text:keep.join("\n").trim(), titolo:tidy(titolo).slice(0, 70), breve:tidy(breve).slice(0, 360), opts:[] };
+}
+function cutFinale(t){ const i = t.search(/\n\s*\**\s*(TITOLO|IN BREVE|OPZIONI)\s*\**\s*:/i); return (i >= 0 ? t.slice(0, i) : t).trim(); }
 const transcript = (x, msgs) => msgs.map(m => (m.r === "u" ? x.name.toUpperCase() + " (utente): " : "NARRATORE: ") + m.t).join("\n\n");
 function buildPrompt(x, s, mode){
   const task = mode === "open"
     ? `Scrivi la scena d'apertura della storia: presenta ${x.name}, il luogo e almeno un personaggio, e fermati in un momento in cui ${x.name} deve reagire.`
-    : `Scrivi SOLO la prossima risposta del narratore e dei personaggi, coerente con la memoria e con l'ultimo messaggio di ${x.name}.`;
+    : modeTask(x, s, mode) || `Scrivi SOLO la prossima risposta del narratore e dei personaggi, coerente con la memoria e con l'ultimo messaggio di ${x.name}.`;
   return `${rules(s, x)}
 
 === MEMORIA A LUNGO TERMINE ===
@@ -894,7 +1015,7 @@ ${x.messages.length ? transcript(x, x.messages.slice(-24)) : "(nessuno: la stori
 
 === COMPITO ===
 ${task}
-${formatRule(x)}`;
+${FINAL[mode] ? finaleRule(x) : formatRule(x)}`;
 }
 function memInstruction(x, s, withTranscript){
   return `Sei il sistema di memoria della storia "${s.t}". Protagonista: ${x.name}. Aggiorna la memoria unendo quella attuale con i fatti nuovi ${withTranscript ? "dei messaggi qui sotto" : "della conversazione qui sopra"}. Tieni solo ciò che serve per restare coerenti in futuro: nomi, luoghi, promesse, oggetti, segreti scoperti, decisioni, cosa sa e cosa NON sa ${x.name}.
@@ -965,10 +1086,10 @@ function ctxSize(){ try{ return AndroidAI.contextSize() || 4096; }catch(e){ retu
 function countTok(p){ try{ const n = AndroidAI.countTokens(p); return n > 0 ? n : p.length / 3; }catch(e){ return p.length / 3; } }
 // mode: "chat" | "open" | "warm"
 function buildLocal(x, s, mode){
-  const maxTok = LOCAL_TOK[settings.len] || 420;
+  const maxTok = (LOCAL_TOK[settings.len] || 420) + (FINAL[mode] ? 240 : 0);
   const budget = ctxSize() - maxTok - (mode === "warm" ? 350 : 32);
   const system = localSystem(s, x);
-  const msgs = x.messages;
+  const msgs = x.messages, special = modeTask(x, s, mode);
   let start = Math.max(0, Math.min(x.win || 0, msgs.length - 2));
   let prompt;
   for(;;){
@@ -977,6 +1098,11 @@ function buildLocal(x, s, mode){
     if(mode === "chat"){
       const last = turns[turns.length - 1];
       if(last.role === "user") last.content += `\n\n(Continua la storia come narratore. Non scrivere al posto di ${x.name}. Finisci con la riga OPZIONI.)`;
+    }
+    if(special){
+      const ins = `(${special}\n\n${FINAL[mode] ? finaleRule(x) : `Non scrivere al posto di ${x.name}. Finisci con la riga OPZIONI.`})`;
+      const last = turns[turns.length - 1];
+      if(last.role === "user") last.content += "\n\n" + ins; else turns.push({ role:"user", content:ins });
     }
     prompt = renderTpl(system, turns, mode !== "warm");
     if(start >= msgs.length - 2 || countTok(prompt) <= budget) break;
@@ -1011,6 +1137,7 @@ function show(v, push = true){
   next.classList.add("on");
   next.querySelectorAll(".stagger").forEach(el => { el.classList.remove("stagger"); void el.offsetWidth; el.classList.add("stagger"); });
   current = v;
+  if(v !== "chat"){ stopVoice(); ambStop(); }
   $("tabs").classList.toggle("hide", !TAB_VIEWS.includes(v));
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.tab === v));
   if(v === "home") renderHome();
@@ -1025,10 +1152,12 @@ function show(v, push = true){
 function back(){ let p = stack.pop() || "home"; if(p === current) p = "home"; show(p, false); }
 function sheetOpen(){ return $("sheet").classList.contains("on"); }
 function dlgOpen(){ return $("dlg").classList.contains("on"); }
-function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen()); }catch(e){} } }
+function finOpen(){ return $("finale").classList.contains("on"); }
+function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen() || finOpen()); }catch(e){} } }
 window.__back = () => {
   if(dlgOpen()){ $("dlg").classList.remove("on"); syncBack(); return true; }
   if(sheetOpen()){ closeSheet(); return true; }
+  if(finOpen()){ closeFinale(); return true; }
   if(current !== "home"){ back(); return true; }
   return false;
 };
@@ -1084,8 +1213,9 @@ function renderExplore(){
 function renderStoryList(){
   const saves = listSaves();
   $("storyList").innerHTML = saves.length ? saves.map((x, i) => {
-    const s = story(x.sid);
-    return `<div class="story" data-resume="${s.id}" style="animation-delay:${Math.min(i, 8) * .05}s"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>${esc(s.t)}</b><span>${esc(lastLine(x))}</span><small>${x.name} · ${x.messages.length} messaggi · ${ago(x.updated)}</small></div><button class="del" data-del="${s.id}" aria-label="Elimina"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>`;
+    const s = story(x.sid), ce = x.caso && x.caso.esito;
+    const fb = x.finale ? `<i class="fb">${ce === "ok" ? "🕵️ Caso risolto" : ce === "meta" ? "🕵️ Risolto a metà" : "🏁 Finita"}</i>` : "";
+    return `<div class="story" data-resume="${s.id}" style="animation-delay:${Math.min(i, 8) * .05}s"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>${esc(s.t)}${fb}</b><span>${esc(lastLine(x))}</span><small>${x.name} · ${x.messages.length} messaggi · ${ago(x.updated)}</small></div><button class="del" data-del="${s.id}" aria-label="Elimina"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>`;
   }).join("") : `<div class="emptyst"><span class="big">📖</span>Nessuna storia iniziata.<br>Scegline una dalla Home o da Esplora.</div>`;
 }
 
@@ -1100,7 +1230,8 @@ function statsNow(){
   const saves = listSaves(), gen = new Set(), cities = new Set();
   saves.forEach(x => { const s = story(x.sid); if(s){ gen.add(s.g); cities.add(s.city); } });
   return { stories:saves.length, msgs:saves.reduce((a, x) => a + x.messages.length, 0), clues:saves.reduce((a, x) => a + ((x.memory && x.memory.indizi) || []).length, 0),
-           genres:gen.size, cities:cities.size, created:custom.length, longest:saves.reduce((a, x) => Math.max(a, x.messages.length), 0) };
+           genres:gen.size, cities:cities.size, created:custom.length, longest:saves.reduce((a, x) => Math.max(a, x.messages.length), 0),
+           solved:saves.filter(x => x.caso && (x.caso.esito === "ok" || x.caso.esito === "meta")).length, endings:saves.filter(x => x.finale).length };
 }
 function renderProfile(){
   const saves = listSaves(), last = saves[0];
@@ -1110,9 +1241,16 @@ function renderProfile(){
   countUp($("stStories"), saves.length);
   countUp($("stMsg"), saves.reduce((a, x) => a + x.messages.length, 0));
   countUp($("stClue"), saves.reduce((a, x) => a + ((x.memory && x.memory.indizi) || []).length, 0));
+  countUp($("stEnd"), saves.filter(x => x.finale).length);
   $("lenVal").textContent = settings.len[0].toUpperCase() + settings.len.slice(1);
   $("swQR").classList.toggle("on", settings.qr);
   $("fxVal").textContent = settings.fx === "low" ? "Ridotte" : "Complete";
+  $("optVoce").style.display = $("optVoceRate").style.display = voceOK() ? "flex" : "none";
+  $("swVoce").classList.toggle("on", !!settings.voce);
+  $("voceRateVal").textContent = cap(settings.voceRate);
+  $("optAmb").style.display = $("optAmbVol").style.display = window.SUONI && SUONI.supported() ? "flex" : "none";
+  $("swAmb").classList.toggle("on", !!settings.amb);
+  $("ambVolVal").textContent = ambVolLabel();
   if(window.FX) FX.badges(statsNow());
   const q = reportsQ(), waiting = q.filter(r => !r.sent).length;
   $("repVal").textContent = q.length ? `${q.length - waiting} inviate${waiting ? ", " + waiting + " in attesa" : ""}` : "nessuna";
@@ -1258,11 +1396,16 @@ function startStory(id, fresh){
           pers:segVal("persSeg", "sveglia"), messages:[], memory:emptyMemory(), turns:0, opts:[], win:0, created:Date.now() };
     if(s.open){ x.messages.push({ r:"a", t:resolve(s.open, x) }); x.opts = (s.opts || []).map(o => resolve(o, x)); }
   }
+  stopVoice();
   st = x; persist();
   renderChat(); show("chat");
   if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720), meta:(s.pick && st.home ? homeLabel(st.home) : s.city) + " · " + (s.era || "Oggi") });
+  ambStart(s);
   if(!st.messages.length) generate("open");
-  else warmup();
+  else{
+    warmup();
+    if(isNew && settings.voce) setTimeout(() => { if(st === x && current === "chat" && !busy) speakMsg(0, true); }, 2700);
+  }
 }
 
 /* ===================== CHAT ===================== */
@@ -1279,9 +1422,12 @@ function fmt(t, s){
 function aiRow(text, i){
   const s = story(st.sid), m = i >= 0 ? st.messages[i] : null;
   const row = document.createElement("div"); row.className = "row-ai";
+  row.dataset.i = i;
   const body = text === null ? '<span class="typing"><i></i><i></i><i></i></span>'
     : (m && m.rep ? `<span class="repd">Hai segnalato questa risposta. <u data-show="${i}">Mostra</u></span>` : fmt(text, s));
-  row.innerHTML = `<div class="av" style="${avStyle(s)}">${s.e}</div><div class="col"><div class="msg ai">${body}</div>${i >= 0 ? `<button class="flagb" data-flag="${i}">⚑ Segnala</button>` : ""}</div>`;
+  const spk = i >= 0 && voceOK() && !(m && m.rep) ? `<button class="spk${i === speakingIdx ? " on" : ""}" data-speak="${i}"><span class="ic">🔊</span><span class="eq"><i></i><i></i><i></i></span><span class="lb">${i === speakingIdx ? "Ferma" : "Ascolta"}</span></button>` : "";
+  row.innerHTML = `<div class="av" style="${avStyle(s)}">${s.e}</div><div class="col"><div class="msg ai${m && m.md && FINAL[m.md] ? " fin" : ""}">${body}</div>${i >= 0 ? `<div class="macts">${spk}<button class="flagb" data-flag="${i}">⚑ Segnala</button></div>` : ""}</div>`;
+  if(i >= 0 && i === speakingIdx) row.classList.add("speaking");
   return row;
 }
 function meBubble(t){ const d = document.createElement("div"); d.className = "msg me"; d.innerHTML = fmt(t, story(st.sid)); return d; }
@@ -1302,9 +1448,14 @@ function renderChat(){
 }
 function renderQR(opts){
   const q = $("qr");
-  if(!settings.qr || !opts || !opts.length || busy){ q.innerHTML = ""; return; }
-  q.innerHTML = opts.map(o => `<button>${esc(o)}</button>`).join("");
-  [...q.children].forEach((b, i) => { b.style.animation = `fadeUp .4s ${i * .08}s both`; b.onclick = () => { $("input").value = b.textContent; send(); }; });
+  const s = st && story(st.sid), caso = !busy && s && casoOf(s) && !(st.caso && st.caso.esito) && (st.turns || 0) >= 3;
+  const list = settings.qr && opts && opts.length && !busy ? opts : [];
+  if(!caso && !list.length){ q.innerHTML = ""; return; }
+  q.innerHTML = (caso ? '<button class="caso">🔎 Risolvi il caso</button>' : "") + list.map(o => `<button>${esc(o)}</button>`).join("");
+  [...q.children].forEach((b, i) => {
+    b.style.animation = `fadeUp .4s ${i * .08}s both`;
+    b.onclick = b.classList.contains("caso") ? casoSheet : () => { $("input").value = b.textContent; send(); };
+  });
 }
 function setSendMode(stop){
   const b = $("sendBtn"); b.classList.toggle("stop", stop);
@@ -1334,21 +1485,30 @@ async function generate(mode = "chat"){
     setStatus("collego l'AI…", true);
     if(!(await ensureSample())){ setStatus(); toast("AI non raggiungibile da qui. Apri l'app dentro Claude (claude.ai) e riprova."); return; }
   }
+  const isFin = !!FINAL[mode];
+  if(mode !== "chat" && mode !== "open"){ x.pendingMode = mode; storeObj(x); }
   busy = true; stopped = false; setSendMode(true); renderQR([]); setStatus(LOCAL ? "sta leggendo la storia…" : "sta pensando…", true);
   const log = $("log"), row = aiRow(null, -1), bub = row.querySelector(".msg");
+  if(isFin) bub.classList.add("fin");
   log.appendChild(row); scrollEnd();
   let partial = "";
   const onText = ({ text }) => {
     if(!text || text === "Thinking...") return;
-    partial = text; setStatus("sta scrivendo…", true); bub.classList.add("streaming");
-    bub.innerHTML = fmt(splitOptions(cleanOut(text)).text, s); scrollEnd();
+    partial = text; setStatus(isFin ? "sta scrivendo il finale…" : "sta scrivendo…", true); bub.classList.add("streaming");
+    bub.innerHTML = fmt(isFin ? cutFinale(cleanOut(text)) : splitOptions(cleanOut(text)).text, s); scrollEnd();
   };
   const finish = raw => {
-    const { text, opts } = splitOptions(cleanOut(raw));
+    const sp = isFin ? splitFinale(cleanOut(raw)) : splitOptions(cleanOut(raw)), text = sp.text;
     if(!text){ row.remove(); toast("Risposta vuota. Tocca ↻ per riprovare."); return; }
-    x.messages.push({ r:"a", t:text }); x.opts = opts; x.turns = (x.turns || 0) + 1; storeObj(x);
+    const msg = { r:"a", t:text };
+    if(mode !== "chat" && mode !== "open") msg.md = mode;
+    x.messages.push(msg); x.opts = sp.opts; x.turns = (x.turns || 0) + 1; delete x.pendingMode;
+    if(isFin) makeFinale(x, s, mode, sp);
+    storeObj(x);
     if(x === st && current === "chat"){ const nr = aiRow(text, x.messages.length - 1); nr.classList.add("still"); row.replaceWith(nr); } else row.remove();
     if(window.FX) setTimeout(() => FX.check(statsNow()), 600);
+    if(settings.voce && x === st && current === "chat") setTimeout(() => speakMsg(x.messages.length - 1, true), 150);
+    if(isFin) setTimeout(() => { if(x === st && current === "chat") openFinale(x); }, 1100);
     if(x.turns % (LOCAL ? 4 : 3) === 0) setTimeout(() => updateMemory(x), 50);
     else setTimeout(warmup, 50);
   };
@@ -1375,6 +1535,7 @@ function stopGen(){
 async function send(){
   if(busy){ stopGen(); return; }
   const t = $("input").value.trim(); if(!t || !st) return;
+  stopVoice();
   $("input").value = ""; autosize();
   if(LOCAL && runningKind() === "warm"){ try{ AndroidAI.stop(); }catch(e){} }
   st.messages.push({ r:"u", t }); st.opts = []; persist();
@@ -1384,14 +1545,17 @@ async function send(){
 }
 async function regen(){
   if(busy || !st) return;
+  stopVoice();
   const s = story(st.sid);
   const last = st.messages[st.messages.length - 1];
+  let mode = "chat";
   if(last && last.r === "a"){
     if(st.messages.length === 1 && s.open){ toast("Questa è la scena d'apertura: scrivi qualcosa per continuare."); return; }
+    if(last.md) mode = last.md;
     st.messages.pop(); persist(); renderChat();
-  }
+  }else if(last && last.r === "u" && st.pendingMode) mode = st.pendingMode;
   if(LOCAL && runningKind() === "warm"){ try{ AndroidAI.stop(); }catch(e){} }
-  await generate(st.messages.length ? "chat" : "open");
+  await generate(st.messages.length ? mode : "open");
 }
 
 /* ===================== MEMORIA ===================== */
@@ -1433,6 +1597,326 @@ function memSheet(){
     `<div class="mem-sec"><b>Fatti ricordati</b>${list(m.fatti)}</div>` +
     `<div class="mem-sec"><b>Personaggi</b>${list(m.personaggi)}</div>` +
     `<div class="mem-sec"><b>🔍 Indizi e segreti scoperti</b>${list(m.indizi)}</div>`);
+}
+
+/* ===================== VOCE NARRANTE ===================== */
+let speakingIdx = -1;
+const cap = t => { t = String(t || ""); return t ? t[0].toUpperCase() + t.slice(1) : ""; };
+function saveSettings(){ ls.set(K.settings, settings); }
+function voceOK(){ return !!(window.VOCE && VOCE.supported()); }
+function markSpeaking(i){
+  speakingIdx = i;
+  document.querySelectorAll("#log .row-ai").forEach(r => {
+    const on = i >= 0 && +r.dataset.i === i, b = r.querySelector(".spk");
+    r.classList.toggle("speaking", on);
+    if(b){ b.classList.toggle("on", on); b.querySelector(".lb").textContent = on ? "Ferma" : "Ascolta"; }
+  });
+}
+function voceErr(auto){
+  if(LOCAL && VOCE.missingData()){ toast("🔊 Manca la voce italiana del telefono: ti apro le impostazioni per scaricarla"); setTimeout(() => VOCE.install(), 1200); }
+  else if(!auto) toast("La voce non è disponibile su questo dispositivo.");
+}
+function speakMsg(i, auto){
+  if(!voceOK() || !st) return;
+  const m = st.messages[i];
+  if(!m || m.r !== "a" || m.rep) return;
+  if(speakingIdx === i){ stopVoice(); return; }
+  VOCE.setRate(VOCE_RATE[settings.voceRate] || 1);
+  const ok = VOCE.speak(m.t, story(st.sid), {
+    start(){ if(window.SUONI) SUONI.duck(true); },
+    end(){ if(speakingIdx === i) markSpeaking(-1); if(window.SUONI) SUONI.duck(false); },
+    error(){ markSpeaking(-1); voceErr(auto); }
+  });
+  if(ok) markSpeaking(i);
+}
+function stopVoice(){
+  if(voceOK() && VOCE.speaking()) VOCE.stop();
+  if(speakingIdx >= 0) markSpeaking(-1);
+  if(window.SUONI) SUONI.duck(false);
+}
+
+/* ===================== SUONI D'ATMOSFERA ===================== */
+function ambVolLabel(){ const v = settings.ambVol; return v <= .4 ? "Basso" : v <= .7 ? "Medio" : "Alto"; }
+function ambStart(s){ if(window.SUONI && settings.amb && s) SUONI.play(SUONI.sceneFor(s)); }
+function ambStop(){ if(window.SUONI) SUONI.stop(); }
+function toggleVoce(){
+  settings.voce = !settings.voce; saveSettings();
+  if(settings.voce){
+    if(window.VOCE) VOCE.init();
+    toast("🔊 Leggo ad alta voce le risposte dell'AI");
+    if(st && current === "chat" && !busy){ const i = st.messages.length - 1; if(i >= 0 && st.messages[i].r === "a") speakMsg(i, true); }
+  }else{ stopVoice(); toast("Lettura ad alta voce spenta"); }
+}
+function cycleRate(){
+  const o = ["lenta", "normale", "veloce"];
+  settings.voceRate = o[(o.indexOf(settings.voceRate) + 1) % 3]; saveSettings();
+  toast("🗣️ Voce " + settings.voceRate);
+}
+function toggleAmb(){
+  settings.amb = !settings.amb; saveSettings();
+  if(window.SUONI) SUONI.setEnabled(settings.amb);
+  if(settings.amb && st && current === "chat") ambStart(story(st.sid));
+  toast(settings.amb ? "🎵 Suoni d'atmosfera accesi" : "Suoni d'atmosfera spenti");
+}
+
+/* ===================== MENU DELLA CHAT ===================== */
+function chatMenu(){
+  if(!st) return;
+  const x = st, s = story(x.sid), c = casoOf(s), cs = x.caso || {};
+  const snd = window.SUONI && SUONI.supported();
+  const caseRow = !c ? "" : cs.esito ? `<div class="li gold" data-m="caso">🔎 Il caso <span class="r">${esc(esitoLabel(cs))}</span></div>`
+    : `<div class="li gold" data-m="caso">🔎 Risolvi il caso <span class="r">${3 - (cs.tent || 0)} tentativi</span></div>`;
+  openSheet(`<h4>Opzioni della storia</h4><div class="sub">${esc(resolve(s.t, x))} · tu sei ${esc(x.name)}</div>
+    <div class="menu" id="cmenu">
+      ${voceOK() ? `<div class="li" data-m="voce">🔊 Leggi le risposte ad alta voce <span class="sw ${settings.voce ? "on" : ""}"></span></div>
+      <div class="li" data-m="rate">🗣️ Velocità della voce <span class="r">${cap(settings.voceRate)}</span></div>` : ""}
+      ${snd ? `<div class="li" data-m="amb">🎵 Suoni d'atmosfera <span class="sw ${settings.amb ? "on" : ""}"></span></div>
+      <div class="vol"><span>🔈</span><input type="range" id="ambRange" min="0" max="100" step="5" value="${Math.round(settings.ambVol * 100)}" aria-label="Volume dei suoni"><span>🔊</span></div>
+      <p class="ambnow">In sottofondo: ${esc(SUONI.name(SUONI.sceneFor(s)))}</p>` : ""}
+      ${caseRow}
+      <div class="li" data-m="fine">🏁 ${x.finale ? "Rivedi il finale" : "Concludi la storia"}</div>
+    </div>`);
+  $("cmenu").onclick = e => {
+    const r = e.target.closest("[data-m]"); if(!r) return;
+    const m = r.dataset.m;
+    if(m === "voce"){ toggleVoce(); r.querySelector(".sw").classList.toggle("on", settings.voce); }
+    else if(m === "rate"){ cycleRate(); r.querySelector(".r").textContent = cap(settings.voceRate); }
+    else if(m === "amb"){ toggleAmb(); r.querySelector(".sw").classList.toggle("on", settings.amb); }
+    else if(m === "caso"){ closeSheet(); setTimeout(casoSheet, 280); }
+    else if(m === "fine"){ closeSheet(); setTimeout(concludi, 280); }
+  };
+  const rg = $("ambRange");
+  if(rg) rg.oninput = () => {
+    settings.ambVol = rg.value / 100; saveSettings();
+    if(window.SUONI){ SUONI.setVolume(settings.ambVol); if(!settings.amb && settings.ambVol > 0){ settings.amb = true; saveSettings(); SUONI.setEnabled(true); ambStart(s); const sw = document.querySelector('#cmenu [data-m="amb"] .sw'); if(sw) sw.classList.add("on"); } }
+  };
+}
+
+/* ===================== RISOLVI IL CASO ===================== */
+function casoOf(s){ return s && CASI[s.id] ? CASI[s.id] : null; }
+function casoOrder(x, c){
+  const r = rng(hashStr(x.sid + ":" + (x.created || 1))), idx = c.opz.map((_, i) => i);
+  for(let i = idx.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return idx;
+}
+function esitoLabel(cs){
+  if(cs.esito === "ok") return "Risolto " + "⭐".repeat(cs.stelle || 2);
+  if(cs.esito === "meta") return "Risolto a metà ⭐";
+  if(cs.esito === "no") return "Non risolto";
+  if(cs.esito === "aperto") return "Verità svelata";
+  return "";
+}
+function casoLine(cs){
+  if(cs.esito === "ok") return `${"⭐".repeat(cs.stelle || 2)} Caso risolto · ${cs.punti} punti`;
+  if(cs.esito === "meta") return `⭐ Caso risolto a metà · ${cs.punti} punti`;
+  if(cs.esito === "no") return "❌ Caso non risolto";
+  return "🔓 Verità svelata senza accusare nessuno";
+}
+function punteggio(x, esito){
+  const ind = ((x.memory && x.memory.indizi) || []).length, turns = x.turns || 0, wrong = Math.max(0, ((x.caso && x.caso.tent) || 1) - 1);
+  let p = (esito === "ok" ? 1000 : 450) - 250 * wrong + 60 * Math.min(ind, 8) + Math.max(0, 400 - 12 * turns);
+  p = Math.max(100, Math.round(p / 10) * 10);
+  const stelle = esito === "meta" ? 1 : (wrong === 0 && (ind >= 3 || turns <= 15) ? 3 : 2);
+  return { punti:p, stelle };
+}
+function casoSheet(){
+  if(!st || busy) return;
+  const x = st, s = story(x.sid), c = casoOf(s); if(!c) return;
+  const cs = x.caso || {};
+  if(cs.esito){
+    openSheet(`<h4>🔎 Il caso</h4><div class="casoq">${esc(resolve(c.q, x))}</div>
+      <div class="casoinfo"><span>${esc(esitoLabel(cs))}</span>${cs.punti ? `<span>🏆 ${cs.punti} punti</span>` : ""}<span>✋ ${cs.tent || 0} ${cs.tent === 1 ? "accusa" : "accuse"}</span></div>
+      <div class="verita"><b>La verità</b>${esc(resolve(c.verita, x))}</div>
+      ${x.finale ? '<button class="btn" id="casoFin">🏁 Rivedi il finale</button>' : ""}`);
+    if($("casoFin")) $("casoFin").onclick = () => { closeSheet(); setTimeout(() => openFinale(x), 280); };
+    return;
+  }
+  const ind = ((x.memory && x.memory.indizi) || []).length, left = 3 - (cs.tent || 0);
+  let sel = -1;
+  openSheet(`<h4>🔎 Risolvi il caso</h4><div class="casoq">${esc(resolve(c.q, x))}</div>
+    <div class="casoinfo"><span>🔍 Indizi raccolti: ${ind}</span><span>✋ Tentativi rimasti: ${left}</span></div>
+    <div class="opzs" id="opzs">${casoOrder(x, c).map((i, k) => `<button class="opz" data-o="${i}"><b>${"ABCDEFG"[k]}</b><span>${esc(resolve(c.opz[i], x))}</span></button>`).join("")}</div>
+    <textarea id="casoWhy" maxlength="240" placeholder="Perché lo pensi? (facoltativo)"></textarea>
+    <button class="btn" id="casoGo" disabled>Accusa ✋</button>
+    <p class="hint">${ind < 2 ? "Hai ancora pochi indizi: puoi continuare a indagare prima di accusare. " : ""}Se sbagli, l'indagine continua: hai 3 tentativi in tutto.</p>`);
+  $("opzs").onclick = e => {
+    const b = e.target.closest(".opz"); if(!b) return;
+    sel = +b.dataset.o;
+    document.querySelectorAll("#opzs .opz").forEach(z => z.classList.toggle("on", z === b));
+    $("casoGo").disabled = false;
+  };
+  $("casoGo").onclick = () => { if(sel < 0) return; const why = clean($("casoWhy").value).replace(/"/g, "'").slice(0, 240); closeSheet(); accusa(sel, why); };
+}
+async function accusa(i, why){
+  const x = st, s = story(x.sid), c = casoOf(s);
+  if(!c || busy) return;
+  if(LOCAL && !aiReady){ toast("Prima scarica e accendi il cervello dell'AI 🧠"); show("setup"); return; }
+  stopVoice();
+  const opz = resolve(c.opz[i], x), cs = x.caso = Object.assign({ tent:0 }, x.caso || {});
+  cs.tent++; cs.scelta = i; cs.at = Date.now();
+  const giusta = i === c.ok, meta = (c.meta || []).includes(i);
+  let mode;
+  if(giusta || meta){ cs.esito = giusta ? "ok" : "meta"; Object.assign(cs, punteggio(x, cs.esito)); mode = giusta ? "caso_ok" : "caso_meta"; }
+  else if(cs.tent >= 3){ Object.assign(cs, { esito:"no", punti:0, stelle:0 }); mode = "caso_fail"; }
+  else mode = "caso_no";
+  const t = `*${x.name} mette in fila gli indizi e dice ad alta voce la sua soluzione.* "${opz.replace(/[.!?…]*$/, ".")}"${why ? ` "${why}"` : ""}`;
+  x.messages.push({ r:"u", t }); x.opts = []; persist();
+  $("log").appendChild(meBubble(t)); scrollEnd();
+  if(window.FX) FX.sent();
+  if(mode === "caso_no"){ const r = 3 - cs.tent; toast(`❌ Accusa sbagliata: ${r === 1 ? "ti resta un tentativo" : "ti restano " + r + " tentativi"}`); }
+  else if(mode === "caso_fail") toast("❌ Ultimo tentativo sbagliato: ecco la verità");
+  else toast(giusta ? "✅ Soluzione giusta! Ecco come va a finire…" : "🟡 Giusto a metà… ecco tutta la verità");
+  await generate(mode);
+}
+
+/* ===================== FINALE ===================== */
+function concludi(){
+  if(!st || busy) return;
+  const x = st, s = story(x.sid), c = casoOf(s);
+  if(x.finale){ openFinale(x); return; }
+  if(x.messages.length < 6){ toast("La storia è appena cominciata: gioca ancora un po' prima del finale."); return; }
+  if(c && !(x.caso && x.caso.esito)){
+    openSheet(`<h4>🏁 Concludere la storia?</h4><div class="sub">Il caso non è ancora risolto. Puoi provare ad accusare qualcuno, oppure chiudere qui: nel finale verrà svelata la verità.</div>
+      <button class="btn" id="cfCaso">🔎 Prima provo a risolvere il caso</button>
+      <button class="btn ghost" id="cfEnd">🏁 Concludi senza accusare</button>`);
+    $("cfCaso").onclick = () => { closeSheet(); setTimeout(casoSheet, 280); };
+    $("cfEnd").onclick = () => { closeSheet(); fineGen("finale_caso"); };
+    return;
+  }
+  confirmDlg("Concludere la storia? L'AI scriverà il finale e potrai condividerlo. Dopo potrai anche continuare a giocare.", () => fineGen("finale"), "Scrivi il finale");
+}
+async function fineGen(mode){
+  if(!st || busy) return;
+  if(LOCAL && !aiReady){ toast("Prima scarica e accendi il cervello dell'AI 🧠"); show("setup"); return; }
+  stopVoice();
+  toast("🏁 L'AI sta scrivendo il finale…");
+  await generate(mode);
+}
+function defTitolo(mode){
+  return { caso_ok:"Mente da vero detective", caso_meta:"A un passo dalla verità", caso_fail:"Il caso che è sfuggito", finale_caso:"La verità venuta a galla" }[mode] || "Una storia da ricordare";
+}
+function defBreve(x, text){
+  const base = (x.memory && x.memory.riassunto) || String(text).replace(/\*/g, "").replace(/\s+/g, " ");
+  return base.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ").slice(0, 320);
+}
+function makeFinale(x, s, mode, sp){
+  if(mode === "finale_caso" && casoOf(s) && !(x.caso && x.caso.esito)) x.caso = Object.assign({ tent:0 }, x.caso || {}, { esito:"aperto", punti:0, stelle:0 });
+  x.finale = { at:Date.now(), msg:x.messages.length - 1, md:mode, titolo:sp.titolo || defTitolo(mode), breve:sp.breve || defBreve(x, sp.text) };
+}
+function finStats(x){
+  const ind = ((x.memory && x.memory.indizi) || []).length, out = [`💬 ${x.messages.length} messaggi`, `🔍 ${ind} ${ind === 1 ? "indizio" : "indizi"}`];
+  const days = x.created ? Math.round((((x.finale && x.finale.at) || Date.now()) - x.created) / 864e5) : 0;
+  if(days >= 1) out.push(`📅 ${days} ${days === 1 ? "giorno" : "giorni"}`);
+  return out;
+}
+function placeOf(s, x){ return (s.pick && x.home ? homeLabel(x.home) : s.city) + " · " + (s.era || "Oggi"); }
+function openFinale(x){
+  x = x || st; if(!x || !x.finale) return;
+  const s = story(x.sid), f = x.finale, cs = x.caso && x.caso.esito ? x.caso : null;
+  $("finBg").innerHTML = coverSVG(s, 400, 720).replace(/<text[\s\S]*?<\/text>/g, "");
+  $("finTitle").textContent = resolve(s.t, x);
+  $("finMeta").textContent = genre(s).e + " " + placeOf(s, x);
+  $("finName").textContent = "Il finale di " + x.name;
+  $("finTit").textContent = "«" + f.titolo + "»";
+  const ce = $("finCase");
+  ce.style.display = cs ? "" : "none";
+  if(cs){ ce.className = "fin-case" + (cs.esito === "ok" || cs.esito === "meta" ? "" : " no"); ce.textContent = casoLine(cs); }
+  $("finBreve").textContent = f.breve;
+  $("finStats").innerHTML = finStats(x).map(t => `<span>${esc(t)}</span>`).join("");
+  $("finale").classList.add("on"); $("finale").scrollTop = 0; syncBack();
+  if(window.FX && (!cs || cs.esito === "ok" || cs.esito === "meta")) setTimeout(() => FX.burstCenter(), 450);
+}
+function closeFinale(){ $("finale").classList.remove("on"); syncBack(); }
+// immagine 1080×1920 da condividere (copertina, titolo, soprannome, riassunto)
+function spaced(k, text, x, y, sp){
+  const ch = [...text], w = ch.reduce((a, c) => a + k.measureText(c).width, 0) + sp * (ch.length - 1);
+  const al = k.textAlign; k.textAlign = "left";
+  let cx = x - w / 2;
+  ch.forEach(c => { k.fillText(c, cx, y); cx += k.measureText(c).width + sp; });
+  k.textAlign = al;
+}
+function wrapText(k, text, x, y, maxW, lh, maxLines, dry){
+  const words = String(text).split(/\s+/).filter(Boolean), put = (t, yy) => { if(!dry) k.fillText(t, x, yy); };
+  let line = "", n = 0;
+  for(let i = 0; i < words.length; i++){
+    const test = line ? line + " " + words[i] : words[i];
+    if(k.measureText(test).width > maxW && line){
+      if(n === maxLines - 1){
+        let l = line; while(l.length && k.measureText(l + "…").width > maxW) l = l.slice(0, -1);
+        put(l.replace(/[\s,;:]+$/, "") + "…", y); return y + lh;
+      }
+      put(line, y); y += lh; n++; line = words[i];
+    }else line = test;
+  }
+  if(line){ put(line, y); y += lh; }
+  return y;
+}
+async function finaleImage(x){
+  const s = story(x.sid), f = x.finale, g = genre(s), cs = x.caso && x.caso.esito ? x.caso : null;
+  const W = 1080, H = 1920, CH = 1240, cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const k = cv.getContext("2d");
+  try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+  k.fillStyle = "#0a0a0e"; k.fillRect(0, 0, W, H);
+  try{
+    const img = new Image();
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(coverSVG(s, W, CH));
+    await img.decode(); k.drawImage(img, 0, 0, W, CH);
+  }catch(e){ k.fillStyle = g.c1 || "#22222a"; k.fillRect(0, 0, W, CH); }
+  let gr = k.createLinearGradient(0, 0, 0, 260);
+  gr.addColorStop(0, "rgba(10,10,14,.7)"); gr.addColorStop(1, "rgba(10,10,14,0)");
+  k.fillStyle = gr; k.fillRect(0, 0, W, 260);
+  gr = k.createLinearGradient(0, 640, 0, CH);
+  gr.addColorStop(0, "rgba(10,10,14,0)"); gr.addColorStop(.55, "rgba(10,10,14,.86)"); gr.addColorStop(1, "rgba(10,10,14,1)");
+  k.fillStyle = gr; k.fillRect(0, 640, W, CH - 640 + 2);
+  const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif', SANS = 'Inter, Roboto, "Segoe UI", system-ui, sans-serif';
+  k.textAlign = "center";
+  k.fillStyle = "#f3c873"; k.font = `700 32px ${SANS}`; spaced(k, "STORIE D'ITALIA", W / 2, 104, 10);
+  k.fillStyle = "rgba(255,255,255,.82)"; k.font = `500 32px ${SANS}`; k.fillText(`${g.e}  ${g.n}`, W / 2, 160);
+  // blocco di testo allineato in basso: prima lo misuro, poi lo disegno
+  const block = (y, dry) => {
+    const put = cb => { if(!dry) cb(); };
+    k.fillStyle = "#f3c873"; k.font = `700 30px ${SANS}`; put(() => spaced(k, "🏁 FINE", W / 2, y, 8)); y += 98;
+    k.fillStyle = "#fff"; k.font = `700 80px ${SERIF}`; y = wrapText(k, resolve(s.t, x), W / 2, y, 940, 90, 2, dry) + 2;
+    k.fillStyle = "rgba(255,255,255,.75)"; k.font = `500 32px ${SANS}`; put(() => k.fillText(placeOf(s, x), W / 2, y)); y += 84;
+    k.fillStyle = "rgba(255,255,255,.55)"; k.font = `600 27px ${SANS}`; put(() => spaced(k, ("Il finale di " + x.name).toUpperCase(), W / 2, y, 4)); y += 74;
+    k.fillStyle = "#f3c873"; k.font = `italic 500 56px ${SERIF}`; y = wrapText(k, "«" + f.titolo + "»", W / 2, y, 960, 68, 2, dry) + 12;
+    if(cs){
+      const t = casoLine(cs); k.font = `700 32px ${SANS}`;
+      const w = k.measureText(t).width + 64, ok = cs.esito === "ok" || cs.esito === "meta";
+      put(() => {
+        k.fillStyle = ok ? "rgba(224,168,63,.18)" : "rgba(239,123,116,.16)"; k.strokeStyle = ok ? "rgba(224,168,63,.55)" : "rgba(239,123,116,.5)"; k.lineWidth = 2;
+        k.beginPath(); if(k.roundRect) k.roundRect(W / 2 - w / 2, y - 6, w, 64, 32); else k.rect(W / 2 - w / 2, y - 6, w, 64); k.fill(); k.stroke();
+        k.fillStyle = ok ? "#f3c873" : "#f3b1ac"; k.fillText(t, W / 2, y + 38);
+      });
+      y += 104;
+    }
+    k.fillStyle = "rgba(255,255,255,.9)"; k.font = `400 35px ${SANS}`;
+    return wrapText(k, f.breve, W / 2, y + 14, 900, 52, 5, dry);
+  };
+  const h = block(0, true);
+  block(Math.max(800, 1740 - h), false);
+  k.fillStyle = "rgba(255,255,255,.6)"; k.font = `500 27px ${SANS}`; k.fillText(finStats(x).join("    "), W / 2, H - 120);
+  k.fillStyle = "#f3c873"; k.font = `700 30px ${SANS}`; k.fillText("Vivi la tua storia su Storie d'Italia", W / 2, H - 64);
+  return cv.toDataURL("image/jpeg", .9);
+}
+async function shareFinale(x){
+  x = x || st; if(!x || !x.finale) return;
+  const b = $("finShare"); b.disabled = true; b.textContent = "Preparo l'immagine…";
+  try{
+    const url = await finaleImage(x), s = story(x.sid);
+    const text = `Ho finito «${resolve(s.t, x)}» su Storie d'Italia: ${x.finale.titolo}!`;
+    if(LOCAL && AndroidAI.shareImage){ AndroidAI.shareImage(url.slice(url.indexOf(",") + 1), text); return; }
+    let done = false;
+    try{
+      const bin = atob(url.slice(url.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
+      for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const file = new File([u8], "storie-italia-finale.jpg", { type:"image/jpeg" });
+      if(navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], text }); done = true; }
+    }catch(e){ if(e && e.name === "AbortError") done = true; }
+    if(!done) openSheet(`<h4>📤 Il tuo finale</h4><div class="sub">Tieni premuto sull'immagine per salvarla o mandarla agli amici.</div><img class="fin-prev" src="${url}" alt="Immagine del finale"><a class="btn" href="${url}" download="storie-italia-finale.jpg" style="display:block;text-align:center">Scarica l'immagine</a>`);
+  }catch(e){ toast("Non riesco a creare l'immagine, riprova."); }
+  finally{ b.disabled = false; b.textContent = "📤 Condividi"; }
 }
 
 /* ===================== SEGNALAZIONI ===================== */
@@ -1495,7 +1979,9 @@ function privacyHTML(){
   <p>Storie d'Italia è pensata per proteggere la tua privacy: <b>non ha account, pubblicità, statistiche o tracciamento</b>.</p>
   <h5>Le tue storie</h5><p>Chat, memoria delle storie, storie create da te e impostazioni restano salvate <b>solo sul tuo telefono</b>. Nell'app Android l'AI funziona direttamente sul dispositivo: i testi delle chat non vengono inviati a nessun server.</p>
   <h5>Download del modello AI</h5><p>Al primo avvio l'app scarica i file del modello da Hugging Face (huggingface.co). Come per ogni download, quel servizio vede l'indirizzo IP del telefono.</p>
-  <h5>Segnalazioni</h5><p>Se segnali una risposta, allo sviluppatore arrivano solo: il testo della risposta segnalata, il motivo, l'eventuale nota che scrivi, il nome della storia, il modello AI e la versione dell'app. Nessun nome, email, numero o identificativo del telefono. Le segnalazioni servono solo a migliorare la sicurezza e sono conservate per massimo 12 mesi.</p>
+  <h5>Caratteri grafici</h5><p>I caratteri dell'app (Inter e Playfair Display) vengono caricati da Google Fonts: come per ogni download, Google vede l'indirizzo IP del telefono. Senza Internet l'app usa i caratteri del telefono.</p>
+  <h5>Voce narrante, suoni e finali</h5><p>La lettura ad alta voce usa la sintesi vocale già presente sul telefono. I suoni d'atmosfera sono creati sul momento dall'app, senza file né connessione. L'immagine del finale viene creata sul telefono e viene inviata solo all'app che scegli tu quando tocchi «Condividi».</p>
+  <h5>Segnalazioni</h5><p>Se segnali una risposta, allo sviluppatore arrivano solo: il testo della risposta segnalata, il motivo, l'eventuale nota che scrivi, il nome della storia, il modello AI e la versione dell'app. Nessun nome, email, numero o identificativo del telefono. Le segnalazioni viaggiano cifrate e sono conservate su Supabase, con server nell'Unione Europea (Francoforte). Servono solo a migliorare la sicurezza e vengono cancellate automaticamente dopo 12 mesi.</p>
   <h5>Permessi</h5><p>L'app usa solo l'accesso a Internet, per scaricare il modello AI e inviare le segnalazioni.</p>
   <h5>Età</h5><p>L'app non è destinata a minori di 16 anni.</p>
   <h5>Cancellare i dati</h5><p>Puoi cancellare tutte le storie da Profilo › Cancella tutte le storie, oppure disinstallando l'app.</p>
@@ -1579,6 +2065,28 @@ $("input").addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKe
 $("sendBtn").onclick = send;
 $("regenBtn").onclick = regen;
 $("memBtn").onclick = memSheet;
+$("moreBtn").onclick = chatMenu;
+$("finClose").onclick = closeFinale;
+$("finShare").onclick = () => shareFinale(st);
+$("finRead").onclick = () => {
+  closeFinale();
+  const f = st && st.finale; if(!f) return;
+  const row = document.querySelector(`#log .row-ai[data-i="${f.msg}"]`);
+  if(row) row.scrollIntoView({ behavior:"smooth", block:"start" });
+};
+$("finAgain").onclick = () => { if(!st) return; const id = st.sid; closeFinale(); openDetail(id); };
+$("optVoce").onclick = () => { toggleVoce(); renderProfile(); };
+$("optVoceRate").onclick = () => {
+  cycleRate(); renderProfile();
+  if(voceOK()){ VOCE.setRate(VOCE_RATE[settings.voceRate]); VOCE.speak(`*Ecco la voce ${settings.voceRate}.* Nonna Filomena: "Allora, ti piace così?"`, { chars:[{ n:"Nonna Filomena", r:"La nonna" }] }, {}); }
+};
+$("optAmb").onclick = () => { toggleAmb(); renderProfile(); };
+$("optAmbVol").onclick = () => {
+  const o = [.3, .55, .85], i = o.findIndex(v => v >= settings.ambVol - .05);
+  settings.ambVol = o[(i + 1) % 3]; saveSettings();
+  if(window.SUONI) SUONI.setVolume(settings.ambVol);
+  renderProfile(); toast("🔈 Volume dei suoni: " + ambVolLabel().toLowerCase());
+};
 $("starBtn").onclick = () => { const i = $("input"), p = i.selectionStart || i.value.length; i.value = i.value.slice(0, p) + "**" + i.value.slice(p); i.focus(); i.setSelectionRange(p + 1, p + 1); };
 $("sheetBg").onclick = closeSheet;
 $("dlgNo").onclick = () => { $("dlg").classList.remove("on"); syncBack(); };
@@ -1642,7 +2150,7 @@ $("setupBtn").onclick = () => {
 $("setupSkip").onclick = () => { try{ AndroidAI.cancelDownload(); }catch(e){} clearInterval(pollT); renderSetup(); toast("Download annullato"); };
 
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-tab],[data-open],[data-back],[data-char],[data-story],[data-resume],[data-genre],[data-exg],[data-del],[data-flag],[data-show],[data-model],[data-cg]");
+  const t = e.target.closest("[data-tab],[data-open],[data-back],[data-char],[data-story],[data-resume],[data-genre],[data-exg],[data-del],[data-flag],[data-show],[data-model],[data-cg],[data-speak]");
   if(!t) return;
   const ds = t.dataset;
   if(ds.del){ e.stopPropagation(); const id = ds.del; confirmDlg(`Eliminare la partita "${story(id).t}"? Anche la memoria verrà cancellata.`, () => { const done = () => { ls.del(saveKey(id)); if(db && uid) rset("save-" + id, null); if(st && st.sid === id) st = null; renderStoryList(); toast("Partita eliminata"); }; const row = t.closest(".story"); if(window.FX && row) FX.collapse(row, done); else done(); }, "Elimina"); return; }
@@ -1654,6 +2162,7 @@ document.addEventListener("click", e => {
   else if(ds.story){ if(window.FX) FX.zoomFrom(t); openDetail(ds.story); }
   else if(ds.genre){ exGenre = ds.genre; $("q").value = ""; stack = []; show("explore", false); renderExplore(); }
   else if(ds.exg){ exGenre = ds.exg; renderExplore(); }
+  else if(ds.speak !== undefined) speakMsg(+ds.speak);
   else if(ds.flag !== undefined) reportSheet(+ds.flag);
   else if(ds.show !== undefined){ const m = st.messages[+ds.show]; if(m){ delete m.rep; persist(); renderChat(); } }
   else if(ds.model){ selModel = ds.model; renderSetup(); }
@@ -1667,6 +2176,8 @@ document.addEventListener("click", e => {
 })();
 settings = Object.assign(settings, ls.get(K.settings) || {});
 if(window.FX) FX.setLevel(settings.fx || "full");
+if(window.SUONI){ SUONI.setVolume(settings.ambVol); SUONI.setEnabled(settings.amb); }
+if(window.VOCE && settings.voce) VOCE.init();
 custom = (ls.get(K.custom) || []).filter(s => s && s.id && s.g && G[s.g]);
 (() => { const v1 = ls.get("storie-italia-milano-v1"); if(v1 && v1.messages && v1.messages.length && !loadSave("bar-ferrante")) ls.set(saveKey("bar-ferrante"), migrateV1(v1)); })();
 $("heroSub").textContent = `${allStories().length} storie in tutta Italia. Personaggi AI che ricordano tutto.`;

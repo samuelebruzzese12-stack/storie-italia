@@ -6,8 +6,10 @@ plugins {
 def vCode = (System.getenv('VERSION_CODE') ?: '1').toInteger()
 
 // Indirizzo dove arrivano le segnalazioni degli utenti (vuoto = non configurato).
-def reportUrl = System.getenv('REPORT_URL') ?: ''
-def reportKey = System.getenv('REPORT_KEY') ?: ''
+// Segnalazioni: progetto Supabase "storie-italia" (UE, Francoforte). La chiave pubblicabile è pubblica per natura:
+// la tabella accetta solo nuovi inserimenti (Row Level Security), nessuno può leggerla o modificarla con questa chiave.
+def reportUrl = System.getenv('REPORT_URL') ?: 'https://ijogkdiggezblepsmfzg.supabase.co/rest/v1/segnalazioni'
+def reportKey = System.getenv('REPORT_KEY') ?: 'sb_publishable_DWX_YylLyD8PFidbN5ZIBw_UwYqz8Gr'
 
 // Chiave di firma per il Play Store (arriva dai "secrets" di GitHub).
 def ksPath = System.getenv('SIGNING_KEYSTORE')
