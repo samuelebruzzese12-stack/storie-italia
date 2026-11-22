@@ -87,6 +87,12 @@ input,textarea{font:inherit;color:inherit}
 .resume span{display:block;font-size:12.5px;color:#cdbf9f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .mini{width:48px;height:48px;border-radius:14px;overflow:hidden;flex:none;position:relative}
 .mini svg{width:100%;height:100%;display:block}
+img.lc{width:100%;height:100%;display:block;object-fit:cover;opacity:0;transition:opacity .5s ease;-webkit-user-drag:none;user-select:none}
+img.lc.ok{opacity:1}
+.scard .cv img.lc{position:absolute;inset:0}
+.feat .img img.lc{position:absolute;inset:0;transform:scale(1.06);animation:kb 16s ease-in-out infinite alternate}
+.dtop .art img.lc{animation:kb 18s ease-in-out infinite alternate}
+.fin-bg img.lc{width:100%;height:100%}
 .play{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#1a1205;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(224,168,63,.5);animation:pulse 2s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 12px rgba(224,168,63,0)}100%{box-shadow:0 0 0 0 rgba(224,168,63,0)}}
 
@@ -162,6 +168,20 @@ input,textarea{font:inherit;color:inherit}
 .dtop .ov{position:absolute;left:18px;right:18px;bottom:8px;z-index:3}
 .dtop h2{font-family:var(--serif);font-size:30px;line-height:1.05}
 .dtop .meta{font-size:13px;color:#d9caa6;margin-top:6px}
+.dtop .ov{right:112px}
+.dposter{position:absolute;right:16px;bottom:12px;z-index:4;width:84px;height:126px;border-radius:9px;overflow:hidden;padding:0;border:1px solid rgba(255,255,255,.18);background:#000;box-shadow:0 12px 28px rgba(0,0,0,.6);transform:rotate(2.5deg);transition:transform .25s;animation:posterIn .7s .15s both cubic-bezier(.2,.9,.25,1.2)}
+.dposter svg{width:100%;height:100%;display:block}
+.dposter::after{content:"🔍";position:absolute;right:5px;bottom:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.62);font-size:11px;line-height:22px;text-align:center}
+.dposter:active{transform:rotate(0) scale(.95)}
+@keyframes posterIn{from{opacity:0;transform:translateY(16px) rotate(8deg) scale(.86)}}
+.locv{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(4,4,7,.94);padding:20px}
+.locv.on{display:flex;animation:fadeIn .25s both}
+.locv-p{width:min(88vw,calc(76vh/1.5));aspect-ratio:2/3;border-radius:10px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);animation:locIn .55s both cubic-bezier(.2,.9,.25,1.1)}
+.locv-p svg{width:100%;height:100%;display:block}
+.locv small{margin-top:16px;color:var(--muted);font-size:12px;letter-spacing:.04em}
+@keyframes locIn{from{opacity:0;transform:scale(.82) translateY(24px)}}
+@keyframes fadeIn{from{opacity:0}}
+body.fx-low .locv.on,body.fx-low .locv-p,body.fx-low .dposter{animation:none!important}
 .pad{padding:0 18px}
 .lead{font-size:15px;line-height:1.6;color:#d6d6de;margin-top:12px}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
@@ -504,6 +524,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
       <div class="art" id="dArt"></div>
       <button class="backbtn" data-back aria-label="Indietro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="ov"><h2 id="dTitle"></h2><div class="meta" id="dMeta"></div></div>
+      <button class="dposter" id="dPoster" aria-label="Guarda la locandina"></button>
     </div>
     <div class="pad">
       <p class="lead" id="dDesc"></p>
@@ -613,6 +634,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="locv" id="locv" role="dialog" aria-label="Locandina della storia"><div class="locv-p" id="locvP"></div><small>Tocca per chiudere</small></div>
 <div class="fin" id="finale" role="dialog" aria-label="Il finale della storia">
   <div class="fin-bg" id="finBg"></div>
   <button class="fin-x" id="finClose" aria-label="Chiudi">✕</button>
@@ -642,6 +664,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 <script src="storie_vita.js"></script>
 <script src="storie_azione.js"></script>
 <script src="campania.js"></script>
+<script src="locandine.js"></script>
 <script src="casi.js"></script>
 <script src="voce.js"></script>
 <script src="suoni.js"></script>
@@ -650,7 +673,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const VERSION = "2.7";
+const VERSION = "2.8";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
@@ -715,7 +738,8 @@ function emptyMemory(){ return { riassunto:"", fatti:[], personaggi:[], indizi:[
 function lastLine(x){ if(!x || !x.messages || !x.messages.length) return ""; return x.messages[x.messages.length-1].t.replace(/\*/g, "").replace(/\s+/g, " ").slice(0, 90); }
 
 /* ===================== COPERTINE ===================== */
-function coverSVG(s, W, H){
+function coverSVG(s, W, H, o){
+  if(window.LOCANDINA){ try{ return LOCANDINA.svg(s, W, H, o); }catch(e){ console.warn("locandina", e); } }
   const g = genre(s), R = rng(hashStr(s.id)), u = "c" + (hashStr(s.id) % 1000000) + "_" + W + "_" + H, A = g.a;
   const rnd = (a, b) => a + R() * (b - a), f = n => Number(n).toFixed(1);
   let d = `<linearGradient id="${u}b" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="${g.c1}"/><stop offset="1" stop-color="${g.c2}"/></linearGradient>`
@@ -1156,8 +1180,18 @@ function back(){ let p = stack.pop() || "home"; if(p === current) p = "home"; sh
 function sheetOpen(){ return $("sheet").classList.contains("on"); }
 function dlgOpen(){ return $("dlg").classList.contains("on"); }
 function finOpen(){ return $("finale").classList.contains("on"); }
-function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen() || finOpen()); }catch(e){} } }
+function locOpen(){ return $("locv").classList.contains("on"); }
+function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen() || finOpen() || locOpen()); }catch(e){} } }
+function openLocandina(id){
+  const s = story(id); if(!s) return;
+  $("locvP").style.backgroundImage = "";
+  $("locvP").innerHTML = lcImg(s, "poster", 400, 600, 900); lcFill($("locvP"));
+  $("locv").classList.add("on"); syncBack();
+  if(window.LOCANDINA && LOCANDINA.img) LOCANDINA.img(s, "poster", 1000).then(url => { const im = $("locvP").querySelector("img.lc"); if(!im || !locOpen()) return; const big = new Image(); big.onload = () => { im.src = url; im.classList.add("ok"); }; big.src = url; }, () => {});
+}
+function closeLocandina(){ $("locv").classList.remove("on"); $("locvP").innerHTML = ""; syncBack(); }
 window.__back = () => {
+  if(locOpen()){ closeLocandina(); return true; }
   if(dlgOpen()){ $("dlg").classList.remove("on"); syncBack(); return true; }
   if(sheetOpen()){ closeSheet(); return true; }
   if(finOpen()){ closeFinale(); return true; }
@@ -1172,7 +1206,41 @@ function confirmDlg(text, cb, yes){ $("dlgText").textContent = text; $("dlgYes")
 /* ===================== HOME ===================== */
 function card(s){
   const x = loadSave(s.id), sx = x ? x : { sex:s.sex === "m" ? "m" : "f" };
-  return `<div class="scard" data-story="${s.id}" data-g="${s.g}"><div class="cv">${coverSVG(s, 142, 190)}${s.custom ? '<span class="tagx">✨ Tua</span>' : ""}${x && x.messages && x.messages.length > 1 ? '<span class="tagx inprog">▶ In corso</span>' : ""}</div><b>${esc(resolve(s.t, sx))}</b><span class="c">${esc(s.city)}${s.era && s.era !== "Oggi" ? " · " + esc(s.era) : ""}</span></div>`;
+  return `<div class="scard" data-story="${s.id}" data-g="${s.g}"><div class="cv" data-cv="${s.id}">${s.custom ? '<span class="tagx">✨ Tua</span>' : ""}${x && x.messages && x.messages.length > 1 ? '<span class="tagx inprog">▶ In corso</span>' : ""}</div><b>${esc(resolve(s.t, sx))}</b><span class="c">${esc(s.city)}${s.era && s.era !== "Oggi" ? " · " + esc(s.era) : ""}</span></div>`;
+}
+// le locandine sono immagini disegnate una volta (e ricordate): finché arrivano si vede il colore del cielo
+function lcImg(s, modo, px, fw, fh){ return `<img class="lc" data-lc="${esc(s.id)}" data-modo="${modo}" data-px="${px}" data-fw="${fw}" data-fh="${fh}" alt="" draggable="false">`; }
+function lcFill(root){
+  (root || document).querySelectorAll("img.lc[data-lc]").forEach(im => {
+    const s = story(im.dataset.lc), modo = im.dataset.modo, px = +im.dataset.px, fw = +im.dataset.fw, fh = +im.dataset.fh;
+    im.removeAttribute("data-lc");
+    if(!s) return;
+    const box = im.parentElement;
+    const torna = () => { if(!im.isConnected) return; im.insertAdjacentHTML("afterend", coverSVG(s, fw || 142, fh || 190, modo === "arte" ? { testo:false } : undefined)); im.remove(); };
+    if(!window.LOCANDINA || !LOCANDINA.img){ torna(); return; }
+    try{ if(box && !box.style.backgroundImage) box.style.backgroundImage = LOCANDINA.sfondo(s); }catch(e){}
+    const pronta = LOCANDINA.pronta(s, modo, px);
+    if(pronta){ im.src = pronta; im.classList.add("ok"); return; }
+    LOCANDINA.img(s, modo, px).then(url => { if(!im.isConnected) return; im.onload = () => im.classList.add("ok"); im.src = url; }, torna);
+  });
+}
+function lcCover(s){
+  const u = window.LOCANDINA && LOCANDINA.pronta && LOCANDINA.pronta(s, "arte", 760);
+  return u ? `<img class="lc ok" src="${u}" alt="">` : coverSVG(s, 400, 720, { testo:false });
+}
+const cvObs = {};
+function fillCv(el){ const id = el.dataset.cv; if(!id) return; delete el.dataset.cv; const s = story(id); if(!s) return; el.insertAdjacentHTML("afterbegin", lcImg(s, "poster", 400, 142, 190)); lcFill(el); }
+function lazyCovers(box){
+  if(!box) return;
+  if(cvObs[box.id]) cvObs[box.id].disconnect();
+  if(!("IntersectionObserver" in window)){ box.querySelectorAll(".cv[data-cv]").forEach(fillCv); return; }
+  const ob = cvObs[box.id] = new IntersectionObserver(es => es.forEach(e => {
+    if(!e.isIntersecting) return;
+    ob.unobserve(e.target);
+    (e.target.matches(".cv") ? [e.target] : e.target.querySelectorAll(".cv[data-cv]")).forEach(fillCv);
+  }), { rootMargin:"700px 0px" });
+  box.querySelectorAll(".rowx").forEach(r => ob.observe(r));
+  box.querySelectorAll(".grid2 .cv[data-cv]").forEach(c => ob.observe(c));
 }
 function featuredStory(){
   const f = BASE.filter(s => s.featured); if(!f.length) return BASE[0];
@@ -1184,10 +1252,10 @@ function renderHome(){
   let h = "";
   if(last){
     const s = story(last.sid);
-    h += `<div class="sec"><div class="resume" data-resume="${s.id}"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>Continua: ${esc(s.t)}</b><span>${esc(lastLine(last))}</span></div><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div></div></div>`;
+    h += `<div class="sec"><div class="resume" data-resume="${s.id}"><div class="mini">${lcImg(s, "arte", 240, 48, 48)}</div><div class="t"><b>Continua: ${esc(s.t)}</b><span>${esc(lastLine(last))}</span></div><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div></div></div>`;
   }
   h += `<div class="sec"><div class="sec-h"><h2>In evidenza oggi</h2></div>
-    <div class="feat" data-story="${f.id}" data-g="${f.g}"><div class="img">${coverSVG(f, 400, 210)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
+    <div class="feat" data-story="${f.id}" data-g="${f.g}"><div class="img">${lcImg(f, "arte", 760, 400, 210)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
     <div class="body"><p>${esc(resolve(f.hook, fx))}</p><span class="go">Gioca ›</span></div></div></div>`;
   h += `<div class="sec"><div class="chiprow">${GENRE_ORDER.map(k => `<button class="gchip" data-genre="${k}">${G[k].e} ${G[k].n}</button>`).join("")}</div></div>`;
   GENRE_ORDER.forEach(k => {
@@ -1198,6 +1266,8 @@ function renderHome(){
   h += `<div class="sec"><div class="feat-grid"><div class="fg"><span class="e">🧠</span><b>Memoria</b><span>ricorda tutto</span></div><div class="fg"><span class="e">🇮🇹</span><b>${allStories().length} storie</b><span>in tutta Italia</span></div><div class="fg"><span class="e">💸</span><b>Gratis</b><span>${LOCAL ? "anche offline" : "per sempre"}</span></div></div></div>`;
   h += `<p class="foot">Storie di pura finzione. Personaggi, locali e organizzazioni sono inventati.<br>Le risposte sono generate dall'AI: puoi segnalare quelle inappropriate.</p>`;
   $("homeBody").innerHTML = h;
+  lcFill($("homeBody"));
+  lazyCovers($("homeBody"));
   if(window.FX) FX.onHome();
 }
 
@@ -1209,6 +1279,7 @@ function renderExplore(){
     (!q || [s.t, s.city, s.place, genre(s).n, s.hook, s.era].join(" ").toLowerCase().includes(q)));
   $("exCount").textContent = list.length === 1 ? "1 storia" : list.length + " storie";
   $("exGrid").innerHTML = list.length ? list.map(card).join("") : `<div class="emptyst" style="grid-column:1/-1"><span class="big">🔎</span>Nessuna storia trovata.<br>Prova a crearla tu, dal Profilo o dalla Home!</div>`;
+  lazyCovers($("exGrid"));
   if(window.FX) FX.onGrid();
 }
 
@@ -1218,8 +1289,9 @@ function renderStoryList(){
   $("storyList").innerHTML = saves.length ? saves.map((x, i) => {
     const s = story(x.sid), ce = x.caso && x.caso.esito;
     const fb = x.finale ? `<i class="fb">${ce === "ok" ? "🕵️ Caso risolto" : ce === "meta" ? "🕵️ Risolto a metà" : "🏁 Finita"}</i>` : "";
-    return `<div class="story" data-resume="${s.id}" style="animation-delay:${Math.min(i, 8) * .05}s"><div class="mini">${coverSVG(s, 48, 48)}</div><div class="t"><b>${esc(s.t)}${fb}</b><span>${esc(lastLine(x))}</span><small>${x.name} · ${x.messages.length} messaggi · ${ago(x.updated)}</small></div><button class="del" data-del="${s.id}" aria-label="Elimina"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>`;
+    return `<div class="story" data-resume="${s.id}" style="animation-delay:${Math.min(i, 8) * .05}s"><div class="mini">${lcImg(s, "arte", 240, 48, 48)}</div><div class="t"><b>${esc(s.t)}${fb}</b><span>${esc(lastLine(x))}</span><small>${x.name} · ${x.messages.length} messaggi · ${ago(x.updated)}</small></div><button class="del" data-del="${s.id}" aria-label="Elimina"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>`;
   }).join("") : `<div class="emptyst"><span class="big">📖</span>Nessuna storia iniziata.<br>Scegline una dalla Home o da Esplora.</div>`;
+  lcFill($("storyList"));
 }
 
 /* ===================== PROFILO ===================== */
@@ -1358,7 +1430,10 @@ function openDetail(id){
   detailId = id;
   const x = loadSave(id), g = genre(s);
   pvSex = x ? x.sex : (s.sex === "m" ? "m" : "f");
-  $("dArt").innerHTML = coverSVG(s, 400, 290);
+  $("dArt").style.backgroundImage = ""; $("dPoster").style.backgroundImage = "";
+  $("dArt").innerHTML = lcImg(s, "arte", 760, 400, 290);
+  $("dPoster").innerHTML = lcImg(s, "poster", 400, 84, 126);
+  lcFill($("v-detail"));
   $("dMeta").textContent = `${g.e} ${g.n} · ${s.city}${s.place ? " · " + s.place : ""} · ${s.era || "Oggi"}`;
   $("dChips").innerHTML = [`${g.e} ${g.n}`, `📍 ${s.city}`, `🕰️ ${s.era || "Oggi"}`, "🧠 Memoria", s.love ? "❤️ Storia d'amore" : "", s.tema ? "🎵 Con la sigla" : "", s.custom ? "✨ Creata da te" : ""].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join("");
   $("fSex").style.display = s.sex === "x" ? "flex" : "none";
@@ -1402,7 +1477,7 @@ function startStory(id, fresh){
   stopVoice();
   st = x; persist();
   renderChat(); show("chat");
-  if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:coverSVG(s, 400, 720), meta:(s.pick && st.home ? homeLabel(st.home) : s.city) + " · " + (s.era || "Oggi") });
+  if(window.FX) FX.enterChat(s, st, genre(s), isNew, { title:resolve(s.t, st), cover:lcCover(s), meta:(s.pick && st.home ? homeLabel(st.home) : s.city) + " · " + (s.era || "Oggi") });
   ambStart(s);
   if(s.tema && (!siglaAt[s.id] || Date.now() - siglaAt[s.id] > 15 * 60000)) setTimeout(() => { if(st === x && current === "chat") sigla(s, false); }, 350);
   if(!st.messages.length) generate("open");
@@ -1832,7 +1907,7 @@ function placeOf(s, x){ return (s.pick && x.home ? homeLabel(x.home) : s.city) +
 function openFinale(x){
   x = x || st; if(!x || !x.finale) return;
   const s = story(x.sid), f = x.finale, cs = x.caso && x.caso.esito ? x.caso : null;
-  $("finBg").innerHTML = coverSVG(s, 400, 720).replace(/<text[\s\S]*?<\/text>/g, "");
+  $("finBg").innerHTML = lcCover(s);
   $("finTitle").textContent = resolve(s.t, x);
   $("finMeta").textContent = genre(s).e + " " + placeOf(s, x);
   $("finName").textContent = "Il finale di " + x.name;
@@ -1879,8 +1954,9 @@ async function finaleImage(x){
   k.fillStyle = "#0a0a0e"; k.fillRect(0, 0, W, H);
   try{
     const img = new Image();
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(coverSVG(s, W, CH));
-    await img.decode(); k.drawImage(img, 0, 0, W, CH);
+    let fatta = false;
+    if(window.LOCANDINA && LOCANDINA.img){ try{ img.src = await LOCANDINA.img(s, "arte", W); await img.decode(); k.drawImage(img, 0, (img.naturalHeight - CH * img.naturalWidth / W) / 2, img.naturalWidth, CH * img.naturalWidth / W, 0, 0, W, CH); fatta = true; }catch(e){} }
+    if(!fatta){ img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(coverSVG(s, W, CH, { testo:false })); await img.decode(); k.drawImage(img, 0, 0, W, CH); }
   }catch(e){ k.fillStyle = g.c1 || "#22222a"; k.fillRect(0, 0, W, CH); }
   let gr = k.createLinearGradient(0, 0, 0, 260);
   gr.addColorStop(0, "rgba(10,10,14,.7)"); gr.addColorStop(1, "rgba(10,10,14,0)");
@@ -2022,7 +2098,8 @@ function licensesHTML(){
   <li>Llama 3.2 3B Instruct – <b>Built with Llama</b>. Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.</li></ul>
   <h5>Caratteri</h5><p>Inter e Playfair Display – SIL Open Font License.</p>
   <h5>Dati</h5><p>Elenco dei comuni della Campania: ISTAT, licenza CC BY 3.0 IT.</p>
-  <h5>Musica e suoni</h5><p>Le sigle delle storie e i suoni d'atmosfera sono originali, composti e generati dall'app.</p></div>`;
+  <h5>Musica e suoni</h5><p>Le sigle delle storie e i suoni d'atmosfera sono originali, composti e generati dall'app.</p>
+  <h5>Locandine</h5><p>Le locandine sono disegnate dall'app sul telefono. Caratteri: Gloock, Italiana, Instrument Serif, Big Shoulders, Tektur, Erica One, Poiret One, National Park, Crimson Pro, Young Serif, Nothing You Could Do, JetBrains Mono, Work Sans e Boldonse – licenza SIL Open Font License 1.1 (testi completi nel file fonts/LICENZE-FONT.txt dell'app).</p></div>`;
 }
 
 /* ===================== SETUP AI OFFLINE ===================== */
@@ -2094,6 +2171,8 @@ $("regenBtn").onclick = regen;
 $("memBtn").onclick = memSheet;
 $("moreBtn").onclick = chatMenu;
 $("finClose").onclick = closeFinale;
+$("dPoster").onclick = () => { if(detailId) openLocandina(detailId); };
+$("locv").onclick = closeLocandina;
 $("finShare").onclick = () => shareFinale(st);
 $("finRead").onclick = () => {
   closeFinale();

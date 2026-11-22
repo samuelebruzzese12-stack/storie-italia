@@ -100,6 +100,9 @@ body.fx-low .tab .pill{ display:block; }
   background:linear-gradient(155deg, rgba(255,255,255,.13), transparent 36%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.05); }
 .scard:active .cv{ box-shadow:0 0 0 2px var(--accent), 0 10px 26px rgba(224,168,63,.28); }
 .tagx{ z-index:3; }
+/* sulle locandine l'effetto vivo resta nella parte alta: il titolo non si tocca */
+.scard .cv .fxo{ -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 50%, transparent 68%); mask-image:linear-gradient(to bottom, #000 0, #000 50%, transparent 68%); }
+.scard .cv .fxo .o-rec, .scard .cv .fxo .o-police, .scard .cv .fxo .o-flash{ display:none; }
 .feat{ box-shadow:0 14px 34px rgba(0,0,0,.4); }
 .go{ animation:goGlow 2.4s ease-in-out infinite; }
 @keyframes goGlow{ 50%{ box-shadow:0 0 0 4px rgba(224,168,63,.16), 0 0 20px rgba(224,168,63,.38); } }
@@ -181,7 +184,7 @@ body.fx-low .tab .pill{ display:block; }
 
 /* ---------- passaggio copertina → scheda ---------- */
 .zoomghost{ position:fixed; z-index:90; overflow:hidden; pointer-events:none; box-shadow:0 24px 70px rgba(0,0,0,.6); }
-.zoomghost svg{ width:100%; height:100%; display:block; }
+.zoomghost svg, .zoomghost img{ width:100%; height:100%; display:block; object-fit:cover; }
 
 /* ---------- SCHEDA DELLA STORIA ---------- */
 .dtop .art{ transform:translate3d(0, calc(var(--sy, 0) * .4px), 0); }
@@ -257,7 +260,7 @@ body.fx-low .tab .pill{ display:block; }
 @keyframes tcIn{ from{ opacity:.35; } to{ opacity:1; } }
 @keyframes tcOut{ to{ opacity:0; visibility:hidden; } }
 .tc-bg{ position:absolute; inset:-8%; opacity:.6; animation:tcZoom 6s ease-out forwards; }
-.tc-bg svg{ width:100%; height:100%; display:block; }
+.tc-bg svg, .tc-bg img{ width:100%; height:100%; display:block; object-fit:cover; }
 @keyframes tcZoom{ from{ transform:scale(1.14); } to{ transform:scale(1); } }
 .tc-shade{ position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,.2), rgba(0,0,0,.88) 72%); }
 .tc-bar{ position:absolute; left:0; right:0; height:11vh; background:#000; z-index:2; }

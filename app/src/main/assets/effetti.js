@@ -201,7 +201,7 @@ function parallax(scroller, target, prop, max){
 /* ---------- passaggio dalla copertina alla scheda ---------- */
 function zoomFrom(el){
   if(low() || !HAS_ANIM || !el) return;
-  const cv = el.querySelector(".cv, .img") || el, svg = cv.querySelector("svg"); if(!svg) return;
+  const cv = el.querySelector(".cv, .img") || el, svg = cv.querySelector("img.lc.ok, svg"); if(!svg) return;
   const r = cv.getBoundingClientRect(), app = (D.querySelector(".app") || D.body).getBoundingClientRect();
   if(r.width < 20 || r.bottom < 0 || r.top > innerHeight) return;
   const g = D.createElement("div"); g.className = "zoomghost"; g.innerHTML = svg.outerHTML;

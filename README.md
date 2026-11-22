@@ -3,6 +3,14 @@
 App Android di storie interattive con personaggi AI, ambientate in Italia: 72 storie tra gialli, romantiche, vita reale, fantascienza, avventura, azione, fantasy, malavita, guerra, thriller, horror, commedia e drama, più la possibilità di crearne di proprie.
 L'AI funziona **direttamente sul telefono**: gratis, senza abbonamenti, anche senza internet.
 
+Nella versione 2.8 ogni storia ha la sua **locandina da cinema**, composta a mano per ciascuna delle 72 storie:
+
+- **scena**: luoghi e personaggi in controluce, con luce di taglio
+- **atmosfera**: nebbia, fumo e nuvole generate dal rumore, riflessi sull'acqua, pioggia a più strati, grana da pellicola
+- **impaginazione**: nomi del cast in alto, frase di lancio, titolo lavorato (oro, cromo, neon, consumato), titoli di coda
+
+Le locandine vengono disegnate sul telefono la prima volta e poi conservate, quindi si aprono subito. Le storie create da chi gioca ricevono una locandina costruita dal loro genere. Nella scheda della storia si tocca la locandina per vederla a tutto schermo.
+
 Nelle versioni 2.6 e 2.7:
 
 - **voce narrante**: il narratore e ogni personaggio leggono ad alta voce con un tono diverso (sintesi vocale del telefono, anche offline);
@@ -49,6 +57,8 @@ L'app scarica una sola volta il "cervello" AI (meglio con il Wi-Fi) e consiglia 
 - `app/src/main/assets/casi.js` – le soluzioni dei gialli e dei thriller per «Risolvi il caso»
 - `app/src/main/assets/voce.js` e `suoni.js` – voce narrante e suoni d'atmosfera
 - `app/src/main/assets/campania.js` – i 550 comuni della Campania (fonte ISTAT, licenza CC BY 3.0 IT) con aree, città, quartieri e rioni
+- `app/src/main/assets/locandine.js` – le locandine: motore di disegno, composizione di ogni storia, impaginazione e pellicola
+- `app/src/main/assets/fonts/` – i caratteri delle locandine (licenza SIL Open Font License 1.1, testi in `LICENZE-FONT.txt`)
 - `app/src/main/assets/effetti.js` e `effetti.css` – animazioni e grafica
 - `app/src/main/assets/index.html` – l'interfaccia e la logica (memoria, segnalazioni, crea storia)
 - `app/src/main/cpp/storie.cpp` – motore AI nativo basato su llama.cpp, con riuso del contesto già elaborato
