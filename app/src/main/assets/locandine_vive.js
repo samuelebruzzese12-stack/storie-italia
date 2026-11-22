@@ -208,9 +208,17 @@
     sc.cam = cam; sc.tt = t;
     k.save();
     k.globalCompositeOperation = "source-over"; k.globalAlpha = 1;
+    const F = opz.fuori;
+    const cornice = () => { setT(k, base, IDENT); k.beginPath(); tondo(k, F.x, F.y, F.w, F.h, F.r); };
+    if(F){
+      // l'ombra della cornice sulla pagina, poi tutto quello che sta dentro
+      k.save(); cornice(); k.shadowColor = "rgba(0,0,0,.7)"; k.shadowBlur = 26 * base.s; k.shadowOffsetY = 10 * base.s; k.fillStyle = "#050507"; k.fill(); k.restore();
+      k.save(); cornice(); k.clip();
+    }
     let mFondo = matCam(cam, .6);
     for(const lv of sc.livelli){
       const st = lv.st, m = matLivello(sc, lv, cam, t);
+      lv._m = m;
       if(st.k === "fondo") mFondo = m;
       setT(k, base, m);
       if(lv.img){
@@ -220,15 +228,36 @@
       for(const ef of lv.fx){ k.save(); try{ ef.disegna(k, t, m, base); }catch(e){ sbaglio(e); } k.restore(); }
     }
     setT(k, base, IDENT);
-    for(const ef of sc.fine){ k.save(); try{ ef.disegna(k, t, IDENT, base); }catch(e){ sbaglio(e); } k.restore(); }
+    for(const ef of sc.fine) if(!F || ef.pieno){ k.save(); try{ ef.disegna(k, t, IDENT, base); }catch(e){ sbaglio(e); } k.restore(); }
     // la pellicola: ombre ai bordi, bagliore delle luci, viraggio, vignetta e scuro per le scritte
     if(sc.imgs.bloom){ setT(k, base, mFondo); k.globalCompositeOperation = "screen"; k.globalAlpha = .42; k.drawImage(sc.imgs.bloom, 0, 0, 600, 900); }
     setT(k, base, IDENT);
     k.globalAlpha = 1; k.globalCompositeOperation = "soft-light"; k.fillStyle = cc.soft; k.fillRect(0, 0, 600, 900);
     k.globalCompositeOperation = "source-over"; k.drawImage(velo(sc), 0, 0, 600, 900);
     for(const ef of sc.post){ k.save(); try{ ef.disegna(k, t, IDENT, base); }catch(e){ sbaglio(e); } k.restore(); }
-    // le scritte
     const m = sc.meta;
+    if(F){
+      grana(k, sc, cc, base, opz, m);
+      k.restore();
+      // il bordo della cornice
+      cornice(); k.globalCompositeOperation = "source-over"; k.globalAlpha = 1; k.lineWidth = F.lw || 2; k.strokeStyle = "rgba(255,238,205,.5)"; k.stroke();
+      // personaggi e oggetti che escono dalla cornice (con le loro luci)
+      k.save(); setT(k, base, IDENT); k.beginPath(); k.rect(-3000, -3000, 6600, 6900); tondo(k, F.x, F.y, F.w, F.h, F.r); k.clip("evenodd");
+      for(const lv of sc.livelli){
+        if(lv.st.tipo !== "vivo" || !lv.img) continue;
+        setT(k, base, lv._m); k.globalCompositeOperation = "source-over"; k.globalAlpha = 1;
+        k.drawImage(lv.img, lv.st.x, lv.st.y, lv.st.w, lv.st.h);
+        for(const ef of lv.fx){ k.save(); try{ ef.disegna(k, t, lv._m, base); }catch(e){ sbaglio(e); } k.restore(); }
+      }
+      // fuori dalla cornice la stessa ombra di pellicola, solo sulle figure
+      setT(k, base, IDENT); k.globalCompositeOperation = "source-atop"; k.globalAlpha = 1; k.drawImage(velo(sc), 0, 0, 600, 900);
+      k.restore();
+      // pioggia, neve, braci, coriandoli… si spargono anche fuori
+      setT(k, base, IDENT);
+      for(const ef of sc.fine) if(!ef.pieno){ k.save(); try{ ef.disegna(k, t, IDENT, base); }catch(e){ sbaglio(e); } k.restore(); }
+      setT(k, base, IDENT); k.globalCompositeOperation = "source-over"; k.globalAlpha = 1;
+    }
+    // le scritte
     if(m.testo && sc.imgs.testo) k.drawImage(sc.imgs.testo, m.testo.x, m.testo.y, m.testo.w, m.testo.h);
     if(m.titolo && sc.imgs.titolo){
       let disegnato = false;
@@ -236,17 +265,21 @@
       if(!disegnato) k.drawImage(sc.imgs.titolo, m.titolo.x, m.titolo.y, m.titolo.w, m.titolo.h);
       for(const ef of sc.titoloFx) if(ef.disegna){ k.save(); try{ ef.disegna(k, t, IDENT, base); }catch(e){ sbaglio(e); } k.restore(); }
     }
-    // grana della pellicola, che si muove (della stessa misura di quella della locandina ferma)
-    if(cc.grana && opz.grana !== 0 && (Q.livello > .7 || sc.statico || base.s > 1.2)){
-      const gs = clamp(base.s / ((m.W || 600) / 600), .45, 2.5);
-      k.setTransform(gs, 0, 0, gs, 0, 0);
-      const R = sc.statico ? Math.random() : Math.random(), Q = Math.random();
-      k.translate(-R * 192, -Q * 192);
-      k.globalCompositeOperation = "overlay"; k.globalAlpha = opz.grana || (m.modo === "poster" ? .16 : .13);
-      k.fillStyle = cc.grana; k.fillRect(0, 0, k.canvas.width / gs + 384, k.canvas.height / gs + 384);
-    }
+    if(!F) grana(k, sc, cc, base, opz, m);
     k.restore();
   }
+  // grana della pellicola, che si muove (della stessa misura di quella della locandina ferma)
+  function grana(k, sc, cc, base, opz, m){
+    if(!(cc.grana && opz.grana !== 0 && (Q.livello > .7 || sc.statico || base.s > 1.2))) return;
+    k.save();
+    const gs = clamp(base.s / ((m.W || 600) / 600), .45, 2.5);
+    k.setTransform(gs, 0, 0, gs, 0, 0);
+    k.translate(-Math.random() * 192, -Math.random() * 192);
+    k.globalCompositeOperation = "overlay"; k.globalAlpha = opz.grana || (m.modo === "poster" ? .16 : .13);
+    k.fillStyle = cc.grana; k.fillRect(0, 0, k.canvas.width / gs + 384, k.canvas.height / gs + 384);
+    k.restore();
+  }
+  function tondo(k, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); k.moveTo(x + r, y); k.arcTo(x + w, y, x + w, y + h, r); k.arcTo(x + w, y + h, x, y + h, r); k.arcTo(x, y + h, x, y, r); k.arcTo(x, y, x + w, y, r); k.closePath(); }
   function disegnaDeriva(k, sc, lv, t){
     const st = lv.st, P = 640, v = (lv.st.vel || 6) * (sc.reg.vento || 1), tt = t - sc.t0;
     const due = st.fx !== "nuvole";
@@ -511,7 +544,7 @@
         k.strokeStyle = col; traccia(cur.pts, 3.6, .8 * f); cur.rami.forEach(r => traccia(r, 1.6, .55 * f));
         k.strokeStyle = "#ffffff"; traccia(cur.pts, 1.4, f);
       } };
-    const vicino = { z:"fine", disegna(k){ const f = forza(); if(f <= 0) return; k.globalCompositeOperation = "lighter"; k.fillStyle = `rgba(200,215,255,${.12 * f})`; k.fillRect(0, 0, 600, 900); } };
+    const vicino = { z:"fine", pieno:true, disegna(k){ const f = forza(); if(f <= 0) return; k.globalCompositeOperation = "lighter"; k.fillStyle = `rgba(200,215,255,${.12 * f})`; k.fillRect(0, 0, 600, 900); } };
     return [sky, vicino];
   };
   EF.lampoLontano = (sc, a, R) => {
@@ -1104,7 +1137,7 @@
   /* --- luce di fuoco che tremola su tutta la scena --- */
   EF.luceViva = (sc, a, R) => {
     const n = rumore(sc.seed + 31), col = a.col || "#ff9a3a";
-    return { z:a.z || "fine", disegna(k, t){ const f = n(t * 5) * .6 + n(t * 13 + 4) * .4; k.globalCompositeOperation = "lighter"; const g = k.createRadialGradient(a.x || 300, a.y || 620, 20, a.x || 300, a.y || 620, a.r || 520); g.addColorStop(0, rgba(col, (a.a || .14) * f)); g.addColorStop(1, rgba(col, 0)); k.fillStyle = g; k.fillRect(0, 0, 600, 900); } };
+    return { z:a.z || "fine", pieno:true, disegna(k, t){ const f = n(t * 5) * .6 + n(t * 13 + 4) * .4; k.globalCompositeOperation = "lighter"; const g = k.createRadialGradient(a.x || 300, a.y || 620, 20, a.x || 300, a.y || 620, a.r || 520); g.addColorStop(0, rgba(col, (a.a || .14) * f)); g.addColorStop(1, rgba(col, 0)); k.fillStyle = g; k.fillRect(0, 0, 600, 900); } };
   };
   /* --- un'auto che passa e illumina la strada --- */
   EF.autoPassa = (sc, a, R) => {
@@ -1117,7 +1150,7 @@
   EF.strobo = (sc, a, R) => {
     const per = a.per || .48, col = a.col || "#ffffff";
     let raffica = 3 + R() * 4, dura = 0;
-    return { z:a.z || "fine", passo(dt){ raffica -= dt; if(raffica <= 0){ dura = per * (4 + Math.floor(R() * 5)); raffica = 6 + R() * 6; } if(dura > 0) dura -= dt; },
+    return { z:a.z || "fine", pieno:true, passo(dt){ raffica -= dt; if(raffica <= 0){ dura = per * (4 + Math.floor(R() * 5)); raffica = 6 + R() * 6; } if(dura > 0) dura -= dt; },
       disegna(k, t){ if(dura <= 0 || sc.statico) return; const u = fr((t - sc.t0) / per); if(u > .12) return; k.globalCompositeOperation = "lighter"; k.fillStyle = rgba(col, .1 * (1 - u / .12)); k.fillRect(0, 0, 600, 900); } };
   };
 
@@ -1255,6 +1288,7 @@
   let spente = false;
   try{ const st = JSON.parse(localStorage.getItem("si2:settings") || "{}"); spente = st && st.fx === "low"; }catch(e){ sbaglio(e); }
   const permesso = () => !spente && !RM.matches;
+  const permessoFuori = () => { try{ return localStorage.getItem("si2:fuori") !== "0"; }catch(e){ return true; } };
   function inVista(cn){
     const h = cn.host;
     if(!h.isConnected) return false;
@@ -1343,10 +1377,27 @@
       const w = host.clientWidth, h = host.clientHeight;
       if(!w || !h) return;
       const dpr = Math.max(1, Math.min(W.devicePixelRatio || 1, opz.dpr || 3) * Q.risoluzione);
-      const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+      const s0 = Math.max(w / 600, h / 900), bx = (w - 600 * s0) / 2, by = (h - 900 * s0) / 2;
+      let et = 0, Fp = null;
+      if(opz.fuori && cn.sc && permessoFuori()){
+        // la parte di locandina che si vede nel contenitore, e il personaggio (o l'oggetto) più grande
+        const V = { x:-bx / s0, y:-by / s0, w:w / s0, h:h / s0 }, of = opz.fuori === true ? {} : opz.fuori;
+        let S = null, best = 0;
+        cn.sc.livelli.forEach(lv => { const st = lv.st; if(st.tipo !== "vivo") return; const ix = Math.min(st.x + st.w, V.x + V.w) - Math.max(st.x, V.x), iy = Math.min(st.y + st.h, V.y + V.h) - Math.max(st.y, V.y); if(ix <= 0 || iy <= 0) return; const a = ix * iy * (st.pz >= 1 ? 1 : .3); if(a > best){ best = a; S = st; } });
+        const lato = V.w * (of.lato != null ? of.lato : .05), sopra = V.h * .035;
+        // la cornice finisce a metà del personaggio: dalla vita in giù esce verso chi guarda
+        const giu = S ? clamp(S.y + S.h * .6, V.y + V.h * .5, V.y + V.h * .8) : V.y + V.h * .78;
+        Fp = { x:V.x + lato, y:V.y + sopra, w:V.w - lato * 2, h:giu - V.y - sopra, r:(of.r || 14) / s0, lw:1.3 / s0 };
+        // se il personaggio sta più in alto del contenitore, la tela sale e la testa esce sopra
+        if(S && S.y < V.y) et = Math.round(Math.min(h * (of.su != null ? of.su : .24), (V.y - S.y) * s0 + 8));
+      }
+      const W2 = w, H2 = h + et, cw = Math.round(W2 * dpr), ch = Math.round(H2 * dpr);
       if(cn.cv.width !== cw || cn.cv.height !== ch){ cn.cv.width = cw; cn.cv.height = ch; }
-      const s2 = Math.max(cw / 600, ch / 900);
-      cn.base = { s:s2, x:(cw - 600 * s2) / 2, y:(ch - 900 * s2) / 2 };
+      if(cn.et !== et){ cn.et = et; cn.cv.style.top = -et + "px"; cn.cv.style.height = H2 + "px"; }
+      cn.fuori = Fp;
+      host.classList.toggle("lcv-fuori", !!Fp);
+      const s2 = s0 * dpr;
+      cn.base = { s:s2, x:bx * dpr, y:(by + et) * dpr };
       cn.mis = performance.now();
     };
     cn.frame = dt => {
@@ -1358,11 +1409,11 @@
       stat.fotogrammi++;
       cn.k.setTransform(1, 0, 0, 1, 0, 0);
       cn.k.clearRect(0, 0, cn.cv.width, cn.cv.height);
-      disegnaScena(cn.k, cn.sc, cn.t, cn.base, { tilt:opz.tilt && incl.on ? incl : null, zoom:opz.zoom, grana:opz.grana });
+      disegnaScena(cn.k, cn.sc, cn.t, cn.base, { tilt:opz.tilt && incl.on ? incl : null, zoom:opz.zoom, grana:opz.grana, fuori:cn.fuori });
     };
     cn.pausa = () => { clearTimeout(cn.libera); cn.libera = setTimeout(() => cn.svuota(), opz.tieni || 12000); };
-    cn.svuota = () => { if(cn.visibile && inVista(cn)) return; cn.sc = null; cn.pronto = false; cn.via = 0; if(cn.cv){ cn.cv.classList.remove("on"); cn.cv.width = 0; cn.cv.height = 0; } host.classList.remove("lcv-on"); };
-    cn.ferma = via => { clearTimeout(cn.libera); attivi.delete(cn); if(io) try{ io.unobserve(host); }catch(e){ sbaglio(e); } if(opz.tilt && cn.pronto) inclinazione(false); cn.sc = null; cn.pronto = false; if(via && cn.cv){ cn.cv.remove(); cn.cv = null; host.classList.remove("lcv-on"); } if(host._lcv === cn) host._lcv = null; };
+    cn.svuota = () => { if(cn.visibile && inVista(cn)) return; cn.sc = null; cn.pronto = false; cn.via = 0; if(cn.cv){ cn.cv.classList.remove("on"); cn.cv.width = 0; cn.cv.height = 0; } host.classList.remove("lcv-on", "lcv-fuori"); };
+    cn.ferma = via => { clearTimeout(cn.libera); attivi.delete(cn); if(io) try{ io.unobserve(host); }catch(e){ sbaglio(e); } if(opz.tilt && cn.pronto) inclinazione(false); cn.sc = null; cn.pronto = false; if(via && cn.cv){ cn.cv.remove(); cn.cv = null; host.classList.remove("lcv-on", "lcv-fuori"); } if(host._lcv === cn) host._lcv = null; };
     host._lcv = cn;
     attivi.add(cn);
     osserva(cn);
@@ -1370,7 +1421,7 @@
   }
   function accendi(on){
     spente = !on;
-    if(spente){ attivi.forEach(cn => { cn.sc = null; cn.pronto = false; if(cn.cv){ cn.cv.classList.remove("on"); cn.cv.width = 0; } cn.host.classList.remove("lcv-on"); }); }
+    if(spente){ attivi.forEach(cn => { cn.sc = null; cn.pronto = false; if(cn.cv){ cn.cv.classList.remove("on"); cn.cv.width = 0; } cn.host.classList.remove("lcv-on", "lcv-fuori"); }); }
     else { attivi.forEach(cn => { if(cn.visibile) cn.carica(); }); avvia(); }
   }
   // il fotogramma fermo che diventa la locandina salvata (uguale al primo fotogramma vivo)

@@ -94,6 +94,13 @@ img.lc.ok{opacity:1}
 canvas.lcv{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .7s ease;pointer-events:none}
 canvas.lcv.on{opacity:1}
 body.fx-low canvas.lcv{display:none}
+/* locandine che escono dalla cornice: il contenitore diventa trasparente, la tela disegna cornice e personaggi */
+.lcv-fuori{overflow:visible!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.lcv-fuori>img.lc,.lcv-fuori>svg{opacity:0!important;transition:opacity .7s ease}
+.feat:has(.lcv-fuori),.dtop:has(.dposter.lcv-fuori),.locv-p.lcv-fuori{overflow:visible!important}
+.feat:has(.lcv-fuori){background:transparent;border-color:transparent}
+.feat .img.lcv-fuori::after{display:none}
+.rowx{padding-top:30px;margin-top:-28px}
 .fin-bg img.lc{width:100%;height:100%}
 .play{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#1a1205;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(224,168,63,.5);animation:pulse 2s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 12px rgba(224,168,63,0)}100%{box-shadow:0 0 0 0 rgba(224,168,63,0)}}
@@ -1192,7 +1199,7 @@ function openLocandina(id){
   $("locvP").style.backgroundImage = "";
   $("locvP").innerHTML = lcImg(s, "poster", 400, 600, 900); lcFill($("locvP"));
   $("locv").classList.add("on"); syncBack();
-  if(window.LOCANDINA && LOCANDINA.img) LOCANDINA.img(s, "poster", 1000, $("locvP")).then(url => { const im = $("locvP").querySelector("img.lc"); if(!im || !locOpen()) return; const big = new Image(); big.onload = () => { if(!locOpen()) return; im.src = url; im.classList.add("ok"); lcVivo($("locvP"), s, "poster", 1000, 50, { tilt:true, grande:true, tieni:3000 }); }; big.src = url; }, () => {});
+  if(window.LOCANDINA && LOCANDINA.img) LOCANDINA.img(s, "poster", 1000, $("locvP")).then(url => { const im = $("locvP").querySelector("img.lc"); if(!im || !locOpen()) return; const big = new Image(); big.onload = () => { if(!locOpen()) return; im.src = url; im.classList.add("ok"); $("locvP").dataset.fuori = "12"; lcVivo($("locvP"), s, "poster", 1000, 50, { tilt:true, grande:true, tieni:3000 }); }; big.src = url; }, () => {});
 }
 function closeLocandina(){ $("locv").classList.remove("on"); $("locvP").innerHTML = ""; syncBack(); }
 window.__back = () => {
@@ -1216,7 +1223,7 @@ function card(s){
 // le locandine sono immagini disegnate una volta (e ricordate): finché arrivano si vede il colore del cielo
 function lcImg(s, modo, px, fw, fh, vivo){ return `<img class="lc" data-lc="${esc(s.id)}" data-modo="${modo}" data-px="${px}" data-fw="${fw}" data-fh="${fh}"${vivo ? ` data-vivo="${vivo}"` : ""} alt="" draggable="false">`; }
 // la locandina si anima sopra l'immagine ferma (locandine_vive.js); fps: quanto spesso si ridisegna
-function lcVivo(box, s, modo, px, fps, extra){ try{ if(box && window.LOCANDINA && LOCANDINA.anima) LOCANDINA.anima(box, s, modo, px, Object.assign({ fps }, extra || {})); }catch(e){} }
+function lcVivo(box, s, modo, px, fps, extra){ try{ if(box && window.LOCANDINA && LOCANDINA.anima) LOCANDINA.anima(box, s, modo, px, Object.assign({ fps, fuori:box.dataset.fuori ? { r:+box.dataset.fuori > 1 ? +box.dataset.fuori : 14 } : false }, extra || {})); }catch(e){} }
 function lcFill(root){
   (root || document).querySelectorAll("img.lc[data-lc]").forEach(im => {
     const s = story(im.dataset.lc), modo = im.dataset.modo, px = +im.dataset.px, fw = +im.dataset.fw, fh = +im.dataset.fh, vivo = +im.dataset.vivo || 0;
@@ -1236,7 +1243,7 @@ function lcCover(s){
   return u ? `<img class="lc ok" src="${u}" alt="">` : coverSVG(s, 400, 720, { testo:false });
 }
 const cvObs = {};
-function fillCv(el){ const id = el.dataset.cv; if(!id) return; delete el.dataset.cv; const s = story(id); if(!s) return; el.insertAdjacentHTML("afterbegin", lcImg(s, "poster", 400, 142, 190, 24)); lcFill(el); }
+function fillCv(el){ const id = el.dataset.cv; if(!id) return; delete el.dataset.cv; const s = story(id); if(!s) return; el.insertAdjacentHTML("afterbegin", lcImg(s, "poster", 400, 142, 190, 24)); el.dataset.fuori = "1"; lcFill(el); }
 function lazyCovers(box){
   if(!box) return;
   if(cvObs[box.id]) cvObs[box.id].disconnect();
@@ -1262,7 +1269,7 @@ function renderHome(){
     h += `<div class="sec"><div class="resume" data-resume="${s.id}"><div class="mini">${lcImg(s, "arte", 240, 48, 48)}</div><div class="t"><b>Continua: ${esc(s.t)}</b><span>${esc(lastLine(last))}</span></div><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></div></div></div>`;
   }
   h += `<div class="sec"><div class="sec-h"><h2>In evidenza oggi</h2></div>
-    <div class="feat" data-story="${f.id}" data-g="${f.g}"><div class="img">${lcImg(f, "arte", 760, 400, 210, 30)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
+    <div class="feat" data-story="${f.id}" data-g="${f.g}"><div class="img" data-fuori="20">${lcImg(f, "arte", 760, 400, 210, 30)}<div class="ov"><span class="badge"><i></i>${esc(genre(f).n.toUpperCase())}</span><h3>${esc(f.t)}</h3><div class="meta">${esc(f.city)} · ${esc(f.place)} · ${esc(f.era)}</div></div></div><div class="shine"></div>
     <div class="body"><p>${esc(resolve(f.hook, fx))}</p><span class="go">Gioca ›</span></div></div></div>`;
   h += `<div class="sec"><div class="chiprow">${GENRE_ORDER.map(k => `<button class="gchip" data-genre="${k}">${G[k].e} ${G[k].n}</button>`).join("")}</div></div>`;
   GENRE_ORDER.forEach(k => {
@@ -1439,7 +1446,7 @@ function openDetail(id){
   pvSex = x ? x.sex : (s.sex === "m" ? "m" : "f");
   $("dArt").style.backgroundImage = ""; $("dPoster").style.backgroundImage = "";
   $("dArt").innerHTML = lcImg(s, "arte", 760, 400, 290, 30);
-  $("dPoster").innerHTML = lcImg(s, "poster", 400, 84, 126, 24);
+  $("dPoster").innerHTML = lcImg(s, "poster", 400, 84, 126, 24); $("dPoster").dataset.fuori = "9";
   lcFill($("v-detail"));
   $("dMeta").textContent = `${g.e} ${g.n} · ${s.city}${s.place ? " · " + s.place : ""} · ${s.era || "Oggi"}`;
   $("dChips").innerHTML = [`${g.e} ${g.n}`, `📍 ${s.city}`, `🕰️ ${s.era || "Oggi"}`, "🧠 Memoria", s.love ? "❤️ Storia d'amore" : "", s.tema ? "🎵 Con la sigla" : "", s.custom ? "✨ Creata da te" : ""].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join("");

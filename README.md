@@ -19,6 +19,7 @@ Nella versione 2.9 le locandine sono molto più dettagliate:
 
 Nella versione 3.0 le locandine sono **animate**, come i poster animati dei film:
 
+- **fuori dalla cornice**: la scena sta dentro una cornice e personaggi, animali e oggetti ne escono verso chi guarda, con pioggia, neve, braci e coriandoli che si spargono fuori
 - **scena a strati**: cielo, nuvole, paesaggio e personaggi si muovono a profondità diverse con un lento movimento di macchina; nella locandina grande inclinando il telefono la scena si sposta
 - **personaggi e oggetti vivi**: i personaggi respirano, il cavallo galoppa, le barche dondolano, i motoscafi planano, l'elicottero resta sospeso, le lettere e il pallone galleggiano, i rami di limoni e d'uva ondeggiano
 - **meteo**: pioggia su tre piani con schizzi a terra e gocce sull'obiettivo, neve e bufera, nebbia e fumo che scorrono, fulmini ramificati con lampo nel cielo
