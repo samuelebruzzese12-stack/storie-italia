@@ -80,7 +80,11 @@
   let nUso = 0;
   function Ctx(s, W2, H2){
     const seed = hash((s.id || "") + "|" + (s.t || "")), R2 = rng(seed);
-    const c = { s, R:R2, d:"", u:"§U§", p:PAL.notte, rif:"", n:0 };
+    const c = { s, R:R2, d:"", u:"§U§", p:PAL.notte, rif:"", n:0, anim:[], vivo:false, strato:null };
+    // punti d'animazione: dove sono luci, finestre, fiamme, acqua… (servono alle locandine vive)
+    c.punto = (tipo, d) => { if(c.vivo) c.anim.push(Object.assign({ tipo, strato:c.strato }, d)); };
+    // da coordinate locali di un gruppo G(x, y, s, …, flip, rot) a coordinate della locandina
+    c.loc = (x, y, sc, flip, rot) => { const a = (rot || 0) * Math.PI / 180, co = Math.cos(a), si = Math.sin(a); return (lx, ly) => { const px = (flip ? -lx : lx) * sc, py = ly * sc; return [f(x + co * px - si * py), f(y + si * px + co * py)]; }; };
     c.rnd = (a, b) => a + R2() * (b - a);
     c.pick = a => a[Math.floor(R2() * a.length) % a.length];
     c.col = z => [c.p.far, c.p.mid, c.p.ink][z == null ? 2 : z];
@@ -94,7 +98,7 @@
     c.fc = {};
     c.flt = (nome, inner, box) => { if(!c.fc[nome]){ const id = c.id(); c.d += `<filter id="${id}" ${box || 'x="-20%" y="-20%" width="140%" height="140%"'} color-interpolation-filters="sRGB">${inner}</filter>`; c.fc[nome] = `url(#${id})`; } return c.fc[nome]; };
     c.sfoca = sd => c.flt("b" + sd, `<feGaussianBlur stdDeviation="${sd}"/>`, 'x="-40%" y="-40%" width="180%" height="180%"');
-    c.rumore = (nome, bf, oct, seed, a, b) => c.flt(nome, `<feTurbulence type="fractalNoise" baseFrequency="${bf}" numOctaves="${oct}" seed="${seed}" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 ${a} ${b}" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in"/>`, 'x="0" y="0" width="100%" height="100%"');
+    c.rumore = (nome, bf, oct, seed, a, b, cuci) => c.flt(nome + (cuci ? "s" : ""), `<feTurbulence type="fractalNoise" baseFrequency="${bf}" numOctaves="${oct}" seed="${seed}"${cuci ? ' stitchTiles="stitch"' : ""} result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 ${a} ${b}" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in"/>`, 'x="0" y="0" width="100%" height="100%"');
     c.rim = (dx, dy, col) => c.flt(`rim${dx}_${dy}_${col}`, `<feOffset in="SourceAlpha" dx="${-dx}" dy="${-dy}" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="e"/><feGaussianBlur in="e" stdDeviation=".9" result="eb"/><feFlood flood-color="${col}"/><feComposite in2="eb" operator="in" result="r"/><feComposite in="r" in2="SourceAlpha" operator="in" result="ri"/>` +
       `<feOffset in="SourceAlpha" dx="${f(-dx * 5)}" dy="${f(-dy * 3)}" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="e2"/><feGaussianBlur in="e2" stdDeviation="5" result="eb2"/><feFlood flood-color="${col}" flood-opacity=".38"/><feComposite in2="eb2" operator="in" result="k"/><feComposite in="k" in2="SourceAlpha" operator="in" result="ki"/>` +
       `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="ki"/><feMergeNode in="ri"/><feMergeNode in="ri"/></feMerge>`, 'x="-15%" y="-15%" width="130%" height="130%"');
@@ -116,7 +120,8 @@
     let e = C(o.x, o.y, r * (o.alone || 4.5), c.rad([[0, col, .8], [.2, col, .3], [1, col, 0]]));
     if(c.hd && (o.t === "sole" || o.t === "luna")){
       // raggi morbidi che partono dall'astro
-      if(o.raggi !== false){
+      c.punto("astro", { x:o.x, y:o.y, r, col, t:o.t, raggi:o.raggi !== false, rl:o.raggiL || 1, ra:o.raggiA || 1 });
+      if(o.raggi !== false && !c.vivo){
         let rg = "";
         const n = o.t === "sole" ? 26 : 16;
         for(let k = 0; k < n; k++){
@@ -160,6 +165,7 @@
       for(let xx = x + 5; xx < x + bw - fw + 2; xx += fw){
         if(c.R() < .12) continue;
         const ww = vicino ? 7 : 5, wh = vicino ? 11 : 8, acceso = c.R() < lit;
+        if(c.vivo && (c.nW = (c.nW || 0) + 1) % (acceso ? 2 : 5) === 0 && (c.nWr = (c.nWr || 0) + 1) < 150) c.punto("finestra", { x:f(xx), y:f(yy), w:ww, h:wh, on:acceso, col:wc, buio:mix(col, c.p.sky[c.p.sky.length - 1], .18) });
         if(acceso){ e += R(xx, yy, ww, wh, c.lin([[0, "#fff4d0"], [1, wc]]), f(c.rnd(.65, 1))); if(vicino && c.R() < .3) e += R(xx + 1, yy + wh * .45, ww - 2, wh * .55, "#1a0e06", .6); }
         else e += R(xx, yy, ww, wh, mix(col, c.p.sky[c.p.sky.length - 1], .18), .55);
         if(vicino && c.R() < .45) e += R(xx - 3, yy - .5, 2.4, wh + 1, mix(col, "#2e5a3a", .5), .85) + R(xx + ww + .6, yy - .5, 2.4, wh + 1, mix(col, "#2e5a3a", .5), .85);
@@ -244,7 +250,7 @@
     const col = o.col || c.col(o.z == null ? 1 : o.z), hole = o.neon || c.p.far, a = o.neon ? .9 : .55;
     let e = P("M-180 4L-180 -150Q-40 -176 120 -160L150 -128L170 -96L176 4Z", col);
     for(let t = 0; t < 3; t++) for(let k = 0; k < 9; k++){ const x = -165 + k * 34, y = -38 - t * 44; if(t === 2 && k > 7) continue; e += P(`M${x} ${y}V${y - 18}Q${x + 9} ${y - 30} ${x + 18} ${y - 18}V${y}Z`, hole, a); }
-    if(o.neon) e += C(0, -80, 200, c.halo(o.neon, .25));
+    if(o.neon){ e += C(0, -80, 200, c.halo(o.neon, .25)); c.punto("bagliore", { x:o.x, y:f((o.y || HOR) - 80 * (o.s || 1)), r:f(220 * (o.s || 1)), col:o.neon, ritmo:2.2 }); }
     return G(o.x, o.y || HOR, o.s || 1, e);
   };
   EL.vulcano = (c, o) => {
@@ -542,13 +548,14 @@
   };
   EL.mare = (c, o) => {
     const y = o.y || HOR, x = o.lx == null ? 300 : o.lx, col = o.col || c.p.mid;
+    c.punto("acqua", { y0:y, y1:VH, lx:x, gc:o.gc || c.p.glow, ga:o.ga || .55, onde:!!o.onde, lago:!!o.lago });
     let e = R(0, y, VW, VH - y, c.lin([[0, o.top || c.p.far], [1, col]]));
     if(c.rif){ e += `<g clip-path="${c.clip(R(0, y, VW, VH - y, "#000"))}" opacity="${o.ra || .4}"><g${c.hd ? ` filter="${c.onde()}"` : ""}><g transform="translate(0 ${2 * y}) scale(1 -1)">${c.rif}</g></g></g>` + R(0, y, VW, VH - y, c.lin([[0, col, .05], [1, col, .85]])); }
     for(let k = 0; k < 26; k++){ const yy = y + 6 + k * k * .55, w = 20 + k * 6; e += R(x - w / 2 + c.rnd(-30, 30), yy, w * c.rnd(.4, 1), 2 + k * .08, o.gc || c.p.glow, f((o.ga || .55) - k * .018)); }
     for(let k = 0; k < (o.onde ? 16 : 9); k++){ const yy = y + 26 + k * (o.onde ? 15 : 24); e += S(`M${f(c.rnd(-80, 0))} ${yy}q75 -${o.onde ? 9 : 5} 150 0t150 0t150 0t150 0t150 0`, "#ffffff", o.onde ? 1.6 : 1, o.onde ? .12 : .06); }
     return e;
   };
-  EL.lago = (c, o) => EL.mare(c, Object.assign({ top:c.p.far, col:c.p.mid, ga:.4 }, o));
+  EL.lago = (c, o) => EL.mare(c, Object.assign({ top:c.p.far, col:c.p.mid, ga:.4, lago:true }, o));
   EL.costiera = (c, o) => {
     const x0 = o.x || 0, col = c.col(1), cols = ["#f2d4a8", "#e9a982", "#f6e6c6", "#d98c6a", "#f0c878", "#e8b8a8"];
     if(c.hd){
@@ -576,7 +583,9 @@
     if(c.hd){
       const luce = mix(col, c.p.glow, .2), fac = c.lin([[0, mix(col, c.p.glow, .12)], [1, col]]);
       let e = R(-130, -118, 260, 122, fac) + R(-136, -122, 272, 8, luce, .7) + R(-136, -62, 272, 4, luce, .5);
-      for(let k = -3; k <= 3; k++){ [-96, -52].forEach((wy, r) => { const on = (lit && c.R() < .6) || (o.una && k === 0 && r === 0); e += R(k * 34 - 9, wy, 18, 30, on ? c.lin([[0, "#fff2c8"], [1, c.p.acc]]) : mix(col, c.p.sky[c.p.sky.length - 1], .15), on ? .95 : .7) + R(k * 34 - 11, wy - 3, 22, 3, luce, .6) + P(`M${k * 34 - 11} ${wy - 3}Q${k * 34} ${wy - 12} ${k * 34 + 11} ${wy - 3}Z`, luce, .5); if(r === 1) e += R(k * 34 - 13, wy + 30, 26, 2, luce, .7); }); }
+      const qv = c.loc(o.x, o.y || HOR, o.s || 1);
+      for(let k = -3; k <= 3; k++){ [-96, -52].forEach((wy, r) => { const on = (lit && c.R() < .6) || (o.una && k === 0 && r === 0);
+        if(c.vivo){ const [ax, ay] = qv(k * 34 - 9, wy), sv = o.s || 1; c.punto("finestra", { x:ax, y:ay, w:f(18 * sv), h:f(30 * sv), on, col:c.p.acc, buio:mix(col, c.p.sky[c.p.sky.length - 1], .15), ...(o.una && k === 0 && r === 0 ? { fantasma:true } : {}) }); } e += R(k * 34 - 9, wy, 18, 30, on ? c.lin([[0, "#fff2c8"], [1, c.p.acc]]) : mix(col, c.p.sky[c.p.sky.length - 1], .15), on ? .95 : .7) + R(k * 34 - 11, wy - 3, 22, 3, luce, .6) + P(`M${k * 34 - 11} ${wy - 3}Q${k * 34} ${wy - 12} ${k * 34 + 11} ${wy - 3}Z`, luce, .5); if(r === 1) e += R(k * 34 - 13, wy + 30, 26, 2, luce, .7); }); }
       e += R(-46, -206, 92, 92, fac) + R(-50, -210, 100, 6, luce, .8) + P("M-54 -210L0 -246L54 -210Z", col) + S("M-54 -210L0 -246", luce, 1.6, .6);
       [-24, 0, 24].map(q => e += P(`M${q - 8} -142V-176Q${q} -188 ${q + 8} -176V-142Z`, o.una || lit ? c.lin([[0, "#fff2c8"], [1, c.p.acc]]) : mix(col, c.p.sky[2], .2), o.una || lit ? .95 : .7));
       if(o.una) e += C(0, -160, 90, c.halo(c.p.acc, .45));
@@ -610,7 +619,9 @@
     if(t === "vittoria"){ top = -300; e += R(-40, -40, 80, 44, col) + P("M-16 -40L-11 -280H11L16 -40Z", col) + R(-20, -300, 40, 22, col) + P("M-8 -300L-4 -330H4L8 -300Z", col) + C(0, -338, 7, col) + P("M2 -334L18 -356L6 -330Z", col); }
     else if(t === "lanterna"){ top = -330; e += R(-26, -170, 52, 174, col) + R(-30, -176, 60, 8, col) + R(-20, -300, 40, 126, col) + R(-24, -306, 48, 8, col) + R(-12, -330, 24, 26, c.p.glow) + P("M-14 -330L0 -346L14 -330Z", col); top = -318; }
     else e += P("M-22 4L-14 -210H14L22 4Z", col) + R(-20, -236, 40, 26, col) + C(0, -224, 9, c.p.glow) + P("M-22 -236L0 -258L22 -236Z", col) + R(-30, -212, 60, 6, col);
-    if(o.raggio !== false) e = P(`M0 ${top}L-460 ${top - 80}L-460 ${top + 60}Z`, c.lin([[0, c.p.glow, .55], [1, c.p.glow, 0]], 1, 0)) + P(`M0 ${top}L300 ${top - 40}L300 ${top + 30}Z`, c.lin([[0, c.p.glow, 0], [1, c.p.glow, .3]], 1, 0)) + C(0, top, 26, c.halo(c.p.glow, .9)) + e;
+    if(o.raggio !== false){ const q = c.loc(o.x, o.y || HOR, o.s || 1, o.flip); const [lx, ly] = q(0, top); c.punto("faro", { x:lx, y:ly, s:o.s || 1, col:c.p.glow, flip:!!o.flip }); }
+    if(o.raggio !== false && c.vivo) e = C(0, top, 26, c.halo(c.p.glow, .9)) + e;
+    else if(o.raggio !== false) e = P(`M0 ${top}L-460 ${top - 80}L-460 ${top + 60}Z`, c.lin([[0, c.p.glow, .55], [1, c.p.glow, 0]], 1, 0)) + P(`M0 ${top}L300 ${top - 40}L300 ${top + 30}Z`, c.lin([[0, c.p.glow, 0], [1, c.p.glow, .3]], 1, 0)) + C(0, top, 26, c.halo(c.p.glow, .9)) + e;
     return G(o.x, o.y || HOR, o.s || 1, e, null, o.flip);
   };
   EL.nave = (c, o) => {
@@ -770,18 +781,21 @@
       e += R(x, top, w, h + 4, col) + P(`M${f(x)} ${f(top)}L${f(x + w / 2)} ${f(top - c.rnd(20, 70))}L${f(x + w)} ${f(top)}Z`, col);
       for(let yy = top + 20; yy < HOR - 10; yy += c.rnd(18, 40)) e += R(x + 4, yy, w - 8, 2, neon[k % 3], f(c.rnd(.3, .8)));
     }
-    for(let k = 0; k < 8; k++){ const y = c.rnd(150, 420), x = c.rnd(0, 560); e += L(x, y, x + 40, y + 4, neon[k % 3], 2, .6) + C(x + 40, y + 4, 3, "#ffffff"); }
+    for(let k = 0; k < 8; k++){ const y = c.rnd(150, 420), x = c.rnd(0, 560); if(!c.vivo) e += L(x, y, x + 40, y + 4, neon[k % 3], 2, .6) + C(x + 40, y + 4, 3, "#ffffff"); }
+    c.punto("veicoli", { y0:150, y1:420, cols:neon });
     return e;
   };
   EL.neon = (c, o) => {
     const A = c.p.acc, sx = o.x || 300, hy = HOR - 20, sr = 150, sy = hy - 70;
     let e = C(sx, sy, sr * 1.6, c.halo("#ff7a9a", .35)) + C(sx, sy, sr, c.lin([[0, "#ffe27a"], [.55, "#ff7a6a"], [1, "#ff2fa0"]]));
-    for(let k = 0; k < 6; k++) e += R(sx - sr, sy + 12 + k * 22, sr * 2, 3 + k * 2.2, c.p.sky[2]);
+    if(c.vivo) c.punto("soleRetro", { x:sx, y:sy, r:sr, col:c.p.sky[2] });
+    else for(let k = 0; k < 6; k++) e += R(sx - sr, sy + 12 + k * 22, sr * 2, 3 + k * 2.2, c.p.sky[2]);
     let x = 0;
     while(x < VW){ const bw = c.rnd(30, 70), bh = c.rnd(40, 170); e += R(x, hy - bh, bw, bh + 2, c.p.mid); for(let k = 0; k < 5; k++) if(c.R() < .6) e += R(x + c.rnd(4, bw - 8), hy - bh + c.rnd(8, bh - 6), 4, 3, c.R() < .5 ? A : "#ff4fd8", .9); x += bw + c.rnd(0, 4); }
     e += R(0, hy, VW, VH - hy, c.p.ink);
     for(let k = -9; k <= 9; k++) e += L(300, hy, 300 + k * 90, VH, "#ff4fd8", 1.6, .55);
-    for(let k = 1; k < 9; k++){ const y = hy + (VH - hy) * Math.pow(k / 9, 1.8); e += L(0, y, VW, y, "#ff4fd8", 1.4, .45); }
+    if(c.vivo) c.punto("griglia", { hy, col:"#ff4fd8" });
+    else for(let k = 1; k < 9; k++){ const y = hy + (VH - hy) * Math.pow(k / 9, 1.8); e += L(0, y, VW, y, "#ff4fd8", 1.4, .45); }
     if(o.palme !== false) e += c.hd ? palmaHD(c, 40, VH - 40, 1.25, c.p.ink, 1) + palmaHD(c, 560, VH - 30, 1.15, c.p.ink, -1) : palma(40, VH - 40, 1.25, c.p.ink, 1) + palma(560, VH - 30, 1.15, c.p.ink, -1);
     return e;
   };
@@ -796,7 +810,9 @@
     const col = c.col(1);
     let e = P(`M-20 ${HOR + 6}L-20 ${HOR - 120}Q300 ${HOR - 170} 620 ${HOR - 120}L620 ${HOR + 6}Z`, col);
     for(let k = 0; k < 60; k++) e += C(c.rnd(0, 600), HOR - c.rnd(10, 130), 1.6, c.pick(["#ffffff", c.p.acc, "#5aa0ff"]), f(c.rnd(.2, .7)));
+    c.punto("tribune", { x0:0, x1:600, y0:HOR - 130, y1:HOR - 10 });
     [[60, -1], [540, 1]].forEach(([x, dr]) => {
+      c.punto("luce", { x, y:HOR - 314, r:90, col:"#ffffff", forma:"riflettore" });
       e += P(`M${x} ${HOR - 300}L${x - dr * 220} ${HOR + 140}L${x + dr * 160} ${HOR + 140}Z`, c.lin([[0, "#ffffff", .34], [1, "#ffffff", 0]]));
       e += R(x - 4, HOR - 300, 8, 200, col) + R(x - 30, HOR - 330, 60, 34, col) + C(x, HOR - 314, 90, c.halo("#ffffff", .5));
       for(let i = 0; i < 4; i++) for(let j = 0; j < 2; j++) e += C(x - 20 + i * 13, HOR - 322 + j * 14, 4.5, "#ffffff", .95);
@@ -819,12 +835,13 @@
     (o.t || [[200, 470], [380, 420]]).forEach(([x, h], i) => {
       const top = HOR - h;
       e += R(x - 40, top + 60, 80, h - 56, col) + R(x - 30, top + 20, 60, 44, col) + R(x - 20, top - 10, 40, 34, col) + (i ? P(`M${x - 20} ${top - 10}Q${x} ${top - 80} ${x + 20} ${top - 10}Z`, col) + P(`M${x - 3} ${top - 70}L${x} ${top - 130}L${x + 3} ${top - 70}Z`, col) : R(x - 6, top - 50, 12, 42, col) + L(x, top - 50, x, top - 100, col, 3));
-      for(let yy = top + 70; yy < HOR - 10; yy += 16) for(let xx = x - 34; xx < x + 32; xx += 10) if(c.R() < .22) e += R(xx, yy, 4, 7, c.p.acc, .8);
+      for(let yy = top + 70; yy < HOR - 10; yy += 16) for(let xx = x - 34; xx < x + 32; xx += 10) if(c.R() < .22){ e += R(xx, yy, 4, 7, c.p.acc, .8); if(c.vivo && (c.nW = (c.nW || 0) + 1) % 2 === 0 && (c.nWr = (c.nWr || 0) + 1) < 150) c.punto("finestra", { x:xx, y:yy, w:4, h:7, on:true, col:c.p.acc, buio:col }); }
     });
     return e;
   };
   EL.liberty = (c, o) => {
-    const col = o.col || c.col(o.z == null ? 1 : o.z);
+    const col = o.col || c.col(o.z == null ? 1 : o.z), [fx, fy] = c.loc(o.x, o.y || HOR, o.s || 1)(36, -400);
+    c.punto("fiamma", { x:fx, y:fy, r:f(24 * (o.s || 1)), col:"#ffc65a", forma:"torcia", s:o.s || 1 });
     return G(o.x, o.y || HOR, o.s || 1, R(-50, -110, 100, 114, col) + R(-36, -150, 72, 44, col) + P("M-26 -150L-30 -260Q-26 -300 -8 -306L12 -300L24 -262L26 -150Z", col) + C(0, -318, 13, col) + P("M-14 -326L-24 -344L-6 -330L0 -350L6 -330L24 -344L14 -326Z", col) + P("M14 -298L30 -380L40 -378L26 -296Z", col) + P("M28 -380L44 -382Q46 -400 36 -410Q30 -398 28 -380Z", "#ffc65a") + C(36, -400, 24, c.halo("#ffc65a", .7)) + R(-34, -250, 20, 34, col, null, ' transform="rotate(-12 -24 -230)"'));
   };
   EL.ciminiere = (c, o) => {
@@ -837,6 +854,7 @@
         e += P(`M${x - 16} ${HOR}L${x - 11} ${HOR - h}H${x + 11}L${x + 16} ${HOR}Z`, c.lin([[0, mix(col, c.p.glow, .1)], [1, col]]));
         [0, 1, 2, 3].forEach(q => e += R(x - 12, HOR - h + q * 12, 24, 12, q % 2 ? "#ece4d6" : "#c8422a", .9));
         e += R(x - 13, HOR - h - 4, 26, 6, col);
+        if(fiamma) c.punto("fiamma", { x, y:HOR - h - 30, r:40, col:"#ffb030", forma:"torcia", s:1.6 }); else c.punto("fumo", { x:x + 6, y:HOR - h - 8, col:"#5a5048", r:14, forza:1 });
         if(fiamma) e += C(x, HOR - h - 40, 90, c.halo("#ffb347", .7)) + P(`M${x - 10} ${HOR - h - 2}Q${x - 24} ${HOR - h - 46} ${x - 2} ${HOR - h - 86}Q${x + 20} ${HOR - h - 44} ${x + 10} ${HOR - h - 2}Z`, c.lin([[0, "#fff6c8"], [.5, "#ffb030"], [1, "#e0501a"]]));
         else e += P(`M${x - 10} ${HOR - h}C${x - 40} ${HOR - h - 120} ${x + 60} ${HOR - h - 200} ${x + 20} ${HOR - h - 320}C${x + 120} ${HOR - h - 200} ${x + 40} ${HOR - h - 100} ${x + 10} ${HOR - h}Z`, c.lin([[0, "#5a5048", .8], [1, "#5a5048", .2]]), null, ` filter="${c.rumore("fumoC", ".012 .02", 3, 9, 2.4, -.7)}"`);
       });
@@ -916,6 +934,7 @@
   };
   EL.rivelatore = (c, o) => {
     const x = o.x || 300, y = o.y || 600, r = o.r || 200, col = c.p.acc;
+    c.punto("rivelatore", { x, y, r, col });
     let e = C(x, y, r * 1.5, c.halo(col, .35)) + C(x, y, r * 1.06, "#06121a");
     for(let k = 0; k < 6; k++) e += `<circle cx="${x}" cy="${y}" r="${f(r * (1 - k * .14))}" fill="none" stroke="${col}" stroke-width="${f(7 - k)}" opacity="${f(.85 - k * .1)}"/>`;
     for(let k = 0; k < 24; k++){ const a = k * Math.PI / 12; e += L(x + Math.cos(a) * r * .28, y + Math.sin(a) * r * .28, x + Math.cos(a) * r, y + Math.sin(a) * r, col, 2, .35); }
@@ -1083,6 +1102,7 @@
     const B = CORPI[T.c] || CORPI.m, luce = mix(col, glow, .5);
     const rosso = T.rosso ? mix("#b8241f", col, .38) : null;
     let dietro = "", e = "", sopra = "", lin = "";
+    const punti = [];
     const hy = B.hy + (T.curva ? 8 : 0), hw = B.hw, hh = B.hh, top = hy - hh;
     // gambe e piedi
     const tg = T.gambe || ({ giubbotto:"jeans", tshirt:"jeans", divisa:"calzoni", lorica:"nude", vestito:"donna", cappottoF:"donna", vestitino:"bimbo", maglietta:"calzoncini" }[T.abito]) || "pantaloni";
@@ -1156,10 +1176,11 @@
     if(cap === "cuffie") tt += `<path d="M${f(-hw * 1.15)} ${f(hy)}Q${f(-hw * 1.2)} ${f(top - 6)} 0 ${f(top - 7)}Q${f(hw * 1.2)} ${f(top - 6)} ${f(hw * 1.15)} ${f(hy)}" fill="none" stroke="currentColor" stroke-width="3.4"/><rect x="${f(-hw * 1.28 - 3)}" y="${f(hy - 7)}" width="7" height="14" rx="3"/><rect x="${f(hw * 1.28 - 4)}" y="${f(hy - 7)}" width="7" height="14" rx="3"/>`;
     if(T.inclina) tt = `<g transform="rotate(${f(T.inclina)} 0 ${f(cy2)})">${tt}</g>`;
     e += tt;
+    if(o.collana) punti.push({ tipo:"brillio", x:0, y:cy2 + 12 });
     if(o.collana) sopra += `<path d="M-7 ${f(cy2 + 1)}Q0 ${f(cy2 + 13)} 7 ${f(cy2 + 1)}" fill="none" stroke="#ffd36b" stroke-width="1.8"/><circle cx="0" cy="${f(cy2 + 12)}" r="2.4" fill="#ffd36b"/>`;
     // oggetti in mano
     const Rh = mani[1] || mani.p1, Lh = mani[-1] || mani["p-1"];
-    if(T.posa === "ombrello"){ const ap = [Rh[0] - 6, Rh[1] - 120], w = 84, cy = ap[1] + 34; let d = `M${f(ap[0] - w)} ${f(cy + 6)}Q${f(ap[0] - w * .96)} ${f(ap[1] - 4)} ${f(ap[0])} ${f(ap[1] - 6)}Q${f(ap[0] + w * .96)} ${f(ap[1] - 4)} ${f(ap[0] + w)} ${f(cy + 6)}`; for(let k = 0; k < 6; k++){ const xa = ap[0] + w - k * w / 3, xb = xa - w / 3; d += `Q${f((xa + xb) / 2)} ${f(cy - 4)} ${f(xb)} ${f(cy + 6)}`; }
+    if(T.posa === "ombrello"){ const ap = [Rh[0] - 6, Rh[1] - 120], w = 84, cy = ap[1] + 34; punti.push({ tipo:"ombrello", x:ap[0], y:ap[1], w, bordo:cy + 6 }); let d = `M${f(ap[0] - w)} ${f(cy + 6)}Q${f(ap[0] - w * .96)} ${f(ap[1] - 4)} ${f(ap[0])} ${f(ap[1] - 6)}Q${f(ap[0] + w * .96)} ${f(ap[1] - 4)} ${f(ap[0] + w)} ${f(cy + 6)}`; for(let k = 0; k < 6; k++){ const xa = ap[0] + w - k * w / 3, xb = xa - w / 3; d += `Q${f((xa + xb) / 2)} ${f(cy - 4)} ${f(xb)} ${f(cy + 6)}`; }
       e += `<path d="M${PP(Rh)}L${PP(ap)}M${PP(Rh)}l0 10q0 7 -7 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>` + `<path d="${d}Z"${o.ombrelloCol ? ` fill="${o.ombrelloCol}"` : ""}/>`; lin += [-2, -1, 0, 1, 2].map(k => `M${PP(ap)}L${f(ap[0] + k * w / 3)} ${f(cy + 6)}`).join(""); }
     if(T.posa === "valigia" || T.posa === "valigiaT"){ e += `<rect x="${f(Rh[0] - 10)}" y="${f(Rh[1] + 5)}" width="34" height="44" rx="4"/><path d="M${f(Rh[0] - 2)} ${f(Rh[1] + 6)}v-6h14v6" fill="none" stroke="currentColor" stroke-width="2.4"/>`; lin += `M${f(Rh[0] - 10)} ${f(Rh[1] + 18)}h34M${f(Rh[0] - 10)} ${f(Rh[1] + 36)}h34`; }
     if(T.arma === "fucile" && T.posa === "porto"){ const dx = Lh[0] - Rh[0], dy = Lh[1] - Rh[1], l = Math.hypot(dx, dy) || 1; e += fucile([Rh[0] - dx / l * 34, Rh[1] - dy / l * 34], [Lh[0] + dx / l * 112, Lh[1] + dy / l * 112], T.baionetta); }
@@ -1171,11 +1192,11 @@
     if(T.posa === "lancia") e += `<path d="M${f(Rh[0] + 3)} 6L${f(Rh[0] - 3)} -380" fill="none" stroke="currentColor" stroke-width="3.2"/><path d="M${f(Rh[0] - 3)} -412l5 32h-10z"/>`;
     if(T.scudo){ const sc = mix("#8a1c18", col, .45); sopra += `<rect x="-82" y="-238" width="54" height="142" rx="9" fill="${sc}"/><rect x="-82" y="-238" width="54" height="142" rx="9" fill="none" stroke="${mix("#e6c25a", col, .35)}" stroke-width="2.4"/><circle cx="-55" cy="-167" r="9" fill="${mix("#e6c25a", col, .35)}"/>`; }
     if(T.posa === "bouquet") sopra += [[-6, -178], [4, -181], [-1, -170], [8, -172], [-9, -169], [2, -164]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${5 - i * .3}" fill="${mix(i % 2 ? "#f6e6ea" : "#ffffff", col, .1)}"/>`).join("") + `<path d="M-3 -162l-4 22M3 -162l4 22" stroke="${mix("#ffffff", col, .2)}" stroke-width="1.6"/>`;
-    if(T.posa === "sigaretta"){ const p = [Rh[0] - 4, Rh[1] - 3]; sopra += `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="1.8" fill="#ffb347"/><circle cx="${f(p[0])}" cy="${f(p[1])}" r="7" fill="#ffb347" opacity=".25"/><path d="M${PP(p)}q-6 -14 2 -26t-2 -30" fill="none" stroke="${luce}" stroke-width="1.6" opacity=".35"/>`; }
+    if(T.posa === "sigaretta"){ const p = [Rh[0] - 4, Rh[1] - 3]; punti.push({ tipo:"sigaretta", x:p[0], y:p[1] }); sopra += `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="1.8" fill="#ffb347"/><circle cx="${f(p[0])}" cy="${f(p[1])}" r="7" fill="#ffb347" opacity=".25"/><path d="M${PP(p)}q-6 -14 2 -26t-2 -30" fill="none" stroke="${luce}" stroke-width="1.6" opacity=".35"/>`; }
     if(o.numero) sopra += `<text x="0" y="-180" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="40" fill="${glow}" opacity=".85">${esc(o.numero)}</text>`;
     // linee di luce che danno forma: tesa del cappello, giacca, braccia
     const linee = lin ? `<path d="${lin}" fill="none" stroke="${luce}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>` : "";
-    return { dietro, corpo:e, sopra, linee };
+    return { dietro, corpo:e, sopra, linee, punti };
   }
 
   // il robot gentile e l'astronauta, con le stesse regole di luce dei personaggi
@@ -1185,12 +1206,12 @@
     e += `<rect x="-29" y="-16" width="26" height="16" rx="6"/><rect x="3" y="-16" width="26" height="16" rx="6"/><path d="M-52 -150l-6 14l6 2l4 -10zM-38 -150l2 14l6 0l-2 -14zM52 -150l6 14l-6 2l-4 -10zM38 -150l-2 14l-6 0l2 -14z"/>`;
     const sopra = `<rect x="-22" y="-286" width="44" height="24" rx="11" fill="#08090c"/><circle cx="-10" cy="-274" r="5" fill="${acc}"/><circle cx="10" cy="-274" r="5" fill="${acc}"/><circle cx="-10" cy="-274" r="11" fill="${acc}" opacity=".3"/><circle cx="10" cy="-274" r="11" fill="${acc}" opacity=".3"/><circle cx="0" cy="-326" r="3" fill="${acc}"/>` +
       `<rect x="-16" y="-218" width="32" height="30" rx="5" fill="#08090c" opacity=".85"/><circle cx="-7" cy="-207" r="3" fill="${acc}"/><circle cx="3" cy="-207" r="3" fill="#ff6a5a" opacity=".9"/><rect x="-10" y="-198" width="20" height="3" rx="1.5" fill="${acc}" opacity=".7"/><path d="M-22 -260q22 10 44 0" fill="none" stroke="${acc}" stroke-width="2" opacity=".6"/>`;
-    return { dietro:"", corpo:e, sopra, linee:`<path d="M-37 -192H37M-31 -246H31M-16 -76h2M14 -76h2" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.4" opacity=".4"/>` };
+    return { dietro:"", corpo:e, sopra, linee:`<path d="M-37 -192H37M-31 -246H31M-16 -76h2M14 -76h2" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.4" opacity=".4"/>`, punti:[{ tipo:"occhi", pts:[[-10, -274], [10, -274]], r:5, col:acc, buio:"#08090c" }, { tipo:"blink", x:0, y:-326, r:3, col:acc, per:2.2 }, { tipo:"blink", x:-7, y:-207, r:3, col:acc, per:1.3 }, { tipo:"blink", x:3, y:-207, r:3, col:"#ff6a5a", per:.9 }] };
   }
   function astronautaHD(col, glow, acc){
     let e = `<rect x="-50" y="-240" width="100" height="84" rx="14"/><circle cx="0" cy="-262" r="33"/><rect x="-42" y="-236" width="84" height="104" rx="20"/>` + arto([[-44, -224, 13], [-56, -184, 11], [-52, -146, 10.5]]) + arto([[44, -224, 13], [56, -184, 11], [52, -146, 10.5]]) + `<ellipse cx="-52" cy="-134" rx="11" ry="13"/><ellipse cx="52" cy="-134" rx="11" ry="13"/>` + arto([[-18, -136, 15], [-20, -74, 12.5], [-19, -18, 11.5]]) + arto([[18, -136, 15], [20, -74, 12.5], [19, -18, 11.5]]) + `<rect x="-36" y="-22" width="32" height="22" rx="8"/><rect x="4" y="-22" width="32" height="22" rx="8"/>`;
     const sopra = `<path d="M-23 -276Q0 -296 23 -276Q20 -242 0 -238Q-20 -242 -23 -276Z" fill="${c0(glow)}" opacity=".75"/><path d="M-14 -280Q0 -290 10 -284" fill="none" stroke="#ffffff" stroke-width="3" opacity=".7"/><rect x="-18" y="-206" width="36" height="22" rx="4" fill="#0a0c10" opacity=".8"/><circle cx="-8" cy="-195" r="3" fill="${acc}"/><circle cx="4" cy="-195" r="3" fill="#ff6a5a"/>`;
-    return { dietro:"", corpo:e, sopra, linee:`<path d="M-30 -140Q0 -132 30 -140M-42 -180H42M-60 -190q-6 30 6 60M60 -190q6 30 -6 60" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.6" opacity=".45"/>` };
+    return { dietro:"", corpo:e, sopra, linee:`<path d="M-30 -140Q0 -132 30 -140M-42 -180H42M-60 -190q-6 30 6 60M60 -190q6 30 -6 60" fill="none" stroke="${mix(col, glow, .5)}" stroke-width="1.6" opacity=".45"/>`, punti:[{ tipo:"visiera", x:0, y:-262, r:24 }, { tipo:"blink", x:-8, y:-195, r:3, col:acc, per:1.1 }, { tipo:"blink", x:4, y:-195, r:3, col:"#ff6a5a", per:1.7 }] };
   }
   const c0 = g => c0.v || (c0.v = g);
   // personaggio: x, y (piedi), s, z (0 lontano … 2 vicino), flip, col, rim (luce di contorno: -1 sinistra, 1 destra, 0 tutt'intorno)
@@ -1219,6 +1240,7 @@
         const mk = c.id();
         c.d += `<mask id="${mk}" maskUnits="userSpaceOnUse" x="-260" y="-470" width="520" height="500"><g fill="#fff" color="#fff">${pz.corpo.replace(/ fill="(?!none)[^"]*"/g, "")}</g></mask>`;
         fig = `<g color="${col}">` + G(o.x, o.y, s, pz.dietro + pz.corpo, corpo, o.flip, o.rot) + G(o.x, o.y, s, `<rect x="-260" y="-470" width="520" height="500" fill="${lato}" mask="url(#${mk})"/>`, null, o.flip, o.rot) + G(o.x, o.y, s, pz.linee + pz.sopra, null, o.flip, o.rot) + "</g>";
+        if(c.vivo && pz.punti){ const q = c.loc(o.x, o.y, s, o.flip, o.rot); pz.punti.forEach(pt => { const d = Object.assign({}, pt); delete d.tipo; if(pt.pts) d.pts = pt.pts.map(([a, b]) => q(a, b)); else { const [a, b] = q(pt.x, pt.y); d.x = a; d.y = b; } if(pt.w) d.w = f(pt.w * s); if(pt.r) d.r = f(pt.r * s); if(pt.bordo != null) d.bordo = q(pt.x, pt.bordo)[1]; d.s = s; c.punto(pt.tipo, d); }); }
       } else {
         const det = DETTAGLI[tipo] ? `<path d="${DETTAGLI[tipo]}" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>` : "";
         fig = `<g color="${col}">` + G(o.x, o.y, s, inner + extra + det, corpo, o.flip, o.rot) + "</g>";
@@ -1244,7 +1266,7 @@
   EL.coppia = (c, o) => figura(c, o.lui || "testa", Object.assign({ posa:"abbraccio", inclina:3 }, o, { x:o.x - 32 * (o.s || 1) })) + figura(c, o.lei || "donna", Object.assign({ posa:"abbraccio", inclina:9 }, o, { x:o.x + 30 * (o.s || 1), s:(o.s || 1) * .94, flip:true }));
   EL.banda = (c, o) => (o.tipi || ["testa", "coppola", "ragazzo", "uomo", "ragazzo"]).map((t, i, a) => figura(c, t, Object.assign({}, o, { x:o.x + (i - (a.length - 1) / 2) * (o.passo || 76) * (o.s || 1), y:o.y + (i % 2) * 6, s:(o.s || 1) * (i % 2 ? .95 : 1) * (t === "bambina" || t === "bambino" ? 1.05 : 1) }))).join("");
   EL.lupo = (c, o) => G(o.x, o.y, o.s || 1, P("M-60 0Q-74 -22 -56 -40Q-40 -50 -30 -78Q-24 -104 -8 -122L-12 -150Q-4 -140 2 -136L8 -158Q14 -140 14 -128Q30 -130 44 -150Q40 -124 26 -108Q36 -86 34 -58Q40 -30 44 0Z", c.col(o.z == null ? 2 : o.z)) + P("M-56 -6Q-90 -10 -110 -30Q-84 -22 -60 -24Z", c.col(o.z == null ? 2 : o.z)) + C(10, -128, 2.6, c.p.acc), null, o.flip);
-  EL.streghe = (c, o) => (o.pos || [[210, 230, .9], [380, 190, .7], [470, 280, .55]]).map(([x, y, s], i) => G(x, y, s, L(-40, 6, 44, -4, c.col(2), 3) + P("M34 -4L58 -12L56 4Z", c.col(2)) + P("M-8 2L4 -30L16 2Z", c.col(2)) + C(5, -34, 6, c.col(2)) + P("M0 -38L8 -60L13 -37Z", c.col(2)) + S("M-6 -6Q-26 -2 -30 10", c.col(2), 3), null, i % 2 === 1, -8)).join("");
+  EL.streghe = (c, o) => c.vivo ? (c.punto("streghe", { pos:o.pos || [[210, 230, .9], [380, 190, .7], [470, 280, .55]], col:c.col(2) }), "") : (o.pos || [[210, 230, .9], [380, 190, .7], [470, 280, .55]]).map(([x, y, s], i) => G(x, y, s, L(-40, 6, 44, -4, c.col(2), 3) + P("M34 -4L58 -12L56 4Z", c.col(2)) + P("M-8 2L4 -30L16 2Z", c.col(2)) + C(5, -34, 6, c.col(2)) + P("M0 -38L8 -60L13 -37Z", c.col(2)) + S("M-6 -6Q-26 -2 -30 10", c.col(2), 3), null, i % 2 === 1, -8)).join("");
 
   /* ---------- oggetti protagonisti ---------- */
   EL.rosa = (c, o) => G(o.x, o.y, o.s || 1,
@@ -1281,6 +1303,7 @@
   EL.lettera = (c, o) => G(o.x, o.y, o.s || 1, R(-120, -80, 240, 160, "#efe2c4") + P("M-120 -80L0 10L120 -80", "none", null, ' stroke="#b8a47e" stroke-width="3"') + P("M-120 80L-30 0M120 80L30 0", "none", null, ' stroke="#b8a47e" stroke-width="2"') + C(0, 10, 22, "#9a1a1a") + C(0, 10, 14, "#b82a2a") + R(66, -66, 36, 44, "#6a8ab0", .8) + R(70, -62, 28, 36, "none", null, ' stroke="#efe2c4" stroke-width="2"') + (o.scritta ? S("M-96 40q20 -10 40 0t40 0M-96 58q30 -8 60 0", "#6a5a3a", 2, .6) : ""), null, false, o.rot || -8);
   EL.lanterna = (c, o) => {
     const col = o.col || "#ffc04a", k = "#141008";
+    c.punto("fiamma", { x:o.x, y:f(o.y - 74 * (o.s || 1)), r:f(200 * (o.s || 1)), col, forma:"lanterna", s:o.s || 1 });
     return G(o.x, o.y, o.s || 1, C(0, -74, 200, c.halo(col, .6)) + `<circle cx="0" cy="-166" r="12" fill="none" stroke="${k}" stroke-width="5"/>` + P("M-30 -130L-20 -152H20L30 -130Z", k) + R(-34, -134, 68, 10, k, null, ' rx="3"') +
       R(-27, -124, 54, 92, c.rad([[0, "#ffffff"], [.4, col], [1, col, .6]]), null, ' rx="10"') + E(0, -74, 8, 15, "#ffffff") + R(-27, -124, 54, 92, "none", null, ` rx="10" stroke="${k}" stroke-width="5"`) + R(-36, -34, 72, 12, k, null, ' rx="4"'));
   };
@@ -1301,7 +1324,7 @@
     R(-160, -10, 46, 40, "#050505", null, ' rx="8"') + R(114, -10, 46, 40, "#050505", null, ' rx="8"'));
   EL.smartphone = (c, o) => G(o.x, o.y, o.s || 1, C(0, -150, 220, c.halo("#ff5fa0", .45)) + R(-80, -300, 160, 300, "#101014", null, ' rx="24"') + R(-70, -286, 140, 272, c.lin([[0, "#ff7ab6"], [1, "#6a3aff"]]), null, ' rx="14"') +
     E(-4, -190, 34, 22, "#ffd84a") + C(24, -214, 15, "#ffd84a") + P("M36 -216L54 -210L36 -204Z", "#ff8a1a") + C(28, -218, 3, "#1a1a1a") + S("M-30 -180q20 18 50 0", "#e8b81a", 3, .8) +
-    P("M-10 -136Q-10 -150 0 -144Q10 -150 10 -136Q10 -126 0 -118Q-10 -126 -10 -136Z", "#ffffff", .95) + `<text x="0" y="-70" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="32" fill="#fff">8,2 M</text>` + `<text x="0" y="-40" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="13" fill="#fff" opacity=".8">VISUALIZZAZIONI</text>` + C(-44, -262, 9, "#fff", .7) + R(-28, -267, 72, 10, "#fff", .5, ' rx="5"'), null, false, o.rot || 8);
+    P("M-10 -136Q-10 -150 0 -144Q10 -150 10 -136Q10 -126 0 -118Q-10 -126 -10 -136Z", "#ffffff", .95) + (c.vivo ? (c.punto("schermo", { x:o.x, y:o.y, s:o.s || 1, rot:o.rot || 8 }), "") : `<text x="0" y="-70" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="32" fill="#fff">8,2 M</text>`) + `<text x="0" y="-40" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="13" fill="#fff" opacity=".8">VISUALIZZAZIONI</text>` + C(-44, -262, 9, "#fff", .7) + R(-28, -267, 72, 10, "#fff", .5, ' rx="5"'), null, false, o.rot || 8);
   EL.sonda = (c, o) => G(o.x, o.y, o.s || 1, E(0, -40, 90, 30, "#d8dce4") + E(0, -40, 70, 20, "#a0a8b8") + L(0, -40, 0, 20, "#c0c8d0", 6) + R(-30, 10, 60, 40, "#c0a060") + C(0, 30, 13, "#f2d27a") + C(0, 30, 6, "#a07a2a") + L(-30, 30, -180, 60, "#c0c8d0", 3) + L(30, 30, 160, 90, "#c0c8d0", 3) + C(-180, 60, 8, "#c0c8d0") + L(0, 50, 0, 140, "#c0c8d0", 2) + C(0, -40, 150, c.halo("#fff3c0", .18)), null, false, o.rot || -14);
   EL.torta = (c, o) => {
     const fr = ["#e9524a", "#7fd4a0", "#f3c873", "#ff9ec6"];
@@ -1323,12 +1346,13 @@
     return G(o.x, o.y, o.s || 1, carta(-22, "♠", "#111") + carta(-4, "♥", "#c41e2a") + carta(14, "♦", "#c41e2a"), null, false, o.rot);
   };
   EL.pallone = (c, o) => G(o.x, o.y, o.s || 1, C(0, 0, 140, c.halo("#ffffff", .3)) + C(0, 0, 70, c.rad([[0, "#ffffff"], [.8, "#dcdcdc"], [1, "#8a8a8a"]], .35, .3, .75)) + P("M0 -24L23 -7L14 20H-14L-23 -7Z", "#111") + [[0, -24, 0, -62], [23, -7, 58, -20], [14, 20, 36, 50], [-14, 20, -36, 50], [-23, -7, -58, -20]].map(([a, b, x, y]) => L(a, b, x, y, "#333", 2.4)).join("") + [[0, -66], [62, -20], [38, 54], [-38, 54], [-62, -20]].map(([x, y]) => C(x, y, 12, "#111", .85)).join(""));
-  EL.valigetta = (c, o) => G(o.x, o.y, o.s || 1, (o.luce ? P("M-100 -100L-220 -420H220L100 -100Z", c.lin([[0, "#5ee1ff", 0], [1, "#5ee1ff", .35]], 0, 0)) + C(0, -100, 160, c.halo("#5ee1ff", .4)) : "") + R(-110, -100, 220, 130, "#16161c", null, ' rx="10"') + R(-110, -100, 220, 130, "none", null, ` rx="10" stroke="${o.luce ? "#5ee1ff" : "#8a8a8a"}" stroke-width="3"`) + P("M-40 -100V-130H40V-100", "none", null, ' stroke="#8a8a8a" stroke-width="8"') + R(-80, -40, 26, 12, "#c0c0c0") + R(54, -40, 26, 12, "#c0c0c0"));
+  EL.valigetta = (c, o) => (o.luce && c.punto("bagliore", { x:o.x, y:f(o.y - 100 * (o.s || 1)), r:f(160 * (o.s || 1)), col:"#5ee1ff", ritmo:1.8 }), G(o.x, o.y, o.s || 1, (o.luce ? P("M-100 -100L-220 -420H220L100 -100Z", c.lin([[0, "#5ee1ff", 0], [1, "#5ee1ff", .35]], 0, 0)) + C(0, -100, 160, c.halo("#5ee1ff", .4)) : "") + R(-110, -100, 220, 130, "#16161c", null, ' rx="10"') + R(-110, -100, 220, 130, "none", null, ` rx="10" stroke="${o.luce ? "#5ee1ff" : "#8a8a8a"}" stroke-width="3"`) + P("M-40 -100V-130H40V-100", "none", null, ' stroke="#8a8a8a" stroke-width="8"') + R(-80, -40, 26, 12, "#c0c0c0") + R(54, -40, 26, 12, "#c0c0c0")));
   EL.valigia = (c, o) => G(o.x, o.y, o.s || 1, R(-80, -110, 160, 110, "#7a5a3a", null, ' rx="8"') + R(-80, -110, 160, 110, "none", null, ' rx="8" stroke="#4a321e" stroke-width="4"') + R(-50, -110, 10, 110, "#4a321e") + R(40, -110, 10, 110, "#4a321e") + P("M-20 -110V-130H20V-110", "none", null, ' stroke="#3a2614" stroke-width="7"') + R(-60, -70, 40, 24, "#e8dcc0", .7));
   EL.aereo = (c, o) => G(o.x, o.y, o.s || 1, P("M-160 -10L120 -30L170 -20L160 0H-150Z", "#c8ccd2") + P("M90 -26L150 -130L176 -128L160 -28Z", "#a8acb2") + P("M-60 -14L-20 -130L10 -126L0 -16Z", "#b8bcc2") + R(-130, -26, 260, 4, "#c84a3a") + [0, 1, 2, 3].map(k => C(-100 + k * 40, -16, 6, "#2a3440")).join(""), null, o.flip, o.rot || 0);
-  EL.coccodrillo = (c, o) => G(o.x, o.y, o.s || 1, P("M-220 0Q-160 -22 -90 -20Q-40 -30 40 -22L150 -12Q190 -8 200 0Z", "#1a2a1a") + [-170, -140, -110, -80, -50, -20].map(x => P(`M${x} -16l12 -16l12 16Z`, "#1a2a1a")).join("") + E(40, -30, 14, 10, "#1a2a1a") + C(40, -32, 5, "#ffd24a") + C(40, -32, 16, "#ffd24a", .25) + S("M-240 4Q0 16 240 4", "#9ad0c0", 2, .4), null, o.flip);
+  EL.coccodrillo = (c, o) => (c.punto("occhi", { pts:[c.loc(o.x, o.y, o.s || 1, o.flip)(40, -32)], r:f(5 * (o.s || 1)), col:"#ffd24a", lento:true }), G(o.x, o.y, o.s || 1, P("M-220 0Q-160 -22 -90 -20Q-40 -30 40 -22L150 -12Q190 -8 200 0Z", "#1a2a1a") + [-170, -140, -110, -80, -50, -20].map(x => P(`M${x} -16l12 -16l12 16Z`, "#1a2a1a")).join("") + E(40, -30, 14, 10, "#1a2a1a") + C(40, -32, 5, "#ffd24a") + C(40, -32, 16, "#ffd24a", .25) + S("M-240 4Q0 16 240 4", "#9ad0c0", 2, .4), null, o.flip));
   EL.insegna = (c, o) => {
-    const col = o.col || c.p.acc, fs = o.fs || 64;
+    const col = o.col || c.p.acc, fs = o.fs || 64, si = o.s || 1;
+    c.punto("neon", { x:f(o.x - o.w / 2 * si), y:f(o.y - fs * .95 * si), w:f(o.w * si), h:f(fs * 1.35 * si), col });
     return G(o.x, o.y, o.s || 1, C(0, -10, 230, c.halo(col, .32)) + R(-o.w / 2, -fs * .95, o.w, fs * 1.35, "#0a0a10", .85, ' rx="10"') + R(-o.w / 2, -fs * .95, o.w, fs * 1.35, "none", null, ` rx="10" stroke="${col}" stroke-width="4" stroke-opacity=".8"`) +
       `<text x="0" y="${f(fs * .2)}" text-anchor="middle" font-family="${o.font || SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="none" stroke="${col}" stroke-width="10" stroke-opacity=".35">${esc(o.t)}</text><text x="0" y="${f(fs * .2)}" text-anchor="middle" font-family="${o.font || SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#fff4fa">${esc(o.t)}</text>`, null, false, o.rot);
   };
@@ -1355,6 +1379,7 @@
       e += R(x0, fy + fh + 16, w, 3, pietra, .65);
       for(let k = 0; k < nf; k++){
         const fx = x0 + (k + .5) * w / nf - fw / 2, acc = c.R() < (o.luci == null ? .5 : o.luci);
+        c.punto("finestra", { x:f(fx), y:f(fy), w:fw, h:fh, on:acc, col:c.p.acc, buio:mix(muro, "#000", .45), grande:true, persiane:true });
         e += R(fx - 4, fy - 6, fw + 8, fh + 10, pietra, .8) + R(fx - 5, fy - 9, fw + 10, 4, mix(pietra, glow, .15), .9);
         e += R(fx, fy, fw, fh, acc ? c.lin([[0, "#fff2cc"], [.6, mix(c.p.acc, "#fff", .2)], [1, mix(c.p.acc, "#000", .2)]]) : c.lin([[0, mix(muro, "#000", .55)], [1, mix(muro, "#000", .35)]]));
         if(acc) e += P(`M${f(fx)} ${f(fy)}Q${f(fx + fw * .34)} ${f(fy + fh * .45)} ${f(fx + fw * .14)} ${f(fy + fh)}H${f(fx)}Z`, "#8a4a22", .55) + P(`M${f(fx + fw)} ${f(fy)}Q${f(fx + fw * .66)} ${f(fy + fh * .45)} ${f(fx + fw * .86)} ${f(fy + fh)}H${f(fx + fw)}Z`, "#8a4a22", .55) + C(fx + fw / 2, fy + fh * .5, 30, c.halo(c.p.acc, .18));
@@ -1377,11 +1402,12 @@
     let dentro = R(gx0, sy, gw, gh, c.lin([[0, "#fff3d2"], [.45, col], [1, mix(col, "#1c0c04", .75)]])) + R(gx0, sy, gw, gh * .5, c.lin([[0, "#ffffff", .2], [1, "#ffffff", 0]]));
     for(let k = 0; k < 3; k++){ const y2 = sy + 26 + k * 24; dentro += R(gx0 + 4, y2, gw - 8, 2.6, "#3a1a08", .9); for(let bx = gx0 + 8 + c.rnd(0, 6); bx < gx1 - 12; bx += c.rnd(5.5, 10)){ const bc = c.pick(["#6a2a10", "#24502a", "#8a5a1a", "#d8c8a0", "#5a1414", "#c89a3a", "#2a3a5a"]), bh = c.rnd(9, 16); dentro += R(bx, y2 - bh, 4.2, bh, bc, .92) + R(bx + 1.1, y2 - bh - 3.5, 2, 4, bc, .92) + R(bx + .8, y2 - bh + 2, 1, bh - 4, "#ffffff", .4); } }
     const nl = Math.max(2, Math.round(gw / 85));
-    for(let k = 0; k < nl; k++){ const lx = gx0 + (k + .5) * gw / nl; dentro += L(lx, sy, lx, sy + 16, "#2a1206", 1.2) + C(lx, sy + 26, 26, c.halo("#fff3cf", .75)) + P(`M${f(lx - 9)} ${f(sy + 25)}L${f(lx - 4)} ${f(sy + 16)}H${f(lx + 4)}L${f(lx + 9)} ${f(sy + 25)}Z`, "#2a1206") + E(lx, sy + 25.5, 7, 2.2, "#fffbe6"); }
+    c.punto("vetrina", { x:gx0, y:sy, w:gw, h:gh, col, suolo:y, xs:[x0, x1] });
+    for(let k = 0; k < nl; k++){ const lx = gx0 + (k + .5) * gw / nl; c.punto("luce", { x:f(lx), y:f(sy + 25), r:26, col:"#fff3cf", forma:"lampadina" }); dentro += L(lx, sy, lx, sy + 16, "#2a1206", 1.2) + C(lx, sy + 26, 26, c.halo("#fff3cf", .75)) + P(`M${f(lx - 9)} ${f(sy + 25)}L${f(lx - 4)} ${f(sy + 16)}H${f(lx + 4)}L${f(lx + 9)} ${f(sy + 25)}Z`, "#2a1206") + E(lx, sy + 25.5, 7, 2.2, "#fffbe6"); }
     if(o.dentro){ const ds = o.ds || .6, testa = sy + gh * (o.dy || .26); dentro += figura(c, o.dentro, { x:gx0 + gw * (o.dx || .32), y:testa + 300 * ds, s:ds, col:"#160b04", rim:0, rimCol:"#ffe6b0", haloA:.12, ombra:false, alza:false, posa:o.posaDentro }); }
     const by = sb - 30;
     dentro += R(gx0, by, gw, 30, c.lin([[0, "#3a1a0a"], [1, "#120602"]])) + R(gx0, by, gw, 3.5, mix(col, "#fff", .35), .85);
-    if(o.caffe !== false){ const mx = gx0 + gw * ((o.dx || .32) > .5 ? .24 : .74); dentro += R(mx - 24, by - 28, 48, 28, c.lin([[0, "#7a7a7a"], [.5, "#f0f0f0"], [1, "#6a6a6a"]], 1, 0)) + P(`M${f(mx - 16)} ${f(by - 28)}Q${f(mx)} ${f(by - 48)} ${f(mx + 16)} ${f(by - 28)}Z`, c.lin([[0, "#9a9a9a"], [.5, "#f6f6f6"], [1, "#8a8a8a"]], 1, 0)) + C(mx, by - 50, 3.2, "#e8c86a") + [-13, 0, 13].map(q => R(mx + q - 3.5, by - 9, 7, 6, "#222")).join("") + [-10, 6, 18].map(q => R(mx + q + 30, by - 9, 6, 9, "#f6f2ea", .9)).join(""); }
+    if(o.caffe !== false){ const mx = gx0 + gw * ((o.dx || .32) > .5 ? .24 : .74); c.punto("vapore", { x:f(mx), y:f(by - 50), r:6 }); dentro += R(mx - 24, by - 28, 48, 28, c.lin([[0, "#7a7a7a"], [.5, "#f0f0f0"], [1, "#6a6a6a"]], 1, 0)) + P(`M${f(mx - 16)} ${f(by - 28)}Q${f(mx)} ${f(by - 48)} ${f(mx + 16)} ${f(by - 28)}Z`, c.lin([[0, "#9a9a9a"], [.5, "#f6f6f6"], [1, "#8a8a8a"]], 1, 0)) + C(mx, by - 50, 3.2, "#e8c86a") + [-13, 0, 13].map(q => R(mx + q - 3.5, by - 9, 7, 6, "#222")).join("") + [-10, 6, 18].map(q => R(mx + q + 30, by - 9, 6, 9, "#f6f2ea", .9)).join(""); }
     if(o.oggetto) dentro += o.oggetto(gx0 + gw / 2, by);
     dentro += P(`M${f(gx0 + gw * .08)} ${f(sy)}L${f(gx0 + gw * .2)} ${f(sy)}L${f(gx0 + gw * .02)} ${f(sb)}L${f(gx0 - gw * .1)} ${f(sb)}Z`, "#ffffff", .1) + P(`M${f(gx0 + gw * .28)} ${f(sy)}L${f(gx0 + gw * .32)} ${f(sy)}L${f(gx0 + gw * .14)} ${f(sb)}L${f(gx0 + gw * .1)} ${f(sb)}Z`, "#ffffff", .07);
     if(o.scritta !== false) dentro += `<text x="${f(gx0 + gw / 2)}" y="${f(sy + gh * .62)}" text-anchor="middle" font-family="${SERIF}" font-size="11" letter-spacing="3" font-weight="700" fill="#f6dc98" opacity=".75">${esc(o.scritta || "CAFFÈ · LIQUORI · PASTICCERIA")}</text>`;
@@ -1393,6 +1419,7 @@
     // l'insegna sulla fascia
     if(o.insegna){
       const fs = o.fs || 34, ny = yS + 34;
+      c.punto("neon", { x:f(x - w * .4), y:f(yS + 4), w:f(w * .8), h:42, col:o.neon || "#ffe6a8", testo:true });
       if(o.neon) e += `<text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="none" stroke="${o.neon}" stroke-width="7" stroke-opacity=".45" filter="${c.sfoca(3)}">${esc(o.insegna)}</text><text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#fff6fb" stroke="${o.neon}" stroke-width="1.2">${esc(o.insegna)}</text>`;
       else e += `<text x="${x + 1.5}" y="${ny + 2}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="#000" opacity=".6">${esc(o.insegna)}</text><text x="${x}" y="${ny}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="700" font-size="${fs}" fill="${c.lin([[0, "#fff4c8"], [.55, "#e8c06a"], [1, "#a8742a"]])}">${esc(o.insegna)}</text>`;
       e += C(x, yS + 24, w * .55, c.halo(o.neon || "#ffe6a8", .14));
@@ -1435,6 +1462,7 @@
   EL.buconero = (c, o) => G(o.x, o.y, o.s || 1, C(0, 0, 420, c.halo("#ff9a4a", .22)) + E(0, 0, 300, 70, "none", null, ' stroke="#ffb35a" stroke-width="26" stroke-opacity=".55"') + E(0, 0, 250, 52, "none", null, ' stroke="#fff0c0" stroke-width="10" stroke-opacity=".85"') + C(0, 0, 150, c.rad([[0, "#ffb35a", 0], [.6, "#ffb35a", 0], [.7, "#ffe0a0", .9], [.8, "#ff8a2a", .5], [1, "#ff8a2a", 0]])) + C(0, 0, 104, "#000000") + P("M-300 2Q0 -36 300 2Q0 30 -300 2Z", "#ffe0a0", .6) + S("M-104 0A104 104 0 0 1 104 0", "#fff6d8", 3, .6));
   EL.pianeta = (c, o) => {
     const r = o.r || 200, x = o.x, y = o.y;
+    c.punto("pianeta", { x, y, r });
     let e = C(x, y, r * 1.3, c.halo(o.col || "#e0a870", .3)) + C(x, y, r, c.lin([[0, "#f2d6b0"], [.3, "#c8905a"], [.45, "#e6c098"], [.6, "#a8683a"], [.8, "#d8a878"], [1, "#8a5030"]]));
     e += E(x + r * .3, y + r * .25, r * .22, r * .12, "#b8582a", .8) + C(x, y, r, c.rad([[0, "#000", 0], [.65, "#000", 0], [1, "#000", .75]], .3, .32, .85));
     if(o.anelli) e += E(x, y, r * 1.9, r * .32, "none", null, ` stroke="#e6d0a8" stroke-width="${f(r * .1)}" stroke-opacity=".6" transform="rotate(-14 ${x} ${y})"`);
@@ -1448,6 +1476,7 @@
   EL.bandiera = (c, o) => {
     const fl = "M0 -260Q50 -276 100 -258T200 -256V-180Q150 -196 100 -182T0 -184Z", cols = o.colori || [o.col || "#c41e2a"];
     let e = L(0, 0, 0, -268, c.col(2), 5);
+    if(c.vivo){ c.punto("bandiera", { x:o.x, y:o.y, s:o.s || 1, colori:cols, flip:!!o.flip, asta:c.col(2) }); return G(o.x, o.y, o.s || 1, e + C(0, -268, 4, c.col(2)), null, o.flip); }
     if(cols.length === 1) e += P(fl, cols[0]);
     else { const id = c.clip(`<path d="${fl}"/>`); e += `<g clip-path="${id}">` + cols.map((col, i) => R(i * 200 / cols.length, -290, 200 / cols.length + 1, 120, col)).join("") + R(0, -290, 200, 120, c.lin([[0, "#000", 0], [.5, "#000", .25], [1, "#000", 0]], 1, 0)) + "</g>"; }
     return G(o.x, o.y, o.s || 1, e, null, o.flip);
@@ -1524,6 +1553,7 @@
   };
   EL.grotta = (c, o) => {
     const x = o.x, y = o.y || HOR, w = o.w || 120, h = o.h || 90;
+    c.punto("bagliore", { x:f(x + w * .1), y:f(y - h * .3), r:f(w * .5), col:o.col || c.p.acc, ritmo:7, fuoco:true });
     return C(x, y - h * .4, w * .9, c.halo(o.col || c.p.acc, .35)) + P(`M${x - w / 2} ${y}Q${x - w / 2} ${y - h} ${x} ${y - h - 10}Q${x + w / 2} ${y - h} ${x + w / 2} ${y}Z`, "#050302", .92) + C(x + w * .1, y - h * .3, w * .18, c.halo(o.col || c.p.acc, .5)) + [-.3, -.1, .15, .32].map(k => P(`M${f(x + k * w - 5)} ${f(y - h + 6)}L${f(x + k * w)} ${f(y - h + 26)}L${f(x + k * w + 5)} ${f(y - h + 6)}Z`, "#050302")).join("");
   };
   EL.pizzomunno = (c, o) => G(o.x, o.y || HOR, o.s || 1, P("M-44 6Q-60 -120 -46 -230Q-36 -300 2 -310Q40 -300 48 -216Q58 -110 44 6Z", c.lin([[0, "#f6f0e2"], [.6, "#c8bea8"], [1, "#6a6252"]], 1, 0)) + P("M-44 6Q-60 -120 -46 -230Q-36 -300 2 -310Q-18 -200 -10 6Z", "#ffffff", .25) + E(0, 8, 70, 10, "#000", .4));
@@ -1537,6 +1567,7 @@
   };
   EL.stella = (c, o) => {
     const r = o.r || 100, x = o.x, y = o.y;
+    c.punto("stella", { x, y, r, col:o.col || "#efe6d2", w:o.w || 9 });
     let d = "";
     for(let k = 0; k < 10; k++){ const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * .42 : r; d += (k ? "L" : "M") + f(x + Math.cos(a) * rr) + " " + f(y + Math.sin(a) * rr); }
     let e = S(d + "Z", o.col || "#efe6d2", o.w || 9, o.a || .8);
@@ -1568,7 +1599,9 @@
   };
   EL.elicottero = (c, o) => {
     const col = c.col(o.z == null ? 1 : o.z);
-    let e = o.luce !== false ? P(`M-6 18L-150 ${o.h || 520}L130 ${o.h || 520}Z`, c.lin([[0, c.p.glow, .45], [1, c.p.glow, 0]])) : "";
+    const q = c.loc(o.x, o.y, o.s || 1, o.flip), [lx, ly] = q(-6, 18), [rx, ry] = q(0, -34), [bx, by] = q(150, -14);
+    c.punto("elicottero", { x:lx, y:ly, rx, ry, rl:f(120 * (o.s || 1)), bx, by, h:o.h || 520, s:o.s || 1, col:c.p.glow, luce:o.luce !== false });
+    let e = o.luce !== false && !c.vivo ? P(`M-6 18L-150 ${o.h || 520}L130 ${o.h || 520}Z`, c.lin([[0, c.p.glow, .45], [1, c.p.glow, 0]])) : "";
     e += E(0, 0, 60, 26, col) + P("M40 -8L150 -14L154 -2L44 8Z", col) + P("M140 -14L160 -40L166 -38L154 -10Z", col) + L(-120, -34, 120, -34, col, 4) + L(0, -26, 0, -34, col, 4) + L(-40, 28, 40, 28, col, 3) + L(-26, 18, -30, 28, col, 3) + L(26, 18, 30, 28, col, 3) + E(-34, -4, 16, 12, c.p.glow, .35) + C(-6, 18, 5, "#ffffff") + C(-6, 18, 20, c.halo("#ffffff", .7)) + C(150, -14, 3, "#ff3a3a");
     return G(o.x, o.y, o.s || 1, e, null, o.flip);
   };
@@ -1581,7 +1614,9 @@
   };
   EL.torretta = (c, o) => {
     const col = c.col(o.z == null ? 2 : o.z);
-    return G(o.x, o.y || HOR + 120, o.s || 1, S("M-34 0L-20 -150M34 0L20 -150M-28 -60H28M-24 -110H24", col, 6) + R(-34, -168, 68, 18, col) + R(-24, -200, 48, 32, col) + L(26, -168, 26, -280, col, 4) + P("M26 -280Q60 -272 86 -280V-236Q60 -244 26 -236Z", "#d8261e") + P("M-60 -200Q-40 -250 0 -254Q40 -250 60 -200Z", "#e8dcc0", .9));
+    const sv = o.s || 1, oy = o.y || HOR + 120;
+    if(c.vivo) c.punto("bandiera", { x:f(o.x + 26 * sv), y:f(oy - 280 * sv), w:f(60 * sv), h:f(44 * sv), colori:["#d8261e"] });
+    return G(o.x, oy, sv, S("M-34 0L-20 -150M34 0L20 -150M-28 -60H28M-24 -110H24", col, 6) + R(-34, -168, 68, 18, col) + R(-24, -200, 48, 32, col) + L(26, -168, 26, -280, col, 4) + (c.vivo ? "" : P("M26 -280Q60 -272 86 -280V-236Q60 -244 26 -236Z", "#d8261e")) + P("M-60 -200Q-40 -250 0 -254Q40 -250 60 -200Z", "#e8dcc0", .9));
   };
   EL.pontile = (c, o) => {
     const x = o.x || 440, col = c.col(2), w0 = o.w || 140, top = HOR + 6;
@@ -1606,12 +1641,13 @@
   };
   EL.lampioni = (c, o) => {
     let e = "";
-    for(let k = 0; k < 6; k++){ const s = Math.pow(.78, k), x = (o.x || 120) + (300 - (o.x || 120)) * (1 - s) * .9, yb = 600 + (VH - 600) * s, h = 300 * s; e += L(x, yb, x, yb - h, c.col(2), f(5 * s + 1)) + S(`M${f(x)} ${f(yb - h)}q${f(18 * s)} ${f(-6 * s)} ${f(26 * s)} ${f(4 * s)}`, c.col(2), f(4 * s + 1)) + C(x + 26 * s, yb - h + 8 * s, 6 * s + 1, "#fff2c0") + C(x + 26 * s, yb - h + 8 * s, 70 * s, c.halo(c.p.acc, .5)); }
+    for(let k = 0; k < 6; k++){ const s = Math.pow(.78, k), x = (o.x || 120) + (300 - (o.x || 120)) * (1 - s) * .9, yb = 600 + (VH - 600) * s, h = 300 * s; c.punto("luce", { x:f(x + 26 * s), y:f(yb - h + 8 * s), r:f(70 * s), col:c.p.acc, forma:"lampione" }); e += L(x, yb, x, yb - h, c.col(2), f(5 * s + 1)) + S(`M${f(x)} ${f(yb - h)}q${f(18 * s)} ${f(-6 * s)} ${f(26 * s)} ${f(4 * s)}`, c.col(2), f(4 * s + 1)) + C(x + 26 * s, yb - h + 8 * s, 6 * s + 1, "#fff2c0") + C(x + 26 * s, yb - h + 8 * s, 70 * s, c.halo(c.p.acc, .5)); }
     return e;
   };
-  EL.fari = (c, o) => { const x = o.x || 380, y = o.y || HOR + 20, d = o.d || 18; return [-d, d].map(dx => C(x + dx, y, 4, "#ffffff") + C(x + dx, y, 34, c.halo("#fff6d0", .7))).join("") + R(x - 140, y - 1.2, 280, 2.4, "#fff6d0", .35) + P(`M${x - d} ${y}L${x - 220} ${y + 220}L${x + 220} ${y + 220}L${x + d} ${y}Z`, c.lin([[0, "#fff6d0", .22], [1, "#fff6d0", 0]])); };
+  EL.fari = (c, o) => { const x = o.x || 380, y = o.y || HOR + 20, d = o.d || 18; c.punto("fari", { x, y, d }); return [-d, d].map(dx => C(x + dx, y, 4, "#ffffff") + C(x + dx, y, 34, c.halo("#fff6d0", .7))).join("") + R(x - 140, y - 1.2, 280, 2.4, "#fff6d0", .35) + P(`M${x - d} ${y}L${x - 220} ${y + 220}L${x + 220} ${y + 220}L${x + d} ${y}Z`, c.lin([[0, "#fff6d0", .22], [1, "#fff6d0", 0]])); };
   EL.ottagono = (c, o) => {
     const r = o.r || 180, x = o.x || 300, y = o.y || 420, col = o.col || c.p.acc;
+    c.punto("ottagono", { x, y, r, col });
     const poly = rr => Array.from({ length:8 }, (_, k) => { const a = Math.PI / 8 + k * Math.PI / 4; return (k ? "L" : "M") + f(x + rr * Math.cos(a)) + " " + f(y + rr * Math.sin(a)); }).join("") + "Z";
     let e = C(x, y, r * 1.2, c.halo(col, .25)) + S(poly(r), col, 3, .6) + S(poly(r * .82), col, 1.4, .4) + S(poly(r * .5), col, 1, .3);
     for(let k = 0; k < 8; k++){ const a = Math.PI / 8 + k * Math.PI / 4, px = x + r * .91 * Math.cos(a), py = y + r * .91 * Math.sin(a); e += C(px, py, 6, "none") + `<circle cx="${f(px)}" cy="${f(py)}" r="7" fill="none" stroke="${col}" stroke-width="1.6" opacity=".7"/>` + L(px - 4, py, px + 4, py, col, 1.4, .7); }
@@ -1619,6 +1655,7 @@
   };
   EL.tesseratto = (c, o) => {
     const x = o.x || 300, y = o.y || 300, r = o.r || 120, col = o.col || c.p.acc;
+    if(c.vivo){ c.punto("tesseratto", { x, y, r, col }); return C(x, y, r * 1.6, c.halo(col, .25)); }
     const sq = (s, rot) => { const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => { const ang = rot * Math.PI / 180, px = a * s, py = b * s; return [x + px * Math.cos(ang) - py * Math.sin(ang), y + px * Math.sin(ang) + py * Math.cos(ang)]; }); return pts; };
     const A = sq(r, 12), B = sq(r * .5, -10);
     const path = pts => pts.map(([px, py], i) => (i ? "L" : "M") + f(px) + " " + f(py)).join("") + "Z";
@@ -1628,31 +1665,35 @@
   };
   EL.porta = (c, o) => {
     const x = o.x, y = o.y || HOR, w = o.w || 80, h = o.h || 160, col = o.col || c.p.glow;
+    c.punto("porta", { x, y, w, h, col });
     return P(`M${x - w / 2} ${y}L${x + w / 2} ${y}L${x + w * 1.8} ${y + 200}L${x - w * 1.8} ${y + 200}Z`, c.lin([[0, col, .5], [1, col, 0]])) + C(x, y - h / 2, h * 1.1, c.halo(col, .5)) + R(x - w / 2 - 6, y - h - 6, w + 12, h + 6, c.col(2)) + R(x - w / 2, y - h, w, h, c.lin([[0, "#ffffff"], [1, col]])) + P(`M${x + w / 2} ${y - h}L${x + w / 2 + w * .5} ${y - h + 14}V${y + 6}L${x + w / 2} ${y}Z`, c.col(2));
   };
-  EL.pacco = (c, o) => G(o.x, o.y, o.s || 1, C(0, -40, 120, c.halo(c.p.acc, .55)) + P("M0 -100L70 -66L0 -32L-70 -66Z", "#9af0ff", .9) + P("M-70 -66L0 -32V40L-70 6Z", "#2a8aa8") + P("M70 -66L0 -32V40L70 6Z", "#1a5a78") + S("M-70 -66L0 -32L70 -66M0 -32V40M-40 -48L-40 22M30 -50L30 20", "#dfffff", 2, .8));
+  EL.pacco = (c, o) => (c.punto("bagliore", { x:o.x, y:f(o.y - 40 * (o.s || 1)), r:f(120 * (o.s || 1)), col:c.p.acc, ritmo:1.4 }), G(o.x, o.y, o.s || 1, C(0, -40, 120, c.halo(c.p.acc, .55)) + P("M0 -100L70 -66L0 -32L-70 -66Z", "#9af0ff", .9) + P("M-70 -66L0 -32V40L-70 6Z", "#2a8aa8") + P("M70 -66L0 -32V40L70 6Z", "#1a5a78") + S("M-70 -66L0 -32L70 -66M0 -32V40M-40 -48L-40 22M30 -50L30 20", "#dfffff", 2, .8)));
   EL.ologramma = (c, o) => {
     const x = o.x || 300, y = o.y || 200, w = o.w || 300, h = o.h || 150, col = o.col || c.p.acc;
+    c.punto("ologramma", { x, y, w, h, col });
     let e = R(x - w / 2, y - h / 2, w, h, col, .1) + R(x - w / 2, y - h / 2, w, h, "none", null, ` stroke="${col}" stroke-width="2" stroke-opacity=".6"`);
     for(let k = 0; k < h; k += 7) e += R(x - w / 2, y - h / 2 + k, w, 1.4, col, .16);
     e += E(x, y - 10, 44, 22, "none", null, ` stroke="${col}" stroke-width="4" stroke-opacity=".8"`) + C(x, y - 10, 12, col, .8) + `<text x="${x}" y="${f(y + h / 2 - 16)}" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="24" letter-spacing="8" fill="${col}" opacity=".85">AURELIA</text>`;
     return e + P(`M${x - 30} ${y + h / 2}L${x - 120} ${HOR - 40}H${x + 120}L${x + 30} ${y + h / 2}Z`, c.lin([[0, col, .2], [1, col, 0]]));
   };
-  EL.onde = (c, o) => { let e = ""; for(let k = 1; k <= 5; k++){ const r = (o.r || 40) * k; e += S(`M${f(o.x - r * .8)} ${f(o.y - r * .6)}A${r} ${r} 0 0 1 ${f(o.x + r * .8)} ${f(o.y - r * .6)}`, o.col || c.p.acc, 3, f(.8 - k * .13)); } return e; };
-  EL.meteora = (c, o) => { const col = o.col || "#ffe6a8"; return S(`M${o.x1} ${o.y1}L${o.x2} ${o.y2}`, c.linU([[0, col, 0], [1, col, .95]], o.x1, o.y1, o.x2, o.y2), o.w || 5) + C(o.x2, o.y2, (o.w || 5) * 2, "#fffbe8") + C(o.x2, o.y2, (o.w || 5) * 14, c.halo(col, .45)); };
+  EL.onde = (c, o) => { if(c.vivo){ c.punto("radio", { x:o.x, y:o.y, r:o.r || 40, col:o.col || c.p.acc }); return ""; } let e = ""; for(let k = 1; k <= 5; k++){ const r = (o.r || 40) * k; e += S(`M${f(o.x - r * .8)} ${f(o.y - r * .6)}A${r} ${r} 0 0 1 ${f(o.x + r * .8)} ${f(o.y - r * .6)}`, o.col || c.p.acc, 3, f(.8 - k * .13)); } return e; };
+  EL.meteora = (c, o) => { const col = o.col || "#ffe6a8"; if(c.vivo){ c.punto("meteora", { x1:o.x1, y1:o.y1, x2:o.x2, y2:o.y2, col, w:o.w || 5 }); return ""; } return S(`M${o.x1} ${o.y1}L${o.x2} ${o.y2}`, c.linU([[0, col, 0], [1, col, .95]], o.x1, o.y1, o.x2, o.y2), o.w || 5) + C(o.x2, o.y2, (o.w || 5) * 2, "#fffbe8") + C(o.x2, o.y2, (o.w || 5) * 14, c.halo(col, .45)); };
   EL.cristalli = (c, o) => EL.vulcano(c, Object.assign({ cristalli:true }, o));
-  EL.palloncini = (c, o) => (o.pos || [[150, 300, "#ff5a7a", "1"], [215, 250, "#5ab8ff", "8"], [440, 330, "#ffd24a", ""]]).map(([x, y, col, t]) => S(`M${x} ${y + 44}q${f(c.rnd(-20, 20))} 80 ${f(c.rnd(-10, 10))} 170`, "#e8e0d0", 1.4, .6) + E(x, y, 34, 42, c.rad([[0, "#ffffff", .9], [.25, col], [1, col]], .35, .3, .8)) + P(`M${x - 5} ${y + 42}L${x} ${y + 50}L${x + 5} ${y + 42}Z`, col) + (t ? `<text x="${x}" y="${y + 14}" text-anchor="middle" font-family="${SERIF}" font-weight="700" font-size="40" fill="#ffffff" opacity=".92">${t}</text>` : "")).join("");
+  EL.palloncini = (c, o) => c.vivo ? (palloncini(c, o), c.punto("palloncini", { pos:o.pos || [[150, 300, "#ff5a7a", "1"], [215, 250, "#5ab8ff", "8"], [440, 330, "#ffd24a", ""]] }), "") : palloncini(c, o);
+  const palloncini = (c, o) => (o.pos || [[150, 300, "#ff5a7a", "1"], [215, 250, "#5ab8ff", "8"], [440, 330, "#ffd24a", ""]]).map(([x, y, col, t]) => S(`M${x} ${y + 44}q${f(c.rnd(-20, 20))} 80 ${f(c.rnd(-10, 10))} 170`, "#e8e0d0", 1.4, .6) + E(x, y, 34, 42, c.rad([[0, "#ffffff", .9], [.25, col], [1, col]], .35, .3, .8)) + P(`M${x - 5} ${y + 42}L${x} ${y + 50}L${x + 5} ${y + 42}Z`, col) + (t ? `<text x="${x}" y="${y + 14}" text-anchor="middle" font-family="${SERIF}" font-weight="700" font-size="40" fill="#ffffff" opacity=".92">${t}</text>` : "")).join("");
   EL.roghi = (c, o) => {
     let e = "";
     (o.xs || [90, 250, 470]).forEach((x, i) => {
       const y = HOR + 4, h = 46 + i * 10;
       if(c.hd) e += P(`M${x - 24} ${y - h}C${x - 70} ${y - h - 160} ${x + 40} ${y - h - 300} ${x - 10} ${y - h - 520}C${x + 140} ${y - h - 360} ${x + 60} ${y - h - 180} ${x + 24} ${y - h}Z`, c.lin([[0, "#0a0604", .55], [.6, "#1a100a", .9], [1, "#0a0604", .95]]), null, ` filter="${c.rumore("fumoR" + i, ".012 .02", 4, 7 + i, 2.5, -.6)}"`);
       else for(let k = 0; k < 8; k++) e += C(x + k * 10 + c.rnd(-8, 8), y - h - 30 - k * 55, 26 + k * 14, "#0a0604", f(.85 - k * .085));
+      c.punto("fuoco", { x, y, h, w:34 }); c.punto("fumo", { x, y:y - h, col:"#1a120c", r:26, forza:1.4, scuro:true });
       e += C(x, y - 20, 90, c.halo("#ff7a1a", .7)) + P(`M${x - 34} ${y}Q${x - 30} ${y - h * .6} ${x - 6} ${y - h}Q${x + 2} ${y - h * .6} ${x + 10} ${y - h * .8}Q${x + 30} ${y - h * .5} ${x + 34} ${y}Z`, c.lin([[0, "#fff0a0"], [.5, "#ffa030"], [1, "#d8401a"]]));
     });
     return e;
   };
-  EL.torcia = (c, o) => P(`M${o.x} ${o.y}L${o.x2 - (o.w || 120)} ${o.y2}L${o.x2 + (o.w || 120)} ${o.y2}Z`, c.linU([[0, "#fff6d8", .55], [1, "#fff6d8", 0]], o.x, o.y, o.x2, o.y2)) + C(o.x, o.y, 5, "#ffffff") + C(o.x, o.y, 26, c.halo("#fff6d8", .8));
+  EL.torcia = (c, o) => c.vivo ? (c.punto("torcia", { x:o.x, y:o.y, x2:o.x2, y2:o.y2, w:o.w || 120 }), C(o.x, o.y, 5, "#ffffff") + C(o.x, o.y, 26, c.halo("#fff6d8", .8))) : P(`M${o.x} ${o.y}L${o.x2 - (o.w || 120)} ${o.y2}L${o.x2 + (o.w || 120)} ${o.y2}Z`, c.linU([[0, "#fff6d8", .55], [1, "#fff6d8", 0]], o.x, o.y, o.x2, o.y2)) + C(o.x, o.y, 5, "#ffffff") + C(o.x, o.y, 26, c.halo("#fff6d8", .8));
   EL.gradinate = (c, o) => {
     const y0 = o.y0 || 250, y1 = o.y1 || 560;
     let e = P(`M-10 ${y0}Q300 ${y0 - 70} 610 ${y0}V${y1}H-10Z`, c.col(1));
@@ -1667,13 +1708,15 @@
     for(let k = 0; k < 3; k++) e += R(200 - k * 20, y - 30 + k * 12, 200 + k * 40, 12, "#2a1c0a", .9);
     return e;
   };
-  EL.fascio = (c, o) => P(`M${o.x1 - (o.w1 || 6)} ${o.y1}L${o.x2 - (o.w2 || 90)} ${o.y2}L${o.x2 + (o.w2 || 90)} ${o.y2}L${o.x1 + (o.w1 || 6)} ${o.y1}Z`, c.linU([[0, o.col || "#ffffff", o.a || .4], [1, o.col || "#ffffff", 0]], o.x1, o.y1, o.x2, o.y2));
+  EL.fascio = (c, o) => c.vivo && o.vivo !== false ? (c.punto("fascio", { x1:o.x1, y1:o.y1, x2:o.x2, y2:o.y2, w1:o.w1 || 6, w2:o.w2 || 90, col:o.col || "#ffffff", a:o.a || .4, muove:o.muove || 0 }), "") : P(`M${o.x1 - (o.w1 || 6)} ${o.y1}L${o.x2 - (o.w2 || 90)} ${o.y2}L${o.x2 + (o.w2 || 90)} ${o.y2}L${o.x1 + (o.w1 || 6)} ${o.y1}Z`, c.linU([[0, o.col || "#ffffff", o.a || .4], [1, o.col || "#ffffff", 0]], o.x1, o.y1, o.x2, o.y2));
   EL.lucine = (c, o) => {
     let e = "";
     (o.fili || [[0, 160, 600, 200, 70], [0, 260, 600, 230, 60]]).forEach(([x1, y1, x2, y2, sag]) => {
       const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2 + sag * 2;
       e += S(`M${x1} ${y1}Q${cx} ${cy} ${x2} ${y2}`, "#1a1a1a", 1.4, .7);
-      for(let k = 1; k < 16; k++){ const t = k / 16, x = (1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * cx + t * t * x2, y = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * cy + t * t * y2; e += C(x, y + 4, 3.2, "#fff0b0") + C(x, y + 4, 14, c.halo("#ffd27a", .5)); }
+      const pts = [];
+      for(let k = 1; k < 16; k++){ const t = k / 16, x = (1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * cx + t * t * x2, y = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * cy + t * t * y2; e += C(x, y + 4, 3.2, "#fff0b0") + C(x, y + 4, 14, c.halo("#ffd27a", .5)); pts.push([f(x), f(y + 4)]); }
+      c.punto("lucine", { pts, col:"#ffd27a", r:3.2 });
     });
     return e;
   };
@@ -1718,6 +1761,7 @@
       e += R(px, py, w, h, c.lin([[0, mix(base, glow, .12)], [1, base]])) + R(lato ? px + w - 3.5 : px, py, 3.5, h, mix(base, "#000", .38), .9) + R(px - 1, py - 1.6, w + 2, 2, mix(base, glow, .3), .85);
       if(c.R() < .22) e += P(`M${f(px)} ${f(py)}Q${f(px + w / 2)} ${f(py - h * .5)} ${f(px + w)} ${f(py)}Z`, mix(base, glow, .08));
       const acc = c.R() < (o.luci == null ? .42 : o.luci);
+      if(c.vivo && (acc || (c.nW = (c.nW || 0) + 1) % 4 === 0) && (c.nWr = (c.nWr || 0) + 1) < 150) c.punto("finestra", { x:f(px + w * .36), y:f(py + h * .45), w:f(w * .28), h:f(h * .55), on:acc, col:c.p.acc, buio:"#120a06" });
       if(c.R() < .55) e += P(`M${f(px + w * .36)} ${f(py + h)}V${f(py + h * .5)}Q${f(px + w * .5)} ${f(py + h * .22)} ${f(px + w * .64)} ${f(py + h * .5)}V${f(py + h)}Z`, acc ? c.lin([[0, "#fff1c4"], [1, c.p.acc]]) : "#140a06", acc ? .95 : .8);
       else e += R(px + w * .3, py + h * .3, 3, 4, acc ? "#ffe6a8" : "#140a06", .9) + (w > 16 ? R(px + w * .62, py + h * .3, 3, 4, c.R() < .5 && acc ? "#ffe6a8" : "#140a06", .9) : "");
       if(acc) e += C(px + w / 2, py + h * .6, 9, c.halo(c.p.acc, .35));
@@ -1752,7 +1796,9 @@
     for(let k = 0; k < 10; k++){ const y = y0 + 16 + k * (y1 - y0 - 20) / 10, hh = 70 - k * 6; e += S(`M-10 ${f(y)}Q300 ${f(y - hh * 2)} 610 ${f(y)}`, mix(col, glow, .2), 1.6, .5) + S(`M-10 ${f(y + 3)}Q300 ${f(y + 3 - hh * 2)} 610 ${f(y + 3)}`, "#000", 2, .35); }
     // ventimila candeline
     let cand = "";
-    for(let k = 0; k < (o.n || 520); k++){ const row = c.rnd(0, 10), t = c.R(), y = y0 + 12 + row * (y1 - y0 - 20) / 10, hh = 70 - row * 6, yy = y - 2 * t * (1 - t) * hh * 2; cand += C(-10 + 620 * t, yy, c.rnd(.8, 1.7) * (1 + row * .05), c.R() < .85 ? "#ffd27a" : "#fff4d0", f(c.rnd(.45, 1))); }
+    const cpts = [];
+    for(let k = 0; k < (o.n || 520); k++){ const row = c.rnd(0, 10), t = c.R(), y = y0 + 12 + row * (y1 - y0 - 20) / 10, hh = 70 - row * 6, yy = (k % 3 === 0 && cpts.push([f(-10 + 620 * t), f(y - 2 * t * (1 - t) * hh * 2)]), 0) + y - 2 * t * (1 - t) * hh * 2; cand += C(-10 + 620 * t, yy, c.rnd(.8, 1.7) * (1 + row * .05), c.R() < .85 ? "#ffd27a" : "#fff4d0", f(c.rnd(.45, 1))); }
+    c.punto("lucine", { pts:cpts, col:"#ffd27a", r:1.6, candele:true });
     e += `<g filter="${c.sfoca(.4)}">${cand}</g>` + R(-10, y0, 620, y1 - y0, c.lin([[0, c.p.acc, .05], [1, c.p.acc, .12]]));
     return e;
   };
@@ -1782,12 +1828,16 @@
     const k = o.col || "#0c0a0c", m = mix(k, c.p.glow, .35);
     let e = S("M0 -150L-60 0M0 -150L56 0M0 -150L4 -10", k, 5) + S("M-30 -76L30 -76", k, 2.4) + R(-16, -168, 32, 18, k);
     e += R(-60, -236, 120, 70, k, null, ' rx="6"') + R(60, -222, 46, 40, k, null, ' rx="4"') + R(104, -230, 14, 56, k, null, ' rx="3"') + E(118, -202, 4, 22, mix(k, c.p.glow, .5), .7);
+    const qc = c.loc(o.x, o.y, o.s || 1, o.flip);
+    [[-28, -282, 40], [42, -276, 34]].forEach(([x, y, r]) => { const [bx, by] = qc(x, y); c.punto("bobina", { x:bx, y:by, r:f(r * .72 * (o.s || 1)), col:mix(k, c.p.glow, .35) }); });
+    { const [rx, ry] = qc(-40, -210); c.punto("blink", { x:rx, y:ry, col:"#ff3a2a", r:4 * (o.s || 1), per:1, on:.5 }); }
     [[-28, -282, 40], [42, -276, 34]].forEach(([x, y, r]) => e += C(x, y, r, k) + `<circle cx="${x}" cy="${y}" r="${r * .72}" fill="none" stroke="${m}" stroke-width="1.6" opacity=".55"/>` + [0, 1, 2, 3, 4, 5].map(q => L(x, y, x + Math.cos(q * 1.047) * r * .6, y + Math.sin(q * 1.047) * r * .6, m, 1.4, .45)).join("") + C(x, y, 4, m));
     e += S("M-60 -200H-96V-180", k, 4) + S("M-60 -230H60", m, 1.2, .5) + C(-40, -210, 4, "#ff3a2a") + C(-40, -210, 10, c.halo("#ff3a2a", .6));
     return G(o.x, o.y, o.s || 1, e, null, o.flip);
   };
   EL.fariSet = (c, o) => (o.pos || [[90, 640, 1], [520, 650, -1]]).map(([x, y, d]) => {
     const k = "#0c0a0c", col = o.col || "#fff4d8", hx = x, hy = y - 230;
+    c.punto("luce", { x:hx + d * 30, y:hy - 2, r:46, col, forma:"riflettore", fascio:[hx + d * 20, hy - 6, d] });
     return P(`M${hx + d * 20} ${hy - 6}L${hx + d * 560} ${hy - 180}L${hx + d * 560} ${hy + 260}Z`, c.linU([[0, col, .32], [1, col, 0]], hx, hy, hx + d * 560, hy)) + S(`M${x} ${y}L${x - 30} ${y + 40}M${x} ${y}L${x + 30} ${y + 40}M${x} ${y}V${hy + 20}`, k, 4) + R(hx - 26, hy - 24, 52, 44, k, null, ' rx="5"') + P(`M${hx + d * 26} ${hy - 26}l${d * 18} -14v72l${-d * 18} -14z`, k) + E(hx + d * 27, hy - 2, 4, 18, col) + C(hx + d * 30, hy - 2, 46, c.halo(col, .7));
   }).join("");
   function fulmineHD(c, o){
@@ -1801,6 +1851,7 @@
   // un lampione solo: palo in ghisa, lanterna, alone e cono di luce nella nebbia
   EL.lampione = (c, o) => {
     const x = o.x, y = o.y || HOR, h = o.h || 220, k = o.colPalo || c.col(2), col = o.col || "#ffe6b0", lx = x + (o.d || 1) * 18;
+    c.punto("luce", { x:lx, y:y - h + 10, r:60, col, forma:"lampione", falene:true, cono:o.cono || 120, suolo:y });
     return P(`M${f(lx - 8)} ${f(y - h + 14)}L${f(lx - (o.cono || 120))} ${f(y + 10)}H${f(lx + (o.cono || 120))}L${f(lx + 8)} ${f(y - h + 14)}Z`, c.lin([[0, col, .26], [1, col, 0]])) + E(lx, y + 6, (o.cono || 120) * .9, 12, c.halo(col, .45)) +
       S(`M${x} ${y}V${y - h}q0 -10 ${(o.d || 1) * 10} -10h${(o.d || 1) * 8}`, k, 4) + R(x - 7, y - 26, 14, 26, k) + R(x - 9, y - 4, 18, 4, k) +
       P(`M${f(lx - 9)} ${f(y - h + 2)}L${f(lx - 6)} ${f(y - h + 18)}H${f(lx + 6)}L${f(lx + 9)} ${f(y - h + 2)}Z`, c.lin([[0, "#fffbe8"], [1, col]])) + P(`M${f(lx - 11)} ${f(y - h + 2)}L${f(lx)} ${f(y - h - 8)}L${f(lx + 11)} ${f(y - h + 2)}Z`, k) + C(lx, y - h + 10, 60, c.halo(col, .7)) + C(lx, y - h + 10, 160, c.halo(col, .18));
@@ -1867,7 +1918,8 @@
     [[-150, 120], [0, 150], [150, 120]].forEach(([x, w]) => e += P(`M${x - w / 2} 6V-24Q${x} ${-50 - w * .1} ${x + w / 2} -24V6Z`, mix(c.p.sky[c.p.sky.length - 1], "#000", .3), .85));
     for(let x = -224; x < 224; x += c.rnd(16, 26)){ const w = c.rnd(14, 24), h = c.rnd(30, 50), tinta = mix(c.pick(["#c8843a", "#d8a04a", "#b86a2a", "#e0b060"]), col, .55); e += R(x, -70 - h, w, h, tinta) + R(x - 1, -72 - h, w + 2, 3, mix(tinta, glow, .25)) + R(x + w * .3, -62 - h * .8, w * .4, h * .35, c.R() < .55 ? lit : "#140a04", c.R() < .55 ? .9 : .8) + R(x, -44, w, 18, mix(tinta, "#000", .3)); for(let q = 0; q < 3; q++) e += L(x + q * w / 2, -44, x + q * w / 2 + 4, -28, mix(tinta, "#000", .5), 1.2, .7); }
     e += R(-230, -138, 460, 16, mix(col, glow, .08)) + R(-232, -140, 464, 3, mix(col, glow, .25));
-    for(let x = -220; x < 220; x += 14) e += R(x, -134, 6, 8, c.R() < .4 ? lit : "#140a04", .85);
+    const qp = c.loc(o.x || 300, y, o.s || 1);
+    for(let x = -220; x < 220; x += 14){ const on = c.R() < .4; e += R(x, -134, 6, 8, on ? lit : "#140a04", .85); if(c.vivo && (on || x % 3 === 0)){ const [ax, ay] = qp(x, -134); c.punto("finestra", { x:ax, y:ay, w:f(6 * (o.s || 1)), h:f(8 * (o.s || 1)), on, col:lit, buio:"#140a04" }); } }
     e += R(-40, -170, 80, 34, col) + [-24, 0, 24].map(q => P(`M${q - 7} -138V-156Q${q} -164 ${q + 7} -156V-138Z`, lit, .5)).join("");
     return G(o.x || 300, y, o.s || 1, e);
   };
@@ -1897,12 +1949,14 @@
     for(let k = 0; k < 9; k++){
       const y = -72 - k * 17, x0 = -256 + k * 6, x1 = 214 - k * k * 2.6 - k * 6;
       e += P(`M${x0} ${y}H${f(x1)}L${f(x1 + 14)} ${y + 17}H${x0}Z`, c.lin([[0, mix(bianco, glow, .14)], [1, bianco]])) + R(x0, y + 15, x1 - x0 + 14, 2, mix(bianco, "#000", .35), .6);
-      for(let x = x0 + 6; x < x1 - 4; x += 6.5){ const on = c.R() < .72; e += R(x, y + 5, 4, 7, on ? (c.R() < .12 ? "#ffefc8" : lt) : "#1a2230", on ? f(c.rnd(.7, 1)) : .85); }
+      for(let x = x0 + 6; x < x1 - 4; x += 6.5){ const on = c.R() < .72;
+        if(c.vivo && (c.nN = (c.nN || 0) + 1) % 5 === 0){ const [ax, ay] = c.loc(o.x, o.y || HOR, o.s || 1, o.flip)(o.flip ? x + 4 : x, y + 5); c.punto("finestra", { x:ax, y:ay, w:f(4 * (o.s || 1)), h:f(7 * (o.s || 1)), on, col:lt, buio:"#1a2230", piccola:true }); } e += R(x, y + 5, 4, 7, on ? (c.R() < .12 ? "#ffefc8" : lt) : "#1a2230", on ? f(c.rnd(.7, 1)) : .85); }
       if(k === 2 || k === 3) for(let x = x0 + 30; x < x1 - 40; x += 34) e += R(x, y + 9, 22, 7, "#e8701a", .95, ' rx="3.5"') + R(x + 2, y + 9, 18, 2, "#ffb86a", .7, ' rx="1"');
     }
     e += P("M130 -224H196L214 -206H130Z", "#0c121c") + R(132, -220, 74, 6, "#5ee1ff", .35);
     e += P("M-170 -226L-160 -282H-104L-98 -226Z", c.lin([[0, mix(bianco, glow, .12)], [1, bianco]])) + R(-162, -270, 60, 12, o.logo || "#1a3a7a") + C(-132, -264, 5, "#ffd27a");
     for(let k = 0; k < 5; k++) e += C(-128 + k * 16, -300 - k * 26, 18 + k * 9, "#8a8090", f(.22 - k * .035));
+    { const q = c.loc(o.x, o.y || HOR, o.s || 1, o.flip), [fx, fy] = q(-132, -290), [bx, by] = q(42, -256); c.punto("fumo", { x:fx, y:fy, col:"#7a7480", r:f(12 * (o.s || 1)), forza:.7 }); c.punto("blink", { x:bx, y:by, col:"#ff4a3a", r:3, per:1.4 }); }
     e += R(40, -250, 4, 36, col) + R(26, -252, 32, 3, col) + C(42, -256, 3, "#ff4a3a") + C(-262, -60, 3, "#ff3a2a") + C(272, -72, 3, "#3aff6a") + E(-40, -226, 80, 8, "#5ee1ff", .3);
     if(o.rossa) e += R(o.rossa[0], o.rossa[1], 4, 7, "#ff2a2a") + C(o.rossa[0] + 2, o.rossa[1] + 3.5, 14, c.halo("#ff2a2a", .8));
     return G(o.x, o.y || HOR, o.s || 1, e, null, o.flip);
@@ -1920,6 +1974,7 @@
       e += R(px, py, w, h, c.lin([[0, mix(base, glow, .1)], [1, base]])) + R(lato ? px + w - 4 : px, py, 4, h, mix(base, "#000", .4), .8);
       e += P(`M${f(px - 3)} ${f(py + 1)}L${f(px + w / 2)} ${f(py - 9)}L${f(px + w + 3)} ${f(py + 1)}Z`, mix("#5a2a1a", col, .62)) + S(`M${f(px - 3)} ${f(py + 1)}L${f(px + w / 2)} ${f(py - 9)}`, mix("#c87a4a", glow, .2), 1, .45);
       const acc = c.R() < (o.luci || .25);
+      if(c.vivo && (acc || (c.nW = (c.nW || 0) + 1) % 3 === 0) && (c.nWr = (c.nWr || 0) + 1) < 150) c.punto("finestra", { x:f(px + w * .25), y:f(py + h * .3), w:4, h:6, on:acc, col:"#ffe6a0", buio:"#120a06" });
       e += R(px + w * .25, py + h * .3, 4, 6, acc ? "#ffe6a0" : "#120a06", .92) + (w > 24 ? R(px + w * .62, py + h * .3, 4, 6, acc && c.R() < .6 ? "#ffe6a0" : "#120a06", .92) : "");
       if(acc) e += C(px + w * .3, py + h * .4, 12, c.halo(c.p.acc, .45));
     });
@@ -1934,6 +1989,7 @@
     const lamp = (px, py, r, k) => `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r)}" fill="${k % 7 === 0 ? vivi[k % 4] : cols[k % 4]}"/>`;
     for(let a = 5; a >= 0; a--){
       const sk = Math.pow(.74, a), ww = w / 2 * sk, hh = h * sk, yb = V + (y - V) * sk, ys = yb - hh * .52, r = 1 + 2.6 * sk;
+      if(c.vivo){ const pts = []; [1, .84, .68].forEach(kk => { const N = Math.round(30 * kk + 6); for(let q = 0; q <= N; q += 2){ const t2 = Math.PI * q / N; pts.push([f(x - Math.cos(t2) * ww * kk), f(ys - Math.sin(t2) * hh * .48 * kk), f(t2)]); } }); for(let q = 0; q <= 12; q += 2){ const py = yb - (yb - ys) * q / 12; pts.push([f(x - ww), f(py), -q], [f(x + ww), f(py), -q]); } c.punto("lucine", { pts, col:"#ffe6a0", r:f(r * 1.4), arco:a, centro:[x, V] }); }
       let g = "";
       for(let q = 0; q <= 12; q++){ const py = yb - (yb - ys) * q / 12; g += lamp(x - ww, py, r, q) + lamp(x + ww, py, r, q + 3) + lamp(x - ww * .86, py, r * .8, q + 1) + lamp(x + ww * .86, py, r * .8, q + 2); if(q % 3 === 1){ g += lamp(x - ww * .93, py - 4 * sk, r * .9, q + 5) + lamp(x + ww * .93, py - 4 * sk, r * .9, q + 6); } }
       [1, .84, .68].forEach((kk, ri) => { const N = Math.round(30 * kk + 6); for(let q = 0; q <= N; q++){ const t = Math.PI * q / N; g += lamp(x - Math.cos(t) * ww * kk, ys - Math.sin(t) * hh * .48 * kk, r * (ri ? .85 : 1), q + ri); } });
@@ -1948,6 +2004,7 @@
   // mirino: un laser rosso che cerca il protagonista
   EL.mirino = (c, o) => {
     const col = o.col || "#ff2a2a";
+    if(c.vivo){ c.punto("mirino", { x1:o.x1, y1:o.y1, x2:o.x2, y2:o.y2, col }); return ""; }
     return `<g filter="${c.sfoca(2)}">${L(o.x1, o.y1, o.x2, o.y2, col, 4, .35)}</g>` + L(o.x1, o.y1, o.x2, o.y2, col, 1.2, .8) + C(o.x2, o.y2, 3.4, "#ffffff") + C(o.x2, o.y2, 7, col, .9) + C(o.x2, o.y2, 30, c.halo(col, .7));
   };
   ["ficodindia", "lupo", "parabola", "buconero", "tripode", "carcere"].forEach(n => PRIMA[n] = EL[n]);
@@ -1976,7 +2033,7 @@
     e += forma([[34,-112],[50,-110],[62,-104],[60,-126],[72,-106],[76,-128],[82,-104],[90,-98],[104,-90],[114,-84],[116,-79],[110,-75],[96,-74],[82,-74],[70,-74],[58,-80],[44,-92]]);
     e += arto([[56, -70, 9], [60, -36, 6], [62, -8, 4.5]]) + arto([[-70, -74, 13], [-60, -44, 8], [-76, -14, 4.5]]) + `<ellipse cx="66" cy="-3" rx="7.5" ry="3.6"/><ellipse cx="-72" cy="-3" rx="7.5" ry="3.6"/>`;
     e += `<path d="M44 -106l-6 -8M50 -100l-5 -8M56 -92l-3 -8M40 -112l-7 -5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>`;
-    e += `<path d="M-10 -104Q20 -112 46 -108M60 -84Q70 -76 76 -70" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.4" opacity=".4"/>` + C(92, -92, 2.6, o.occhi || c.p.acc) + C(92, -92, 9, c.halo(o.occhi || c.p.acc, .8));
+    e += `<path d="M-10 -104Q20 -112 46 -108M60 -84Q70 -76 76 -70" fill="none" stroke="${mix(col, glow, .45)}" stroke-width="1.4" opacity=".4"/>` + (c.punto("occhi", { pts:[c.loc(o.x, o.y, o.s || 1, o.flip)(92, -92)], r:f(2.6 * (o.s || 1)), col:o.occhi || c.p.acc }), C(92, -92, 2.6, o.occhi || c.p.acc)) + C(92, -92, 9, c.halo(o.occhi || c.p.acc, .8));
     return G(o.x, o.y, o.s || 1, `<g color="${col}">${e}</g>`, c.lin([[0, mix(col, glow, .12)], [1, col]]), o.flip);
   };
   // radiotelescopio: piedistallo, forcella, parabola con la superficie lucida, tre bracci e l'illuminatore
@@ -1993,6 +2050,7 @@
   EL.buconero = (c, o) => {
     if(!c.hd) return PRIMA.buconero(c, o);
     const caldo = c.lin([[0, "#ffd9a0", .95], [.3, "#ffffff", 1], [.7, "#ffb35a", .9], [1, "#c8501a", .7]], 1, 0);
+    c.punto("buconero", { x:o.x, y:o.y, s:o.s || 1 });
     let e = C(0, 0, 460, c.halo("#ff9a4a", .2)) + C(0, 0, 210, c.halo("#ffd0a0", .35));
     e += `<g filter="${c.sfoca(2.2)}"><path d="M-170 0A170 150 0 0 1 170 0A146 128 0 0 0 -146 0Z" fill="${caldo}" opacity=".92"/></g>`;
     e += `<path d="M-310 0A310 48 0 0 1 310 0L250 0A250 34 0 0 0 -250 0Z" fill="${caldo}" opacity=".75"/>`;
@@ -2005,7 +2063,9 @@
   EL.tripode = (c, o) => {
     if(!c.hd) return PRIMA.tripode(c, o);
     const col = o.col || c.col(o.z == null ? 1 : o.z), glow = c.p.glow, ros = o.raggio || "#ff3a2a";
-    let e = P(`M24 -436L-300 -20L-220 24Z`, c.linU([[0, ros, .75], [1, ros, 0]], 24, -436, -260, 0)) + `<g filter="${c.sfoca(3)}">${P(`M24 -436L-290 -16L-250 6Z`, ros, .5)}</g>`;
+    const qt = c.loc(o.x, o.y || HOR, o.s || 1), [ex, ey] = qt(24, -436), [gx, gy] = qt(-260, 0);
+    c.punto("raggio", { x1:ex, y1:ey, x2:gx, y2:gy, w:f(46 * (o.s || 1)), col:ros });
+    let e = c.vivo ? "" : P(`M24 -436L-300 -20L-220 24Z`, c.linU([[0, ros, .75], [1, ros, 0]], 24, -436, -260, 0)) + `<g filter="${c.sfoca(3)}">${P(`M24 -436L-290 -16L-250 6Z`, ros, .5)}</g>`;
     [[[-46, -430, 9], [-150, -300, 7], [-112, 0, 4.5]], [[46, -430, 9], [136, -312, 7], [92, 0, 4.5]], [[0, -420, 8], [24, -262, 6.5], [-18, 0, 4]]].forEach((g, i) => e += arto(g, i === 2 ? mix(col, "#000", .3) : null) + C(g[1][0], g[1][1], 11, i === 2 ? mix(col, "#000", .3) : col));
     for(let k = 0; k < 4; k++){ const x0 = -40 + k * 26; e += S(`M${x0} -428q${f(c.rnd(-30, 30))} 60 ${f(c.rnd(-20, 20))} ${f(c.rnd(100, 160))}t${f(c.rnd(-30, 30))} ${f(c.rnd(40, 80))}`, col, 3.4); }
     e += P("M-96 -440Q-90 -500 0 -510Q90 -500 96 -440Q60 -420 0 -418Q-60 -420 -96 -440Z", c.lin([[0, mix(col, glow, .25)], [.5, col], [1, mix(col, "#000", .3)]])) + S("M-90 -444Q0 -426 90 -444", mix(col, glow, .4), 2, .6) + S("M-60 -490Q0 -506 60 -490", mix(col, glow, .5), 1.6, .5);
@@ -2017,7 +2077,8 @@
     if(!c.hd) return PRIMA.carcere(c, o);
     const col = o.col || c.col(o.z == null ? 1 : o.z), y = o.y || HOR, top = y - (o.h || 190), tx = o.tx || 470, glow = c.p.glow;
     let e = "";
-    if(o.faro !== false) e += `<g filter="${c.sfoca(5)}">` + P(`M${tx} ${top - 96}L${tx - 420} ${top - 330}L${tx - 330} ${top - 420}Z`, c.linU([[0, glow, .55], [1, glow, 0]], tx, top - 96, tx - 380, top - 380)) + "</g>";
+    if(o.faro !== false) c.punto("fascio", { x1:tx - 10, y1:top - 100, x2:tx - 380, y2:top - 380, w1:4, w2:70, col:glow, a:.5, muove:22, perno:true });
+    if(o.faro !== false && !c.vivo) e += `<g filter="${c.sfoca(5)}">` + P(`M${tx} ${top - 96}L${tx - 420} ${top - 330}L${tx - 330} ${top - 420}Z`, c.linU([[0, glow, .55], [1, glow, 0]], tx, top - 96, tx - 380, top - 380)) + "</g>";
     e += R(-10, top, VW + 20, y - top + 6, c.lin([[0, mix(col, glow, .1)], [1, col]]), null, ` filter="${c.intonaco()}"`) + R(-10, top, VW + 20, 5, mix(col, glow, .2));
     for(let x = 26; x < VW; x += 86){ for(let r = 0; r < 2; r++){ const wy = top + 40 + r * 70, acc = c.R() < .3; e += R(x, wy, 30, 38, acc ? c.lin([[0, "#ffe6a0"], [1, c.p.acc]]) : "#000", acc ? .85 : .55); for(let b = 0; b < 4; b++) e += R(x + 3 + b * 7.4, wy, 2.2, 38, mix(col, "#000", .3)); e += R(x - 3, wy + 38, 36, 3, mix(col, glow, .15)); } }
     let filo = "";
@@ -2055,6 +2116,7 @@
     let e = P("M-170 -2L-162 -36Q0 -44 160 -40L196 -54L200 -48L168 -30L150 -2Z", c.lin([[0, mix(col, glow, .12)], [1, col]])) + S("M-160 -26Q0 -32 158 -28", mix("#e8e0c8", col, .4), 3, .8) + S("M160 -40L236 -70", col, 2.4);
     for(let k = 0; k < 9; k++) e += R(-140 + k * 30, -30, 8, 6, "#000", .5);
     e += P("M-46 -36Q-46 -96 0 -98Q46 -96 46 -36Z", col) + [...Array(7)].map((_, k) => { const a = Math.PI * (k + 1) / 8; return L(0, -36, -Math.cos(a) * 42, -36 - Math.sin(a) * 58, lt, 1.2, .5); }).join("") + S("M-46 -36Q-46 -96 0 -98Q46 -96 46 -36", lt, 1.4, .6);
+    { const [fx, fy] = c.loc(o.x, o.y || HOR, o.s || 1, o.flip)(-3, -196); c.punto("fumo", { x:fx, y:fy, col:"#6a6058", r:f(10 * (o.s || 1)), forza:o.s || 1 }); }
     e += P("M-18 -40L-12 -196H6L10 -40Z", col) + R(-14, -190, 22, 8, mix(col, glow, .2));
     e += `<g filter="${c.rumore("fumoP", ".02 .03", 3, 17, 2.2, -.8)}">${P("M-12 -196C-40 -260 -20 -320 -110 -380C-60 -330 -60 -270 10 -200Z", c.lin([[0, "#7a7068", .9], [1, "#7a7068", .2]]))}</g>`;
     [[-100, -250], [90, -230]].forEach(([x, h]) => { e += L(x, -38, x, h, col, 3.4) + L(x - 46, h + 40, x + 46, h + 40, col, 2.2) + L(x - 34, h + 90, x + 34, h + 90, col, 2) + E(x, h + 44, 44, 5, mix(col, glow, .15)) + E(x, h + 93, 32, 4, mix(col, glow, .15)) + S(`M${x} ${h}L${x - 70} -36M${x} ${h}L${x + 66} -38M${x} ${h + 10}L${x - 40} -36`, col, 1, .7); });
@@ -2104,6 +2166,7 @@
       e += R(b1 - (d > 0 ? 50 : 0), yb2 - 26, 50, 26, col) + R(b1 - (d > 0 ? 44 : -6), yb2 - 20, 38, 6, c.p.acc, .7);
       const tx = x + d * c.rnd(90, 190);
       e += R(tx - 12, yb2 + 14, 24, 10, col) + S(`M${tx - 8} ${yb2 + 24}V${yb2 + 110}M${tx + 8} ${yb2 + 24}V${yb2 + 110}`, lt, 1, .7) + container(c, tx - 26, yb2 + 110, 52, 18, CONT[i + 2], .3);
+      c.punto("blink", { x, y:yb2 - 82, col:"#ff4a3a", r:3, per:1.6 + i * .3 }); c.punto("blink", { x:b0, y:yb2 - 2, col:"#ff4a3a", r:2.6, per:1.9 + i * .2 });
       e += C(x, yb2 - 82, 3, "#ff4a3a") + C(x, yb2 - 82, 12, c.halo("#ff4a3a", .8)) + C(b0, yb2 - 2, 2.6, "#ff4a3a") + C(x - d * 30, yp + 8, 4, "#fff2c0") + C(x - d * 30, yp + 8, 70, c.halo("#ffe6a8", .45));
     });
     return e;
@@ -2116,6 +2179,7 @@
     for(let r = 0; r < 5; r++) for(let k = 0; k < 15; k++){ if(r >= 3 && c.R() < .45) continue; e += container(c, -224 + k * 32.6, -70 - r * 19, 31, 19, CONT[(k * 3 + r * 5) % CONT.length], .32 + r * .04); }
     e += R(-300, -168, 66, 118, c.lin([[0, mix("#e8e8e8", col, .5)], [1, mix("#c8c8c8", col, .6)]])) + R(-290, -194, 46, 28, mix("#e0e0e0", col, .5)) + R(-304, -178, 74, 8, mix("#e0e0e0", col, .45));
     for(let r = 0; r < 5; r++) for(let k = 0; k < 6; k++) e += R(-294 + k * 10, -158 + r * 20, 6, 8, c.R() < .55 ? c.p.acc : "#141a22", .9);
+    { const q = c.loc(o.x, o.y || HOR, o.s || 1), [bx, by] = q(-268, -204); c.punto("blink", { x:bx, y:by, col:"#ff4a3a", r:2.6, per:1.7 }); }
     e += R(-296, -176, 60, 5, "#5ee1ff", .3) + C(-268, -204, 2.6, "#ff4a3a") + C(290, -40, 2.4, "#3aff6a");
     return G(o.x, o.y || HOR, o.s || 1, e);
   };
@@ -2180,11 +2244,12 @@
     let can = "";
     for(let k = 0; k < 16; k++){ const t = c.rnd(.05, .95), p = k % 2 ? sx[Math.floor(t * (sx.length - 1))] : dx[Math.floor(t * (dx.length - 1))], l = (y - p[1]) * c.rnd(.3, .8); can += linea(seghetta(c, [p[0], p[1] + 3], [p[0] + (k % 2 ? -1 : 1) * l * .3, p[1] + l], 3, .2)); }
     e += S(can, mix(col, c.p.ink, .4), 1.4 * s, .4) + S(linea(prof), c.linU([[0, glow, .1], [.5, glow, .45], [1, glow, .1]], x - 300 * s, 0, x + 300 * s, 0), 1.6);
-    if(o.lava){ const cy = y - 206 * s; e += C(x, cy, 110 * s, c.halo("#ff8a3a", .7)) + E(x, cy + 4 * s, 54 * s, 8 * s, "#ffc060", .95) + E(x, cy + 4 * s, 30 * s, 4 * s, "#fff2b0");
+    if(o.fumo !== false) c.punto("fumo", { x:f(x + 10 * s), y:f(y - 226 * s), col:o.fumoCol || "#9a8a80", r:f(22 * s), forza:1.6 * s, lento:true });
+    if(o.lava){ const cy = y - 206 * s; c.punto("cratere", { x, y:f(cy), r:f(54 * s) }); e += C(x, cy, 110 * s, c.halo("#ff8a3a", .7)) + E(x, cy + 4 * s, 54 * s, 8 * s, "#ffc060", .95) + E(x, cy + 4 * s, 30 * s, 4 * s, "#fff2b0");
       let lv = "";
-      [[-1, 150, 190], [-1, 60, 200], [1, 110, 180], [1, 30, 210]].forEach(([d, sp, l]) => { const pts = seghetta(c, [x + d * 30 * s, cy + 6 * s], [x + d * (30 + sp) * s, cy + l * s], 4, .14); lv += linea(pts); if(c.R() < .8){ const m = pts[Math.floor(pts.length * .5)]; lv += linea(seghetta(c, m, [m[0] + d * 40 * s, m[1] + 60 * s], 3, .2)); } });
+      [[-1, 150, 190], [-1, 60, 200], [1, 110, 180], [1, 30, 210]].forEach(([d, sp, l]) => { const pts = seghetta(c, [x + d * 30 * s, cy + 6 * s], [x + d * (30 + sp) * s, cy + l * s], 4, .14); lv += linea(pts); c.punto("lava", { pts:pts.map(p => [f(p[0]), f(p[1])]), w:f(3.4 * s) }); if(c.R() < .8){ const m = pts[Math.floor(pts.length * .5)]; lv += linea(seghetta(c, m, [m[0] + d * 40 * s, m[1] + 60 * s], 3, .2)); } });
       e += `<g filter="${c.sfoca(3)}">${S(lv, "#ff6a1a", 9 * s, .5)}</g>` + S(lv, "#ff7a2a", 3.4 * s, .95) + S(lv, "#ffe08a", 1.2 * s, .9); }
-    if(o.cristalli){ const cy = y - 210 * s; e += C(x, cy, 120 * s, c.halo(c.p.acc, .75)); [[-26, 0, -20, 50], [-8, -4, -6, 70], [10, -2, 12, 58], [26, 2, 26, 40], [-40, 4, -34, 30], [40, 4, 44, 26]].forEach(([dx2, dy, tx, h]) => e += P(`M${f(x + (dx2 - 7) * s)} ${f(cy + dy * s)}L${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}Z`, c.lin([[0, "#ffffff"], [1, c.p.acc]]), .92) + S(`M${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}`, "#ffffff", 1, .7)); }
+    if(o.cristalli){ const cy = y - 210 * s; c.punto("cristalli", { x, y:f(cy), s, col:c.p.acc }); e += C(x, cy, 120 * s, c.halo(c.p.acc, .75)); [[-26, 0, -20, 50], [-8, -4, -6, 70], [10, -2, 12, 58], [26, 2, 26, 40], [-40, 4, -34, 30], [40, 4, 44, 26]].forEach(([dx2, dy, tx, h]) => e += P(`M${f(x + (dx2 - 7) * s)} ${f(cy + dy * s)}L${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}Z`, c.lin([[0, "#ffffff"], [1, c.p.acc]]), .92) + S(`M${f(x + tx * s)} ${f(cy - h * s)}L${f(x + (dx2 + 7) * s)} ${f(cy + dy * s)}`, "#ffffff", 1, .7)); }
     return e;
   };
   // Castel del Monte: corpo ottagonale in prospettiva, torri ottagonali agli spigoli, portale gotico, bifore
@@ -2249,6 +2314,7 @@
     let jb = "";
     for(let x = mx - 160; x < mx + 310; x += 14) jb += `M${x} ${HOR - 478}L${x + 7} ${HOR - 496}L${x + 14} ${HOR - 478}`;
     e += S(jb, col, 1.2, .8) + P(`M${mx - 6} ${HOR - 500}L${mx} ${HOR - 548}L${mx + 6} ${HOR - 500}Z`, col) + S(`M${mx} ${HOR - 548}L${mx - 160} ${HOR - 494}M${mx} ${HOR - 548}L${mx + 300} ${HOR - 494}`, col, 1.4) + R(mx - 158, HOR - 476, 40, 30, col) + R(mx - 22, HOR - 470, 44, 30, col) + R(mx - 16, HOR - 464, 32, 12, c.p.acc, .6);
+    c.punto("blink", { x:mx, y:HOR - 552, col:"#ff4a3a", r:3, per:1.5 }); c.punto("blink", { x:mx + 300, y:HOR - 500, col:"#ff4a3a", r:2.6, per:1.8 });
     const tx = mx + 220; e += R(tx - 8, HOR - 478, 16, 8, col) + S(`M${tx - 4} ${HOR - 470}V${HOR - 340}M${tx + 4} ${HOR - 470}V${HOR - 340}`, col, 1) + R(tx - 30, HOR - 340, 60, 14, c.lin([[0, mix(cem, glow, .3)], [1, cem]])) + C(mx, HOR - 552, 3, "#ff4a3a") + C(mx, HOR - 552, 14, c.halo("#ff4a3a", .8)) + C(mx + 300, HOR - 500, 2.6, "#ff4a3a");
     return e;
   };
@@ -2262,6 +2328,8 @@
     for(let r = 0; r < rows; r++) for(let k = 0; k < cols; k++){
       const wx = X + k * cw + cw * .24, wy = Y + r * rh + rh * .18, ww = cw * .52, wh = rh * .6, speciale = r === 2 && k === 2;
       const lit = !speciale && c.R() < .76, luce = c.pick(["#ffd68a", "#ffc46a", "#ffe8b0", "#ffd0a0"]), st = c.pick(storie);
+      if(c.vivo && !speciale) c.punto("finestra", { x:f(wx), y:f(wy), w:f(ww), h:f(wh), on:lit, col:luce, buio:"#1a120c", tv:lit && st === "tv", grande:true });
+      if(c.vivo && speciale) c.punto("occhi", { pts:[[f(wx + ww * .38), f(wy + wh * .45)], [f(wx + ww * .62), f(wy + wh * .45)]], r:3.4, col:"#fff36a", buio:"#050505" });
       e += R(wx - 5, wy - 6, ww + 10, wh + 10, trav, .9);
       e += R(wx, wy, ww, wh, speciale ? "#050505" : lit ? (st === "tv" ? c.lin([[0, "#9ad0ff"], [1, "#3a6aa8"]]) : c.lin([[0, "#fff6dc"], [1, luce]])) : "#1a120c", lit ? .95 : 1);
       const ps = mix("#3a6a4a", intonaco, .2);
@@ -2293,7 +2361,7 @@
       d += `L${x} ${HOR - h}`;
       for(let k = n - 1; k >= 0; k--){ const y = HOR - h * k / n, half = w / 2 * (1 - k / n); d += `L${f(x + half - w / 2 / n)} ${f(y - h / n)}L${f(x + half)} ${f(y - h / n)}`; }
       e += P(d + `L${x + w / 2} ${HOR + 4}Z`, c.lin([[0, mix(cem, glow, .14)], [1, cem]], 1, 0), null, ` filter="${c.intonaco()}"`);
-      for(let k = 1; k < n; k++){ const yy = HOR - h * k / n, half = w / 2 * (1 - k / n); e += R(x - half, yy - 2, half * 2, 2.4, mix(cem, glow, .3), .7); for(let q = 0; q < Math.floor(half / 7); q++) if(c.R() < .4) e += R(x - half + 4 + q * 14 + c.rnd(-2, 2), yy + 3, 5, 6, c.p.acc, f(c.rnd(.5, .95))); if(c.R() < .3) e += R(x - half * .5 + c.rnd(-10, 10), yy + 1, 10, 6, c.pick(["#f2f2f2", "#e05a4a", "#5a8ae0"]), .7); }
+      for(let k = 1; k < n; k++){ const yy = HOR - h * k / n, half = w / 2 * (1 - k / n); e += R(x - half, yy - 2, half * 2, 2.4, mix(cem, glow, .3), .7); for(let q = 0; q < Math.floor(half / 7); q++) if(c.R() < .4){ const wx2 = x - half + 4 + q * 14 + c.rnd(-2, 2); e += R(wx2, yy + 3, 5, 6, c.p.acc, f(c.rnd(.5, .95))); if(c.vivo && (c.nW = (c.nW || 0) + 1) % 2 === 0 && (c.nWr = (c.nWr || 0) + 1) < 150) c.punto("finestra", { x:f(wx2), y:f(yy + 3), w:5, h:6, on:true, col:c.p.acc, buio:cem }); } if(c.R() < .3) e += R(x - half * .5 + c.rnd(-10, 10), yy + 1, 10, 6, c.pick(["#f2f2f2", "#e05a4a", "#5a8ae0"]), .7); }
       e += R(x - 2, HOR - h + 6, 4, h, "#000", .4);
     });
     return e;
@@ -2304,7 +2372,7 @@
     let e = R(0, 0, VW, VH, c.lin([[0, mix(c.p.mid, "#000", .2)], [1, c.p.ink]]));
     [[40, 140], [460, 140]].forEach(([x, w]) => { e += R(x, 120, w, 520, mix(st, "#000", .55), .6); for(let k = 0; k < 4; k++){ const cy = 170 + k * 120; e += E(x + w / 2, cy, 46, 52, "none", null, ` stroke="${st}" stroke-width="3" stroke-opacity=".55"`) + C(x + w / 2, cy - 4, 14, st, .45) + E(x + w / 2, cy + 22, 20, 14, st, .35) + S(`M${x + 14} ${cy + 46}q${w / 4} 20 ${w / 2 - 14} 0t${w / 2 - 14} 0`, st, 2, .45); } });
     e += R(150, 640, 300, 60, c.lin([[0, mix("#e8dcc8", glow, .2)], [1, "#5a4a3a"]])) + R(140, 630, 320, 12, mix("#f2e6d0", glow, .25));
-    [[96, 600], [504, 600]].forEach(([x, y]) => { e += R(x - 4, y, 8, 70, c.lin([[0, "#f2d27a"], [1, "#8a6a2a"]], 1, 0)) + E(x, y + 70, 14, 4, "#8a6a2a") + R(x - 3, y - 26, 6, 26, "#f6efe0") + P(`M${x} ${y - 44}Q${x - 6} ${y - 32} ${x} ${y - 26}Q${x + 6} ${y - 32} ${x} ${y - 44}Z`, "#ffd27a") + C(x, y - 34, 40, c.halo("#ffcf7a", .7)); });
+    [[96, 600], [504, 600]].forEach(([x, y]) => { c.punto("fiamma", { x, y:y - 34, r:40, col:"#ffcf7a", forma:"candela", s:1 }); e += R(x - 4, y, 8, 70, c.lin([[0, "#f2d27a"], [1, "#8a6a2a"]], 1, 0)) + E(x, y + 70, 14, 4, "#8a6a2a") + R(x - 3, y - 26, 6, 26, "#f6efe0") + P(`M${x} ${y - 44}Q${x - 6} ${y - 32} ${x} ${y - 26}Q${x + 6} ${y - 32} ${x} ${y - 44}Z`, "#ffd27a") + C(x, y - 34, 40, c.halo("#ffcf7a", .7)); });
     return e;
   };
   PRIMA.barcaVela = EL.barcaVela;
@@ -2332,15 +2400,15 @@
       let e = ""; for(let k = 0; k < (o.n || 46); k++){ const x = c.rnd(-40, 640), y = c.rnd(-20, 880), l = c.rnd(18, 36); e += L(x, y, x - l * .28, y + l, col, 1.2, f(c.rnd(.12, .35))); } return e; },
     nebbia(c, o){
       if(c.hd){ const y = o.y || HOR, h = 120 + (o.n || 5) * 22, col = o.col || "#e8eef2", a = Math.min(.95, .55 * (o.k || 1) + (o.n || 5) * .03);
-        return R(-20, y - h * .62, VW + 40, h, c.lin([[0, col, 0], [.45, col, a], [.7, col, a * .8], [1, col, 0]]), null, ` filter="${c.rumore("neb" + (o.n || 5), ".0032 .014", 4, 11 + (o.n || 5), 2.4, -.85)}"`); }
+        return R(-20, y - h * .62, VW + 40, h, c.lin([[0, col, 0], [.45, col, a], [.7, col, a * .8], [1, col, 0]]), null, ` filter="${c.rumore("neb" + (o.n || 5), ".0032 .014", 4, 11 + (o.n || 5), 2.4, -.85, c.vivo)}"`); }
       let e = ""; for(let k = 0; k < (o.n || 5); k++){ const y = c.rnd((o.y || HOR) - 150, (o.y || HOR) + 140); e += E(c.rnd(100, 500), y, c.rnd(260, 420), c.rnd(30, 60), o.col || "#e8eef2", f(c.rnd(.06, .14) * (o.k || 1))); } return e; },
     neve(c, o){ let e = ""; for(let k = 0; k < (o.n || 70); k++) e += C(c.rnd(0, 600), c.rnd(0, 900), c.rnd(1, 3.4), "#ffffff", f(c.rnd(.35, .9))); return e; },
     braci(c, o){ let e = ""; for(let k = 0; k < (o.n || 40); k++) e += C(c.rnd(0, 600), c.rnd(200, 900), c.rnd(1, 3), c.R() < .5 ? "#ffb347" : "#ff6a2a", f(c.rnd(.4, .95))); return e; },
-    stelle(c, o){ let e = ""; for(let k = 0; k < (o.n || 60); k++) e += C(c.rnd(0, 600), c.rnd(0, (o.y || HOR) - 60), c.rnd(.6, 1.9), "#ffffff", f(c.rnd(.3, .95))); return e; },
+    stelle(c, o){ let e = ""; const pts = []; for(let k = 0; k < (o.n || 60); k++){ const x = c.rnd(0, 600), y = c.rnd(0, (o.y || HOR) - 60), r = c.rnd(.6, 1.9), a = c.rnd(.3, .95); e += C(x, y, r, "#ffffff", f(a)); if(r > 1.1) pts.push([f(x), f(y), f(r)]); } c.punto("stelle", { pts }); return e; },
     galassia(c, o){ let e = E(300, 260, 420, 60, c.halo("#c8d8ff", .25), null, ' transform="rotate(-28 300 260)"'); for(let k = 0; k < 90; k++){ const t = c.rnd(-1, 1), x = 300 + t * 380, y = 260 - t * 200 + c.rnd(-50, 50); e += C(x, y, c.rnd(.5, 1.5), "#ffffff", f(c.rnd(.25, .8))); } return e; },
     lucciole(c, o){ let e = ""; for(let k = 0; k < (o.n || 26); k++){ const x = c.rnd(20, 580), y = c.rnd(380, 820); e += C(x, y, 9, o.col || c.p.acc, .14) + C(x, y, 2.2, "#fff7d0", .95); } return e; },
     fumo(c, o){
-      if(c.hd){ const col = o.col || "#8a807a", a = Math.min(.8, .25 + (o.n || 8) * .04); return R(-20, HOR - 380, VW + 40, 460, c.lin([[0, col, 0], [.5, col, a], [1, col, a * .4]]), null, ` filter="${c.rumore("fumo" + (o.n || 8), ".006 .012", 4, 41 + (o.n || 8), 2.1, -.8)}"`); }
+      if(c.hd){ const col = o.col || "#8a807a", a = Math.min(.8, .25 + (o.n || 8) * .04); return R(-20, HOR - 380, VW + 40, 460, c.lin([[0, col, 0], [.5, col, a], [1, col, a * .4]]), null, ` filter="${c.rumore("fumo" + (o.n || 8), ".006 .012", 4, 41 + (o.n || 8), 2.1, -.8, c.vivo)}"`); }
       let e = ""; const g = c.halo(o.col || "#8a807a", .22); for(let k = 0; k < (o.n || 8); k++) e += C(c.rnd(0, 600), c.rnd(HOR - 260, HOR + 20), c.rnd(80, 180), g); return e; },
     fasci(c){ let e = ""; [[120, -.5], [300, .1], [480, .55]].forEach(([x, a]) => e += P(`M${x} ${VH}L${x + a * 400 - 50} 0L${x + a * 400 + 50} 0Z`, c.lin([[0, "#ffffff", 0], [1, "#ffffff", .16]], 0, 0))); return e; },
     raggi(c, o){ let e = ""; for(let k = 0; k < (o.n || 6); k++){ const x = c.rnd(40, 560), w = c.rnd(20, 60); e += P(`M${f(x - w)} 0L${f(x + w)} 0L${f(x + w * 3 + 120)} ${VH}L${f(x - w * 3 + 60)} ${VH}Z`, c.lin([[0, o.col || c.p.glow, .2], [1, o.col || c.p.glow, 0]])); } return e; },
@@ -2363,7 +2431,7 @@
     vento(c, o){ let e = ""; for(let k = 0; k < (o.n || 18); k++){ const y = c.rnd(80, 800), x = c.rnd(-120, 480), l = c.rnd(140, 320); e += S(`M${f(x)} ${f(y)}q${f(l / 2)} -22 ${f(l)} -8`, "#ffffff", f(c.rnd(1, 2.2)), f(c.rnd(.08, .22))); } return e; },
     nuvole(c, o){
       if(c.hd){ const y1 = (o.y || 240) + 60, base = mix(c.p.ink, c.p.mid, .5), luce = o.luce || c.p.glow;
-        const fl = c.rumore("nuv" + (o.n || 8), ".0042 .011", 5, 23 + (o.n || 8), 2.2 + (o.n || 8) * .05, -.95);
+        const fl = c.rumore("nuv" + (o.n || 8), ".0042 .011", 5, 23 + (o.n || 8), 2.2 + (o.n || 8) * .05, -.95, c.vivo);
         return `<g filter="${c.sfoca(.6)}">` + R(-20, -20 + 8, VW + 40, y1 + 20, c.lin([[0, luce, .0], [.6, luce, .35], [1, luce, 0]]), null, ` filter="${fl}"`) + "</g>" + R(-20, -20, VW + 40, y1 + 20, c.lin([[0, base, .95], [.7, base, .9], [1, base, 0]]), null, ` filter="${fl}"`); }
       let e = ""; const g = c.rad([[0, c.p.ink, .75], [.6, c.p.ink, .5], [1, c.p.ink, 0]]), gl = c.rad([[0, c.p.glow, .14], [1, c.p.glow, 0]]); for(let k = 0; k < (o.n || 8); k++){ const x = c.rnd(-60, 660), y = c.rnd(-20, o.y || 240), w = c.rnd(120, 240); for(let q = 0; q < 5; q++){ const dx = c.rnd(-w * .5, w * .5), dy = c.rnd(-w * .12, w * .1), r = c.rnd(w * .25, w * .45); e += E(x + dx, y + dy + r * .3, r * 1.3, r * .7, gl) + E(x + dx, y + dy, r * 1.3, r * .75, g); } } return e; },
     razzi(c, o){ let e = ""; (o.pos || [[140, 180], [460, 120], [330, 250]]).forEach(([x, y]) => e += S(`M${x - 60} ${HOR}Q${x - 40} ${y + 120} ${x} ${y}`, "#d8d0c0", 2, .25) + C(x, y, 120, c.halo(o.col || "#fff2c8", .45)) + C(x, y, 5, "#ffffff")); return e; },
@@ -2929,10 +2997,10 @@
     k.restore();
     if(st.riga){ k.fillStyle = st.riga; k.fillRect(Wpx / 2 - 70 * u, yFine + 18 * u, 140 * u, 4 * u); }
     if(st.ornamenti){ k.strokeStyle = "rgba(232,192,104,.7)"; k.lineWidth = 1.6 * u; [-1, 1].forEach(d => { k.beginPath(); k.moveTo(Wpx / 2 + d * 60 * u, yFine + 22 * u); k.lineTo(Wpx / 2 + d * 200 * u, yFine + 22 * u); k.stroke(); }); k.fillStyle = "rgba(232,192,104,.85)"; k.beginPath(); k.moveTo(Wpx / 2, yFine + 14 * u); k.lineTo(Wpx / 2 + 8 * u, yFine + 22 * u); k.lineTo(Wpx / 2, yFine + 30 * u); k.lineTo(Wpx / 2 - 8 * u, yFine + 22 * u); k.fill(); }
-    return { y0, top:y0 - size * .82, size, st };
+    return { y0, top:y0 - size * .82, size, st, tc, tcTop:top, linee:best.L.length, lh, yFine };
   }
 
-  function scritteCanvas(k, s, sp, Wpx){
+  function scritteCanvas(k, s, sp, Wpx, kT){
     const u = Wpx / 600, X = Wpx / 2, crema = "#f3ead8";
     k.textAlign = "center"; k.textBaseline = "alphabetic";
     // in alto: i nomi del cast
@@ -2952,7 +3020,7 @@
     rt.forEach((l, i) => k.fillText(l, X, (86 + i * 30) * u));
     k.restore();
     // titolo
-    const T = titolo(k, s, sp, u, Wpx);
+    const T = titolo(kT || k, s, sp, u, Wpx);
     // «presenta» sopra il titolo
     k.font = `700 ${f(12 * u)}px ${FF.work}`;
     const py = T.top - 20 * u, pw = largo(k, "STORIE D'ITALIA PRESENTA", 5.5 * u);
@@ -2982,6 +3050,7 @@
     k.fillStyle = "rgba(243,234,216,.75)"; k.textAlign = "left"; k.font = `700 ${f(9.5 * u)}px ${FF.work}`; scrivi(k, "STORIE D'ITALIA", X - 124 * u, by + 9 * u, 2 * u);
     k.textAlign = "right"; k.strokeStyle = "rgba(243,234,216,.6)"; k.lineWidth = 1 * u; k.strokeRect(X + 100 * u, by - 1 * u, 50 * u, 12 * u); k.font = `700 ${f(8.5 * u)}px ${FF.work}`; scrivi(k, "AI · OFFLINE", X + 147 * u, by + 8.5 * u, 1 * u);
     k.textAlign = "center";
+    return T;
   }
 
   /* pellicola: bagliore delle luci, viraggio, vignetta, grana */
@@ -3021,7 +3090,161 @@
     k.translate(Math.random() * 192, Math.random() * 192); k.fillRect(-192, -192, Wpx + 384, Hpx + 384); k.restore();
   }
 
-  const VERSIONE_ARTE = "2.9.0";
+
+  /* ======================================================================
+     LOCANDINE VIVE: LA SCENA DIVISA IN STRATI
+     cielo (fermo, lontano), nubi che scorrono, paesaggio, personaggi e oggetti
+     che respirano, ondeggiano, galoppano; nebbie davanti che scorrono.
+     Pioggia, neve, braci, fasci di luce, fulmini e il resto non finiscono negli
+     strati: li disegna dal vivo locandine_vive.js, insieme al titolo e alla grana.
+     ====================================================================== */
+  const FX_VIVI = new Set(["pioggia", "neve", "braci", "lucciole", "coriandoli", "polvere", "bokeh", "carteCadenti", "soldi", "cuori", "bolle", "codice", "laser", "razzi", "velocita", "vento", "cubi", "segnale", "fulmine", "fasci", "raggi", "riflettori"]);
+  const FX_DERIVA = new Set(["nebbia", "fumo", "nuvole"]);
+  const FIGURE_EL = new Set(Object.keys(FIG).concat(["coppia", "banda"]));
+  const MOTO_EL = { cavallo:"galoppo", auto:"motore", supercar:"motore", autoRetro:"motore", vespa:"motore", motoscafo:"planata", barcaVela:"dondola", gondola:"dondola", chiatta:"dondola",
+    elicottero:"sospeso", zeppelin:"sospeso", sonda:"sospeso", lettera:"galleggia", documento:"galleggia", smartphone:"galleggia", pacco:"galleggia", pallone:"galleggia", valigetta:"galleggia",
+    limoni:"ondeggia", uva:"ondeggia", rosa:"ondeggia", lanterna:"ondeggia", lupo:"respiro", bufale:"respiro", pecore:"respiro" };
+  function specDi(s, c){
+    let sp = STORIE[s.id] || (W.LOCANDINE_STORIE || {})[s.id];
+    if(!sp){ const gen = GENERE[s.g] || GENERE.drama; sp = gen(c); }
+    if(typeof sp === "function") sp = sp(c);
+    return sp;
+  }
+  function regiaDi(s, sp){ const R2 = W.LOCANDINE_REGIA || {}, RG = W.LOCANDINE_REGIA_GENERE || {}; return Object.assign({}, RG[s.g] || {}, R2[s.id] || {}, sp.regia || {}); }
+  function motoDi(reg, n, a, i){
+    const rs = reg.strati || {};
+    let m = rs[i] !== undefined ? rs[i] : rs[n] !== undefined ? rs[n] : undefined;
+    if(m === undefined) m = FIGURE_EL.has(n) ? "respiro" : MOTO_EL[n];
+    if(a && a.moto !== undefined) m = a.moto;
+    if(!m) return null;
+    return typeof m === "string" ? { moto:m } : Object.assign({ moto:"fermo" }, m);
+  }
+  const scene = new Map();
+  function scena(s){
+    const ks = [s.id, s.t, s.g, s.hook, s.city, s.era].join("|");
+    if(scene.has(ks)) return scene.get(ks);
+    const c = Ctx(s, 600, 900);
+    c.hd = true; c.vivo = true;
+    const sp = specDi(s, c);
+    c.p = Object.assign({}, PAL[sp.pal] || PAL.notte, sp.tinta || {});
+    HOR = sp.hor || 655;
+    const reg = regiaDi(s, sp), B = [];
+    let cur = null, nStatici = 0, nVivi = 0;
+    const apri = (k, tipo, x) => { cur = Object.assign({ k, tipo, svg:"" }, x || {}); B.push(cur); c.strato = k; return cur; };
+    const statico = id => { if(!cur || cur.tipo !== "statico"){ const primo = !nStatici++; apri(primo ? "fondo" : "S" + id, "statico", { pz:nVivi ? 1.08 : .6 }); } c.strato = cur.k; return cur; };
+    const vivoFx = (n, a, id) => { const st = B[B.length - 1].k; c.strato = st; try{ FX[n](c, a || {}); }catch(e){} c.anim.push({ tipo:"fx", nome:n, o:a || {}, strato:st, id:String(id) }); };
+    const vel = n => (reg.deriva && reg.deriva[n] != null ? reg.deriva[n] : { nuvole:5, nebbia:9, fumo:4 }[n] || 6);
+    const deriva = (n, a, id) => { const k = "D" + id; c.strato = k; const out = FX[n](c, a || {}); apri(k, "deriva", { pz:!nStatici ? .25 : nVivi ? 1.12 : .75, vel:vel(n), fx:n, box:[-20, 0, 640, 900] }); cur.svg = out; cur = null; };
+    try{
+      apri("cielo", "cielo", { pz:.15 });
+      cur.svg = cielo(c);
+      const fx = (sp.fx || []).map(n => Array.isArray(n) ? n : [n, {}]);
+      let nubi = "";
+      if(sp.cielo !== false && !["spazio", "abisso"].includes(sp.pal) && !fx.some(([n]) => n === "nuvole") && !(sp.el || []).some(([n]) => n === "nuvole")){
+        const base = mix(c.p.sky[1], c.p.glow, .12), fl = c.rumore("nuvAuto", ".0026 .0085", 5, 61, 1.9, -.92, true), yb = Math.min(HOR - 150, 430);
+        nubi += R(-20, 30, VW + 40, yb, c.lin([[0, base, 0], [.35, base, .55], [.8, mix(base, c.p.glow, .3), .65], [1, base, 0]]), null, ` filter="${fl}"`);
+      }
+      fx.forEach(([n, a], j) => {
+        if(!CIELO[n] || !FX[n]) return;
+        if(n === "nuvole"){ c.strato = "nubi"; nubi += FX[n](c, a); }
+        else if(n === "stelle" || n === "galassia"){ c.strato = "cielo"; B[0].svg += FX[n](c, a); }
+        else vivoFx(n, a, "c" + j);
+      });
+      if(nubi){ apri("nubi", "deriva", { pz:.25, vel:vel("nuvole"), fx:"nuvole", box:[-20, 0, 640, 900] }); cur.svg = nubi; cur = null; }
+      (sp.el || []).forEach(([n, a], i) => {
+        a = a || {};
+        if(!EL[n]) return;
+        if(FX[n]){
+          if(FX_DERIVA.has(n)) deriva(n, a, i);
+          else if(FX_VIVI.has(n)) vivoFx(n, a, i);
+          else if((n === "stelle" || n === "galassia") && !nStatici){ c.strato = "cielo"; B[0].svg += FX[n](c, a); }
+          else statico(i).svg += FX[n](c, a);
+          return;
+        }
+        const m = motoDi(reg, n, a, i);
+        const b = m ? apri("L" + i, "vivo", Object.assign({ n, pz:nStatici ? 1 : .35, idx:i, ax:a.x, ay:a.y }, m)) : statico(i);
+        if(m && nStatici && m.moto !== "sospeso") nVivi++;
+        const nPunti = c.anim.length;
+        let out = "";
+        try{ out = EL[n](c, a); }catch(err){ try{ console.warn("locandina", s.id, n, err && err.message); }catch(e2){} }
+        const dof = a.dof != null ? a.dof : (a.z === 0 ? 1.1 : 0);
+        if(dof) out = `<g filter="${c.sfoca(dof)}">${out}</g>`;
+        if(a.cont) out = `<g filter="${c.rim(f(a.cont[0] * 1.2), f(a.cont[1] * 1.2), a.contCol || c.p.glow)}">${out}</g>`;
+        b.svg += out; if(a.rif) c.rif += out;
+        if(m || c.anim.length > nPunti) cur = null;
+      });
+      fx.forEach(([n, a], j) => {
+        if(CIELO[n] || !FX[n]) return;
+        if(FX_DERIVA.has(n)) deriva(n, a, "f" + j);
+        else if(FX_VIVI.has(n)) vivoFx(n, a, "f" + j);
+        else statico("f" + j).svg += FX[n](c, a);
+      });
+    } finally { HOR = 655; }
+    const res = { sp, reg, B, anim:c.anim, defs:c.d, hor:sp.hor || 655, p:c.p };
+    if(scene.size > 40) scene.clear();
+    scene.set(ks, res);
+    return res;
+  }
+  const tela = (w, h) => { const cv = document.createElement("canvas"); cv.width = Math.max(1, Math.round(w)); cv.height = Math.max(1, Math.round(h)); return cv; };
+  const telaLettura = (w, h) => { const cv = tela(w, h); try{ cv.getContext("2d", { willReadFrequently:true }); }catch(e){} return cv; };
+  async function raster(txt){ const im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(txt); await (im.decode ? im.decode() : new Promise((ok, ko) => { im.onload = ok; im.onerror = ko; })); return im; }
+  // le definizioni (sfumature, filtri, maschere) che uno strato usa davvero
+  function defsMappa(defs){ const m = new Map(), re = /<(linearGradient|radialGradient|clipPath|filter|mask)\b[^>]*?\bid="([^"]+)"[\s\S]*?<\/\1>/g; let r; while((r = re.exec(defs))) m.set(r[2], r[0]); return m; }
+  function defsPer(m, svg){
+    const usati = new Set(), giro = [], re = /url\(#([^)]+)\)/g;
+    let r; while((r = re.exec(svg))) if(!usati.has(r[1])){ usati.add(r[1]); giro.push(r[1]); }
+    let out = "";
+    for(let i = 0; i < giro.length; i++){ const d = m.get(giro[i]); if(!d) continue; out += d; const re2 = /url\(#([^)]+)\)/g; let q; while((q = re2.exec(d))) if(!usati.has(q[1])){ usati.add(q[1]); giro.push(q[1]); } }
+    return out;
+  }
+  // ritaglia uno strato trasparente intorno a quello che contiene
+  function ritaglia(cv, soloY){
+    const k = cv.getContext("2d"), w = cv.width, h = cv.height;
+    let d; try{ d = k.getImageData(0, 0, w, h).data; }catch(e){ return { cv, x:0, y:0 }; }
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for(let y = 0; y < h; y++){
+      const r = y * w * 4;
+      let a = -1, b = -1;
+      for(let x = 0; x < w; x++) if(d[r + x * 4 + 3] > 3){ a = x; break; }
+      if(a < 0) continue;
+      for(let x = w - 1; x >= a; x--) if(d[r + x * 4 + 3] > 3){ b = x; break; }
+      if(a < x0) x0 = a; if(b > x1) x1 = b; if(y < y0) y0 = y; y1 = y;
+    }
+    if(x1 < 0) return null;
+    if(soloY){ x0 = 0; x1 = w - 1; }
+    x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(w - 1, x1 + 2); y1 = Math.min(h - 1, y1 + 2);
+    if(x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1) return { cv, x:0, y:0 };
+    const out = tela(x1 - x0 + 1, y1 - y0 + 1); out.getContext("2d").drawImage(cv, -x0, -y0);
+    return { cv:out, x:x0, y:y0 };
+  }
+  // il velo del grading (scuro ai bordi e sotto le scritte), come nelle locandine ferme
+  function velo(testo, W2, H2, parte){
+    const cv = tela(W2, H2), k = cv.getContext("2d"), sx = W2 / 600, sy = H2 / 900;
+    let g;
+    if(parte !== "pellicola"){
+      g = k.createLinearGradient(0, 640 * sy, 0, 900 * sy); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.45)"); k.fillStyle = g; k.fillRect(0, 640 * sy, W2, 260 * sy);
+      k.save(); k.translate(300 * sx, 414 * sy); k.scale(468 * sx, 702 * sy); g = k.createRadialGradient(0, 0, 0, 0, 0, 1); g.addColorStop(.56, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.6)"); k.fillStyle = g; k.fillRect(-3, -3, 6, 6); k.restore();
+    }
+    if(parte === "scena") return cv;
+    g = k.createRadialGradient(W2 / 2, H2 * .45, W2 * .32, W2 / 2, H2 * .48, W2 * .95); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.62)"); k.fillStyle = g; k.fillRect(0, 0, W2, H2);
+    if(testo){
+      g = k.createLinearGradient(0, 0, 0, H2 * .26); g.addColorStop(0, "rgba(0,0,0,.72)"); g.addColorStop(1, "rgba(0,0,0,0)"); k.fillStyle = g; k.fillRect(0, 0, W2, H2 * .26);
+      g = k.createLinearGradient(0, H2 * .56, 0, H2); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.45, "rgba(0,0,0,.66)"); g.addColorStop(1, "rgba(0,0,0,.96)"); k.fillStyle = g; k.fillRect(0, H2 * .56, W2, H2 * .44);
+    }
+    return cv;
+  }
+  function bagliore(raw, W2, H2){ const t = tela(W2 / 3, H2 / 3), q = t.getContext("2d"); try{ q.filter = `brightness(.9) contrast(3.4) saturate(1.25) blur(${f(W2 / 140)}px)`; }catch(e){} q.drawImage(raw, 0, 0, t.width, t.height); return t; }
+  // composizione semplice, se il motore delle animazioni non c'è
+  function componiFermo(k, meta, imgs, W2, H2){
+    const u = W2 / 600;
+    meta.strati.forEach((st, i) => { const im = imgs.strati[i]; if(im) k.drawImage(im, st.x * u, st.y * u, st.w * u, st.h * u); });
+    if(imgs.bloom){ k.save(); k.globalCompositeOperation = "screen"; k.globalAlpha = .42; k.drawImage(imgs.bloom, 0, 0, W2, H2); k.restore(); }
+    k.save(); k.globalCompositeOperation = "soft-light"; const g = k.createLinearGradient(0, 0, 0, H2); g.addColorStop(0, meta.grade.ombra || "rgba(20,40,70,.55)"); g.addColorStop(.55, "rgba(128,128,128,0)"); g.addColorStop(1, meta.grade.calda || "rgba(255,150,60,.35)"); k.fillStyle = g; k.fillRect(0, 0, W2, H2); k.restore();
+    k.drawImage(velo(meta.modo === "poster", W2, H2), 0, 0);
+    ["testo", "titolo"].forEach(n => { if(imgs[n] && meta[n]) k.drawImage(imgs[n], meta[n].x * u, meta[n].y * u, meta[n].w * u, meta[n].h * u); });
+    granaSopra(k, W2, H2, meta.modo === "poster" ? .16 : .13);
+  }
+  const VERSIONE_ARTE = "3.0.0";
   let dbP = null;
   function archivio(){
     if(dbP) return dbP;
@@ -3032,27 +3255,115 @@
   async function salva(key, blob){ const d = await archivio(); if(!d || !blob) return; try{ d.transaction("img", "readwrite").objectStore("img").put(blob, key); }catch(e){} }
   const pronte = new Map(), attese = new Map();
   let coda = Promise.resolve();
+  /* la coda dei disegni: prima quello che si vede adesso (la locandina grande, la scheda, le copertine
+     sullo schermo), poi il resto nell'ordine in cui è stato chiesto */
+  const lavori = [];
+  let lavorando = false, nLavori = 0;
+  const visibile = el => { try{ if(!el || !el.isConnected) return false; const v = el.closest(".view"); if(v && !v.classList.contains("on")) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < (W.innerHeight || 900) && r.left < (W.innerWidth || 600); }catch(e){ return false; } };
+  function inCoda(fn, Wpx, el){
+    return new Promise((ok, ko) => { lavori.push({ fn, ok, ko, el, pri:Wpx >= 1000 ? 3 : Wpx >= 760 ? 2 : 1, n:nLavori++ }); pompa(); });
+  }
+  function pompa(){
+    if(lavorando || !lavori.length) return;
+    let best = 0, bv = -1;
+    lavori.forEach((j, i) => { const v = (visibile(j.el) ? 10 : 0) + j.pri - j.n * 1e-6; if(v > bv){ bv = v; best = i; } });
+    const j = lavori.splice(best, 1)[0];
+    lavorando = true;
+    setTimeout(() => { Promise.resolve().then(j.fn).then(j.ok, j.ko).finally(() => { lavorando = false; pompa(); }); }, 0);
+  }
   function chiave(s, modo, Wpx){ return [VERSIONE_ARTE, s.id, s.t, s.g, s.hook, s.city, s.era, (s.chars || []).map(ch => ch.n).join(","), modo, Wpx].join("|"); }
+  const vivi = new Map();
+  // gli strati decodificati restano in memoria per poche locandine (le ultime viste), entro un tetto di pixel
+  const pixel = v => (v.imgs.strati || []).concat([v.imgs.testo, v.imgs.titolo, v.imgs.bloom]).reduce((n, im) => n + (im ? (im.width || 0) * (im.height || 0) : 0), 0);
+  function ricorda(key, v){ vivi.delete(key); vivi.set(key, v); let tot = 0; vivi.forEach(x => tot += x.px || (x.px = pixel(x))); while(vivi.size > 1 && (vivi.size > 8 || tot > 9e6)){ const k0 = vivi.keys().next().value; tot -= vivi.get(k0).px || 0; vivi.delete(k0); } }
+  const blob = (cv, tipo, q) => new Promise(r => { try{ cv.toBlob(b => r(b), tipo, q); }catch(e){ r(null); } });
   async function dipingi(s, modo, Wpx){
     await caratteri();
-    const Hpx = Math.round(Wpx * 1.5), c = Ctx(s, 600, 900);
-    const svgTxt = svg(s, Wpx, Hpx, { testo:false, hd:true, px:true });
-    const img = new Image();
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgTxt);
-    await (img.decode ? img.decode() : new Promise((ok, ko) => { img.onload = ok; img.onerror = ko; }));
-    const cv = document.createElement("canvas"); cv.width = Wpx; cv.height = Hpx;
-    const k = cv.getContext("2d");
-    k.drawImage(img, 0, 0, Wpx, Hpx);
-    let sp = STORIE[s.id] || (W.LOCANDINE_STORIE || {})[s.id];
-    if(!sp){ const gen = GENERE[s.g] || GENERE.drama; sp = gen(c); }
-    if(typeof sp === "function") sp = sp(c);
-    const p = Object.assign({}, PAL[sp.pal] || PAL.notte, sp.tinta || {});
-    pellicola(k, Wpx, Hpx, sp.grade || {}, modo === "poster");
-    if(modo === "poster") scritteCanvas(k, s, sp, Wpx);
-    granaSopra(k, Wpx, Hpx, modo === "poster" ? .16 : .13);
-    return await new Promise(r => cv.toBlob(b => r(b || cv.toDataURL("image/jpeg", .9)), "image/jpeg", .9));
+    const T0 = performance.now(), tempi = W.__TEMPI ? [] : null, segna = n => tempi && tempi.push([n, Math.round(performance.now() - T0)]);
+    const Hpx = Math.round(Wpx * 1.5), u = Wpx / 600, sc = scena(s), testo = modo === "poster", mappa = defsMappa(sc.defs);
+    segna("scena");
+    const strati = [], tele = [];
+    for(const b of sc.B){
+      if(!b.svg) continue;
+      const box = b.box || [0, 0, 600, 900], pw = Math.round(box[2] * u), ph = Math.round(box[3] * u);
+      const txt = (`<svg viewBox="${box.join(" ")}" width="${pw}" height="${ph}" xmlns="http://www.w3.org/2000/svg"><defs>${defsPer(mappa, b.svg)}</defs>${b.svg}</svg>`).replace(/§U§/g, "V");
+      let im; try{ im = await raster(txt); }catch(e){ continue; }
+      let cv = telaLettura(pw, ph); cv.getContext("2d").drawImage(im, 0, 0, pw, ph);
+      let ox = 0, oy = 0;
+      if(b.tipo !== "cielo"){ const r = ritaglia(cv, b.tipo === "deriva"); if(!r) continue; cv = r.cv; ox = r.x; oy = r.y; }
+      const st = Object.assign({}, b); delete st.svg;
+      st.x = f(box[0] + ox / u); st.y = f(box[1] + oy / u); st.w = f(cv.width / u); st.h = f(cv.height / u);
+      strati.push(st); tele.push(cv);
+      segna(b.k);
+    }
+    const meta = { v:3, W:Wpx, modo, id:s.id, g:s.g, era:s.era || "", hor:sc.hor, pal:sc.sp.pal, grade:sc.sp.grade || {},
+      p:{ glow:sc.p.glow, acc:sc.p.acc, sky:sc.p.sky, mid:sc.p.mid, ink:sc.p.ink, far:sc.p.far }, anim:sc.anim, strati };
+    const imgs = { strati:tele };
+    if(testo){
+      const t1 = telaLettura(Wpx, Hpx), t2 = telaLettura(Wpx, Hpx), T = scritteCanvas(t1.getContext("2d"), s, sc.sp, Wpx, t2.getContext("2d"));
+      const pos = (r, dy) => r && { x:f(r.x / u), y:f((r.y + (dy || 0)) / u), w:f(r.cv.width / u), h:f(r.cv.height / u) };
+      const a = ritaglia(t1), b = ritaglia(t2), m = T && T.tc ? ritaglia(T.tc) : null;
+      if(a){ imgs.testo = a.cv; meta.testo = pos(a); }
+      if(b){ imgs.titolo = b.cv; meta.titolo = pos(b); }
+      if(m){ imgs.tmask = m.cv; meta.tmask = pos(m, T.tcTop); }
+      if(T) meta.tinfo = { y0:f(T.y0 / u), size:f(T.size / u), linee:T.linee, lh:f(T.lh / u), yFine:f(T.yFine / u), neon:!!T.st.neon, glow:T.st.glow ? T.st.glow.col : null, fill:T.st.fill };
+    }
+    segna("testo");
+    const raw = tela(Wpx, Hpx), kr = raw.getContext("2d");
+    strati.forEach((st, i) => kr.drawImage(tele[i], st.x * u, st.y * u, st.w * u, st.h * u));
+    kr.drawImage(velo(false, Wpx, Hpx, "scena"), 0, 0);
+    segna("raw");
+    imgs.bloom = bagliore(raw, Wpx, Hpx);
+    segna("bloom");
+    const comp = tela(Wpx, Hpx), kc = comp.getContext("2d");
+    const V = W.LOCANDINA_VIVE;
+    try{ if(V && V.fotogramma) V.fotogramma(kc, s, meta, imgs, Wpx, Hpx); else componiFermo(kc, meta, imgs, Wpx, Hpx); }
+    catch(e){ try{ console.warn("fotogramma", s.id, e && e.message); }catch(e2){} kc.clearRect(0, 0, Wpx, Hpx); componiFermo(kc, meta, imgs, Wpx, Hpx); }
+    segna("comp");
+    if(tempi) (W.__TEMPI[s.id] = tempi);
+    const key = chiave(s, modo, Wpx);
+    if([400, 760, 1000].includes(Wpx)){
+      ricorda(key, { meta, imgs });
+      (async () => {
+        const bl = { strati:await Promise.all(tele.map((cv, i) => blob(cv, strati[i].tipo === "cielo" ? "image/jpeg" : "image/webp", .86))),
+          testo:imgs.testo ? await blob(imgs.testo, "image/webp", .9) : null, titolo:imgs.titolo ? await blob(imgs.titolo, "image/webp", .9) : null,
+          tmask:imgs.tmask ? await blob(imgs.tmask, "image/webp", .8) : null, bloom:await blob(imgs.bloom, "image/jpeg", .85) };
+        if(bl.strati.every(Boolean)) salva(key + "|vivo", { meta, bl });
+      })();
+    }
+    return await new Promise(r => comp.toBlob(b => r(b || comp.toDataURL("image/jpeg", .9)), "image/jpeg", .9));
   }
-  function img(s, modo, Wpx){
+  function decodifica(b){
+    const viaImg = () => new Promise(r => { const url = URL.createObjectURL(b), im = new Image(); im.onload = () => { r(im); setTimeout(() => URL.revokeObjectURL(url), 2000); }; im.onerror = () => r(null); im.src = url; });
+    if(!b) return Promise.resolve(null);
+    if(W.createImageBitmap) return createImageBitmap(b).catch(viaImg);
+    return viaImg();
+  }
+  // gli strati per animare una locandina: dalla memoria, dall'archivio o disegnandoli
+  const inCorso = new Map();
+  function strati(s, modo, Wpx, el){
+    const key = chiave(s, modo, Wpx);
+    if(vivi.has(key)){ const v = vivi.get(key); ricorda(key, v); return Promise.resolve(v); }
+    if(inCorso.has(key)) return inCorso.get(key);
+    const pr = (async () => {
+      let rec = await leggi(key + "|vivo");
+      if(!rec || !rec.meta || rec.meta.v !== 3){
+        await img(s, modo, Wpx, el).catch(() => {});
+        if(vivi.has(key)) return vivi.get(key);
+        rec = await leggi(key + "|vivo");
+        if(!rec){ await inCoda(() => dipingi(s, modo, Wpx), Wpx, el).catch(() => {}); if(vivi.has(key)) return vivi.get(key); return null; }
+      }
+      const bl = rec.bl;
+      const imgs = { strati:await Promise.all(bl.strati.map(decodifica)), testo:await decodifica(bl.testo), titolo:await decodifica(bl.titolo), tmask:await decodifica(bl.tmask), bloom:await decodifica(bl.bloom) };
+      if(imgs.strati.some(x => !x)) return null;
+      const v = { meta:rec.meta, imgs };
+      ricorda(key, v);
+      return v;
+    })().finally(() => inCorso.delete(key));
+    inCorso.set(key, pr);
+    return pr;
+  }
+  function img(s, modo, Wpx, el){
     const key = chiave(s, modo, Wpx);
     if(pronte.has(key)) return Promise.resolve(pronte.get(key));
     if(attese.has(key)) return attese.get(key);
@@ -3060,7 +3371,7 @@
     const pr = (async () => {
       const salvata = await leggi(key);
       if(salvata) return indirizzo(salvata);
-      const fatta = coda = coda.catch(() => {}).then(() => new Promise(r => setTimeout(r, 0))).then(() => dipingi(s, modo, Wpx));
+      const fatta = inCoda(() => dipingi(s, modo, Wpx), Wpx, el);
       const b = await fatta;
       if(typeof b === "string") return b;
       salva(key, b);
@@ -3081,5 +3392,6 @@
       return `linear-gradient(180deg, ${p.sky.join(", ")} 68%, ${p.mid} 72%, ${p.ink})`;
     }catch(e){ return "#111"; }
   }
-  W.LOCANDINA = { svg, img, pronta, caratteri, sfondo, PAL, EL, FX, GENERE, STORIE, STILI };
+  const libera = () => { vivi.clear(); scene.clear(); };
+  W.LOCANDINA = { svg, img, pronta, caratteri, sfondo, strati, scena, velo, grana, libera, PAL, EL, FX, GENERE, STORIE, STILI, mix, hash, rng };
 })(window);

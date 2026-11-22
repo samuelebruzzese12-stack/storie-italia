@@ -17,6 +17,18 @@ Nella versione 2.9 le locandine sono molto più dettagliate:
 - **luce**: raggi del sole, luna con mari e crateri, fulmini ramificati, laser, lampioni nella nebbia
 - **titoli**: un titolo troppo alto viene impaginato su meno righe, così copre meno la scena
 
+Nella versione 3.0 le locandine sono **animate**, come i poster animati dei film:
+
+- **scena a strati**: cielo, nuvole, paesaggio e personaggi si muovono a profondità diverse con un lento movimento di macchina; nella locandina grande inclinando il telefono la scena si sposta
+- **personaggi e oggetti vivi**: i personaggi respirano, il cavallo galoppa, le barche dondolano, i motoscafi planano, l'elicottero resta sospeso, le lettere e il pallone galleggiano, i rami di limoni e d'uva ondeggiano
+- **meteo**: pioggia su tre piani con schizzi a terra e gocce sull'obiettivo, neve e bufera, nebbia e fumo che scorrono, fulmini ramificati con lampo nel cielo
+- **luci**: finestre che si accendono e si spengono (con televisori e sagome che passano), insegne al neon che ronzano, lampioni con le falene, fari che girano, fiamme di candele, torce e lanterne, riflettori e fasci di luce con la polvere dentro, scintille sull'acqua, sole e luna con raggi e nuvole che passano
+- **vita**: gabbiani, corvi, rondini, uno stormo di storni, rapaci, pipistrelli, streghe in volo, pesci e caustiche sott'acqua, lucciole, foglie e petali, fuochi d'artificio, saldatrici, spari e razzi illuminanti
+- **titoli**: riflesso che attraversa le lettere, scintille, neon che sfarfalla, glitch per la fantascienza, pulsazione rossa per l'horror, piccolo salto per le commedie; grana e graffi da pellicola d'epoca per le storie del passato
+- ogni storia ha la sua regia (`locandine_regia.js`); le storie create da chi gioca si animano in base al genere
+
+Le animazioni si fermano da sole quando la locandina non si vede, si adattano alla velocità del telefono e si spengono con **Profilo → Animazioni: Ridotte** (o con l'impostazione di sistema «riduci movimento»).
+
 Le locandine vengono disegnate sul telefono la prima volta e poi conservate, quindi si aprono subito. Le storie create da chi gioca ricevono una locandina costruita dal loro genere. Nella scheda della storia si tocca la locandina per vederla a tutto schermo.
 
 Nelle versioni 2.6 e 2.7:

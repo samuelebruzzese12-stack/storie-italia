@@ -58,6 +58,8 @@ const OV = {
   azione:'<i class="o-police"></i><i class="o-police b"></i><i class="o-neon"></i>'
 };
 function overlay(g){ const d = D.createElement("div"); d.className = "fxo"; d.innerHTML = OV[g] || OV.drama; return d; }
+// se le locandine sono vive (locandine_vive.js) gli effetti generici sopra le copertine non servono
+const vive = () => !!(W.LOCANDINA_VIVE && W.LOCANDINA_VIVE.attive());
 
 /* copertine vive: l'effetto esiste solo per le copertine visibili */
 let coverIO = null;
@@ -65,10 +67,10 @@ const watched = new Set();
 function liveCovers(scope){
   if(!scope || !("IntersectionObserver" in W)) return;
   watched.forEach(el => { if(!el.isConnected){ if(coverIO) coverIO.unobserve(el); watched.delete(el); } });
-  if(low()) return;
+  if(low() || vive()) return;
   if(!coverIO) coverIO = new IntersectionObserver(ents => ents.forEach(en => {
     const el = en.target;
-    if(en.isIntersecting && !low()){ if(!el._fx){ el._fx = overlay(el.dataset.fxg); el.appendChild(el._fx); } }
+    if(en.isIntersecting && !low() && !vive()){ if(!el._fx){ el._fx = overlay(el.dataset.fxg); el.appendChild(el._fx); } }
     else if(el._fx){ el._fx.remove(); el._fx = null; }
   }), { threshold:.2 });
   scope.querySelectorAll(".scard[data-g] .cv").forEach(cv => {
@@ -79,7 +81,7 @@ function liveCovers(scope){
 function decorate(host, g){
   if(!host) return;
   const old = host.querySelector(":scope > .fxo"); if(old) old.remove();
-  if(low()) return;
+  if(low() || vive()) return;
   host.appendChild(overlay(g));
 }
 
@@ -330,7 +332,8 @@ W.FX = {
   setLevel: safe(v => {
     level = v === "low" ? "low" : "full";
     D.body.classList.toggle("fx-low", low());
-    if(low()){ D.querySelectorAll(".fxo").forEach(o => o.remove()); watched.forEach(el => el._fx = null); }
+    if(W.LOCANDINA_VIVE) W.LOCANDINA_VIVE.accendi(!low());
+    if(low() || vive()){ D.querySelectorAll(".fxo").forEach(o => o.remove()); watched.forEach(el => el._fx = null); }
     else { heroInit(); liveCovers(D); }
   }),
   onShow: safe(v => {
