@@ -36,7 +36,9 @@
     const m = stt.m, info = stt.msg[i]; if(!info) return;
     const ids = info.luoghi.slice(), acc = info.carta === "accessi";
     const fuoco = ids.concat(info.qui && !ids.length ? [info.qui] : []);
-    const ti = tavolaPer(m, fuoco, acc, info.qui), tav = m.tav[ti];
+    // se sei dentro l'edificio, nominare l'edificio («il Bar Ferrante») vale per la sua pianta, non per la mappa della città
+    const dentro = m.dentro && info.qui && m.perId[info.qui] && m.perId[info.qui].ti === m.perId[m.dentro].ti;
+    const ti = tavolaPer(m, fuoco.map(id => dentro && m.perId[id] && m.perId[id].edificio ? m.dentro : id), acc, info.qui), tav = m.tav[ti];
     const nomi = ids.map(id => m.perId[id].n.split(" · ")[0]).slice(0, 3).join(", ");
     const sotto = acc ? "Vie di entrata e di uscita" : nomi || (info.qui ? "Tu sei qui" : m.t);
     el.className = "pmap" + (aperta ? " aperta" : " chiusa") + (nuova ? " nuova" : "");
@@ -264,6 +266,9 @@
     for(let i = parole.length - 1; i >= 0; i--){ const w = parole[i]; for(const T of TIPI){ if(T[2].test(w) || (largo && T[3] && T[3].test(w))) return T; } }
     return null;
   }
+  // «Sul muro c'è scritto: "…"»: la riga dice che è un testo scritto anche senza nominare un foglio
+  const SCRITTO = /\b(scritt[oaie]|si legge|incis[oaie]|stampat[oaie])\b/;
+  const CARTELLO = TIPI.find(q => q[0] === "cartello");
   const ARTICOLI = /^(il|lo|la|l|i|gli|le|un|una|uno|sul|sulla|sullo|sull|nel|nella|nello|nell|dal|dalla|sui|sulle|quel|quella|questo|questa|ecco)$/;
   // divide il testo in pezzi: testo normale e documenti
   function segmenti(t){
@@ -276,7 +281,7 @@
     let r;
     while((r = re1.exec(t))){
       const parole = nrm(r[3]).split(" ").filter(w => !ARTICOLI.test(w));
-      const T = parole.length ? TIPI.find(q => q[2].test(parole[0])) : null;
+      const T = (parole.length ? TIPI.find(q => q[2].test(parole[0])) : null) || (SCRITTO.test(nrm(r[3])) ? tipoDa(parole, true) || CARTELLO : null);
       if(!T) continue;
       const da = r.index + r[1].length;
       docs.push({ da, a:r.index + r[0].length, k:T[0], label:r[3].trim(), t:r[4].trim() });
@@ -291,7 +296,7 @@
       const riga = prima.slice(prima.lastIndexOf("\n") + 1);
       // una battuta di dialogo («Nome: "…"») non è un documento, a meno che il nome non sia quello di un foglio
       const battuta = /^[ \t]*\*?[ \t]*[A-ZÀ-Ü][^:*\n]{0,34}:[\s*]*$/.test(riga) && riga.trim().split(/\s+/).length <= 5;
-      const T = battuta ? tipoDa(nrm(riga).split(" "), false) : tipoDa(nrm(coda.slice(-150)).split(" "), true);
+      const T = battuta ? (tipoDa(nrm(riga).split(" "), false) || (SCRITTO.test(nrm(riga)) ? tipoDa(nrm(riga).split(" "), true) || CARTELLO : null)) : tipoDa(nrm(coda.slice(-150)).split(" "), true);
       if(!T) continue;
       docs.push({ da, a, k:T[0], label:T[1], t:r[1].trim(), dentro:true });
     }

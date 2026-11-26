@@ -181,6 +181,7 @@
       if(o[0] === "!") r.acc = o.slice(1).trim() || nome;
       else if(o === "#") r.chiuso = true;
       else if(o === "*") r.inizio = true;
+      else if(o === "=") r.edificio = true;
       else if(o[0] === "~") r.k = o.slice(1).split(",").map(s => s.trim()).filter(Boolean);
       else if(o[0] === ">") r.verso = o.slice(1).trim();
       else if(o[0] === "?") r.d = o.slice(1).trim();
@@ -227,6 +228,9 @@
       }
       m.tav.push(tav);
     });
+    // «entri nel Bar Ferrante»: dalla mappa della città si passa all'ingresso della pianta
+    const tp = m.tav.find(t => t.tipo === "pianta"), ing = tp ? (tp.luoghi.find(r => r.acc) || tp.luoghi[0]) : null;
+    m.dentro = ing ? ing.id : null;
     m.accessi = m.luoghi.filter(r => r.acc);
     m.accessi.forEach((r, i) => { r.an = i + 1; });
     m.inizio = (m.luoghi.find(r => r.inizio) || {}).id || null;
@@ -802,6 +806,7 @@
   /* ---------- la tavola finita: cornice, titolo, evidenze, «tu sei qui», personaggi ---------- */
   const CSS = `.pv-svg{display:block;width:100%;height:auto;font-family:var(--pf);-webkit-user-select:none;user-select:none}
 .pv-svg text{pointer-events:none}
+.pv-svg .ev,.pv-svg .evp,.pv-svg .pe,.pv-svg .tu,.pv-svg .tuo,.pv-svg .tur,.pv-svg .acb,.pv-svg .acf,.pv-svg .acl,.pv-svg .scan{pointer-events:none}
 .pv-svg .bg{fill:var(--c)}.pv-svg .gr{stroke:var(--g);stroke-width:1;fill:none}.pv-svg .cn{fill:none;stroke:var(--t);stroke-width:1}
 .pv-svg .w{fill:none;stroke:var(--l);stroke-width:1.4}.pv-svg .wo{fill:none;stroke:var(--l);stroke-width:3.4;stroke-linejoin:round}
 .pv-svg .wt{fill:none;stroke:var(--t);stroke-width:1.1;stroke-dasharray:5 4}
@@ -941,10 +946,26 @@ body.fx-low .pv-an *{animation:none!important}`;
   /* ---------- i luoghi nominati nel testo ---------- */
   const ACCESSI = /punt[oi] d ?i? ?(accesso|ingresso|entrata|uscita)|vi[ae] d ?i? ?(entrata|accesso|ingresso|fuga|uscita)|\baccessi\b|\bingressi\b|\bentrate\b|uscit[ae] (di sicurezza|d emergenza|secondari[ae]|di servizio|sul retro)|passaggi[o]? segret|come (si )?entr|da dove (si )?(entra|passa|esce|arriva)|per entrare|(unic[oa]|sol[oa]|altr[oa]|second[oa]|un altro|un altra) (accesso|ingresso|entrata|uscita)|(ingresso|entrata|uscita|accesso) (principale|secondari[oa]|di servizio|laterale|posteriore|sul retro|di emergenza)/;
   const PAROLA_MAPPA = /\b(planimetri[ae]|piantin[ae]|pianta della|pianta del|mappa|cartina|schema de[li])/;
-  const MOSSA_TU = /\b(sei|ti trovi|ti ritrovi|entri|rientri|arrivi|raggiungi|sali|scendi|torni|esci|sbuchi|ti fermi|ti nascondi|ti infili|varchi|attraversi|imbocchi|ti affacci|ti dirigi|corri|cammini|ti precipiti|ti avvii|siete|entrate|arrivate|raggiungete|salite|scendete|tornate|vi trovate|vai|andate|parti|partite|lasci|lasciate|prendi|prendete|prosegui|proseguite|uscite|rientrate|attraversate|imboccate|vi dirigete|vi fermate|vi infilate|vi avvicinate|ti avvicini|ti sposti|vi spostate|giungi|giungete|sbarchi|sbarcate|approdi|approdate|atterri|atterrate|risali|risalite|ridiscendi|percorri|percorrete|guidi|guidate|ti cali|vi calate|strisci|strisciate|ti arrampichi|vi arrampicate|correte|camminate|ti rifugi|vi rifugiate|fuggi|fuggite|scappi|scappate)\b/;
-  const MOSSA_IO = /\b(vado|andiamo|entro|entriamo|rientro|salgo|saliamo|scendo|scendiamo|raggiungo|raggiungiamo|torno|torniamo|corro|corriamo|esco|usciamo|mi dirigo|mi avvicino|mi sposto|mi nascondo|mi infilo|mi precipito|mi avvio|passo|scappo|fuggo|vado a|andare|porto|accompagno|seguo|mi fiondo|filo|parto|partiamo|lascio|lasciamo|prendo|prendiamo|proseguo|proseguiamo|attraverso|attraversiamo|imbocco|imbocchiamo|ritorno|ritorniamo|risalgo|risaliamo|ci dirigiamo|ci spostiamo|ci avviciniamo|ci infiliamo|ci nascondiamo|cammino|camminiamo|sbarco|sbarchiamo|guido|guidiamo|mi calo|ci caliamo|striscio|mi arrampico|mi rifugio|ci rifugiamo|mi reco|ci rechiamo|m incammino|mi incammino|ci incamminiamo|fuggiamo|scappiamo)\b/;
+  const MOSSA_TU = /\b(sei|ti trovi|ti ritrovi|entri|rientri|arrivi|raggiungi|sali|scendi|torni|esci|sbuchi|ti fermi|ti nascondi|ti infili|varchi|attraversi|imbocchi|ti dirigi|ti siedi|vi sedete|ti accomodi|vi accomodate|ti sdrai|ti chiudi|ti intrufoli|sbucate|bussi|bussate|aspetti|aspettate|resti|restate|rimani|rimanete|ti apposti|ti presenti|corri|cammini|ti precipiti|ti avvii|siete|entrate|arrivate|raggiungete|salite|scendete|tornate|vi trovate|vai|andate|parti|partite|lasci|lasciate|prendi|prendete|prosegui|proseguite|uscite|rientrate|attraversate|imboccate|vi dirigete|vi fermate|vi infilate|vi avvicinate|ti avvicini|ti sposti|vi spostate|giungi|giungete|sbarchi|sbarcate|approdi|approdate|atterri|atterrate|risali|risalite|ridiscendi|percorri|percorrete|guidi|guidate|ti cali|vi calate|strisci|strisciate|ti arrampichi|vi arrampicate|correte|camminate|ti rifugi|vi rifugiate|fuggi|fuggite|scappi|scappate)\b/;
+  const MOSSA_IO = /\b(vado|andiamo|entro|entriamo|rientro|salgo|saliamo|scendo|scendiamo|raggiungo|raggiungiamo|torno|torniamo|corro|corriamo|esco|usciamo|mi dirigo|mi avvicino|mi sposto|mi nascondo|mi infilo|mi precipito|mi avvio|passo|scappo|fuggo|vado a|andare|porto|accompagno|seguo|mi fiondo|filo|parto|partiamo|lascio|lasciamo|prendo|prendiamo|proseguo|proseguiamo|attraverso|attraversiamo|imbocco|imbocchiamo|ritorno|ritorniamo|risalgo|risaliamo|ci dirigiamo|ci spostiamo|ci avviciniamo|ci infiliamo|ci nascondiamo|cammino|camminiamo|sbarco|sbarchiamo|guido|guidiamo|mi calo|ci caliamo|striscio|mi arrampico|mi rifugio|ci rifugiamo|mi reco|ci rechiamo|m incammino|mi incammino|ci incamminiamo|fuggiamo|scappiamo|busso|bussiamo|aspetto|aspettiamo|resto|restiamo|rimango|rimaniamo|mi apposto|mi presento|mi siedo|ci sediamo|mi fermo|ci fermiamo|mi accomodo|mi sdraio|mi chiudo)\b/;
   // dentro una battuta un personaggio è «in un luogo» solo se la frase lo dice: «Whitaker è nella suite», «Alba sta salendo in plancia»
   const STA = /\b(e|era|sta|stava|resta|restava|rimane|aspetta|dorme|lavora|abita|vive|va|andava|sale|scende|torna|entra|esce|corre|si trova|si trovava|si nasconde|si e chius[oa]|e (andat|sces|salit|tornat|entrat|uscit|rimast|chius|nascost|scappat|corso|cors)[oa]?|sta (salendo|scendendo|andando|tornando|entrando|uscendo|aspettando|dormendo|lavorando|correndo))\b/;
+  const MOSSA_TU_G = new RegExp(MOSSA_TU.source, "g"), MOSSA_IO_G = new RegExp(MOSSA_IO.source, "g");
+  const LOC = /^(in|nel|nello|nella|nell|nei|negli|nelle|a|ad|al|allo|alla|all|ai|agli|alle|su|sul|sullo|sulla|sull|sui|sugli|sulle|verso|per|dentro|sotto|sopra|presso|oltre|tra|fra|lungo|attraverso|dietro|davanti)$/;
+  const ARTI = /^(il|lo|la|l|i|gli|le|un|una|uno|quel|quello|quella|quell|questo|questa)$/;
+  const SALTA = /^(tuo|tua|tuoi|tue|suo|sua|mio|mia|nostro|nostra|vostro|vostra|vecchio|vecchia|grande|piccolo|piccola|nuovo|nuova|stesso|stessa|solito|solita|primo|prima|secondo|seconda|ultimo|ultima)$/;
+  const VERBO_FERMO = /^(sei|siete|ti trovi|ti ritrovi|vi trovate|ti fermi|vi fermate|ti nascondi|ti siedi|vi sedete|ti accomodi|vi accomodate|ti sdrai|ti chiudi|bussi|bussate|aspetti|aspettate|resti|restate|rimani|rimanete|ti apposti|ti presenti|busso|bussiamo|aspetto|aspettiamo|resto|restiamo|rimango|rimaniamo|mi apposto|mi presento|mi siedo|ci sediamo|mi fermo|ci fermiamo|mi accomodo|mi sdraio|mi chiudo|mi nascondo|ci nascondiamo|lasci|lasciate|lascio|lasciamo|esci|uscite|esco|usciamo|porto|seguo|accompagno|passo|filo)$/;
+  const citata = (riga, fino) => { let a = false; for(let q = 0; q < fino; q++){ const c = riga[q]; if(c === '"') a = !a; else if(c === "“" || c === "«") a = true; else if(c === "”" || c === "»") a = false; } return a; };
+  const inLuogo = (nf, t) => { const prima = nf.slice(0, t.s).trim().split(" "); let w = prima.pop() || ""; if(SALTA.test(w)) w = prima.pop() || ""; return LOC.test(w); };
+  function meta(nf, t, mossa){
+    const prima = nf.slice(0, t.s).trim().split(" ");
+    let w = prima.pop() || "";
+    if(SALTA.test(w)) w = prima.pop() || "";
+    if(LOC.test(w)) return true;
+    const fermo = VERBO_FERMO.test(mossa[0]);
+    if(ARTI.test(w)) return !fermo;
+    return !fermo && nf.slice(mossa.index + mossa[0].length, t.s).trim() === "";    // «raggiungi Trani»
+  }
   const LONTANO = /al telefono|per telefono|alla radio|via radio|in vivavoce|altoparlante|interfono|videochiamata|messaggio vocale|auricolare|al cellulare|ti chiama|squilla/;
   function nelTesto(m, frase){
     const trovati = [];
@@ -995,26 +1016,37 @@ body.fx-low .pv-an *{animation:none!important}`;
       const lontano = LONTANO.test(norm(msg.t));
       String(msg.t || "").split(/\n+/).forEach(riga => {
         const dial = !mio && riga.match(/^\s*\*?\s*([A-ZÀ-Ü][^:*\n"]{0,30}):\s*\*?\s*["“«]/);
+        const rigaS = riga.replace(/\*/g, " "); let cur = 0;
         frasi(riga).forEach((fr, fi) => {
           const nf = norm(fr), L = nelTesto(m, nf).filter(t => !t.liv || true);
+          // una frase tra virgolette (un messaggio letto, una voce) o una domanda non sposta chi gioca
+          const da = rigaS.indexOf(fr, cur); if(da >= 0) cur = da + fr.length;
+          const ferma = /\?\s*["”»]?\s*$/.test(fr) || (!mio && (/^\s*["“«]/.test(fr) || (da > 0 && citata(rigaS, da))));
           if(L.length){
-            const mossa = (mio ? MOSSA_IO : MOSSA_TU).exec(nf);
-            if(mossa && (!dial || mio)){ const dopo = L.filter(t => t.s > mossa.index); if(dopo.length) st.qui = dopo[dopo.length - 1].id; }
+            // ogni luogo si giudica con il verbo di movimento che lo precede: «esci sul marciapiede e raggiungi la metro»
+            const verbi = [];
+            if(!ferma && (!dial || mio)){ const reV = mio ? MOSSA_IO_G : MOSSA_TU_G; reV.lastIndex = 0; let v; while((v = reV.exec(nf))) verbi.push(v); }
+            if(verbi.length){
+              const dopo = L.filter(t => { let vb = null; verbi.forEach(q => { if(q.index < t.s) vb = q; }); return vb && meta(nf, t, vb); });
+              if(dopo.length){ st.qui = dopo[dopo.length - 1].id; if(m.perId[st.qui].edificio && m.dentro) st.qui = m.dentro; }
+            }
             if(!mio){
               const P2 = trovaPers(s, nf, fr.replace(/\*/g, " "));
               P2.forEach(pp => {
                 const prima = fr.slice(0, pp.at), raw = norm(prima).length;
+                if(L.some(t => raw + 1 >= t.s && raw + 1 < t.e)) return;
                 if(dial){
                   // in una battuta: non conta l'etichetta di chi parla, e serve «Nome è / sta / va … luogo»
-                  if(fi === 0 && !/["“«]/.test(prima)) return;
+                  if(fi === 0 && !/["“«]/.test(fr.slice(0, pp.at + 1))) return;
                   const dopo = L.filter(t => !m.perId[t.id].livello && t.s > raw).sort((a, b) => a.s - b.s)[0];
                   if(!dopo || dopo.s - raw > 64 || !STA.test(nf.slice(raw, dopo.s))) return;
                   if(P2.some(q => q !== pp && q.at > pp.at && norm(fr.slice(0, q.at)).length < dopo.s)) return;
                   st.pers[pp.i] = { p:dopo.id, i };
                   return;
                 }
+                // nella narrazione: il luogo più vicino al nome, ma solo se la frase dice «in», «al», «davanti alla»…
                 let best = null;
-                L.forEach(t => { if(m.perId[t.id].livello) return; const d = Math.abs(t.s - raw); if(!best || d < best[1]) best = [t.id, d]; });
+                L.forEach(t => { if(m.perId[t.id].livello || !inLuogo(nf, t)) return; const d = Math.abs(t.s - raw); if(!best || d < best[1]) best = [t.id, d]; });
                 if(best && best[1] < 70) st.pers[pp.i] = { p:best[0], i };
               });
             }
