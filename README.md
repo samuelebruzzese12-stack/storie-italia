@@ -32,6 +32,18 @@ Le animazioni si fermano da sole quando la locandina non si vede, si adattano al
 
 Le locandine vengono disegnate sul telefono la prima volta e poi conservate, quindi si aprono subito. Le storie create da chi gioca ricevono una locandina costruita dal loro genere. Nella scheda della storia si tocca la locandina per vederla a tutto schermo.
 
+Nella versione 3.1 ogni storia ha la sua **planimetria**, che compare da sola dentro la chat:
+
+- **planimetria in chat**: quando la storia nomina dei luoghi, sotto il messaggio compare la pianta con quei luoghi accesi; se si parla di **punti di accesso** o **vie di entrata**, la pianta mostra le entrate e le uscite numerate (A1, A2, …) con l'elenco sotto
+- **72 mappe disegnate una per una**: la nave «M/N Adelaide» con cinque ponti, il carcere, la banca, il casinò sul Canal Grande, Castel del Monte a otto lati, l'Arena, ville, bar e condomini con i loro piani; e poi città, paesi, montagne, coste, cunicoli sotterranei, rotte sull'Italia e nello spazio
+- **stile secondo il genere**: cianotipo per gialli e thriller, carta notturna per malavita, drama e horror, mappa militare per la guerra, pergamena per fantasy e avventura, ologramma per la fantascienza, neon per l'azione
+- **tu sei qui e personaggi sulla mappa**: l'app segue il racconto e segna dove ti trovi e dove sono stati visti l'ultima volta i personaggi, ognuno con la sua pedina colorata
+- **visore a tutto schermo**: pulsante mappa in alto nella chat; si ingrandisce con due dita, si tocca un luogo per leggere cos'è e scegliere **Vai qui**, **Osserva** o **Scrivi tu**
+- **documenti veri**: biglietti, lettere, SMS, telegrammi, giornali, referti, cartelli e pergamene che compaiono nella storia sono mostrati come fogli veri, non come semplice testo
+- le storie create da chi gioca ricevono una mappa costruita dal genere; planimetrie e documenti si spengono dal menu ⋮ della chat
+
+Non viene salvato niente in più: posizione, luoghi scoperti e pedine sono ricavati ogni volta dai messaggi della chat.
+
 Nelle versioni 2.6 e 2.7:
 
 - **voce narrante**: il narratore e ogni personaggio leggono ad alta voce con un tono diverso (sintesi vocale del telefono, anche offline);
@@ -79,6 +91,9 @@ L'app scarica una sola volta il "cervello" AI (meglio con il Wi-Fi) e consiglia 
 - `app/src/main/assets/voce.js` e `suoni.js` – voce narrante e suoni d'atmosfera
 - `app/src/main/assets/campania.js` – i 550 comuni della Campania (fonte ISTAT, licenza CC BY 3.0 IT) con aree, città, quartieri e rioni
 - `app/src/main/assets/locandine.js` – le locandine: motore di disegno, composizione di ogni storia, impaginazione e pellicola
+- `app/src/main/assets/planimetrie.js` – il motore delle planimetrie: piante di edifici e navi, mappe di città, paesi, monti e mari, lettura dei luoghi nel testo
+- `app/src/main/assets/mappe.js` e `mappe_2.js` – le planimetrie delle 72 storie e quelle per genere (come si scrivono è spiegato in cima a `planimetrie.js`)
+- `app/src/main/assets/scena.js` e `scena.css` – la planimetria dentro la chat, il visore a tutto schermo e i documenti
 - `app/src/main/assets/fonts/` – i caratteri delle locandine (licenza SIL Open Font License 1.1, testi in `LICENZE-FONT.txt`)
 - `app/src/main/assets/effetti.js` e `effetti.css` – animazioni e grafica
 - `app/src/main/assets/index.html` – l'interfaccia e la logica (memoria, segnalazioni, crea storia)

@@ -1,0 +1,116 @@
+/* Storie d'Italia – la scena in chat: planimetria sotto i messaggi, visore a tutto schermo, documenti */
+
+/* ---------- pulsante nella barra della chat ---------- */
+#v-chat .bar{gap:6px}
+#v-chat .bar .ico{width:36px;height:36px}
+#mapBtn{position:relative;color:var(--accent2)}
+#mapBtn.nuovo::after{content:"";position:absolute;right:6px;top:6px;width:8px;height:8px;border-radius:50%;background:#ff5a4a;box-shadow:0 0 0 2px rgba(13,13,17,.96);animation:blink 1.4s infinite}
+
+/* ---------- la scheda sotto il messaggio ---------- */
+.pmap{width:min(calc((100vw - 24px) * .94),400px);margin:7px 0 0 -38px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#131318;cursor:pointer;transition:transform .15s,border-color .2s;-webkit-user-select:none;user-select:none}
+.pmap:active{transform:scale(.985);border-color:var(--accent)}
+.pmap-h{display:flex;align-items:center;gap:7px;padding:8px 10px;font-size:12px;line-height:1.2}
+.pmap-i{flex:none;font-size:13px}
+.pmap-h b{flex:none;font-size:12.5px;color:var(--accent2)}
+.pmap-s{flex:1;min-width:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmap-x{flex:none;font-size:10.5px;font-weight:700;color:var(--accent2);border:1px solid #5a4520;border-radius:99px;padding:3px 8px;white-space:nowrap}
+.pmap-m{display:block;line-height:0;border-top:1px solid var(--line)}
+.pmap-f{display:flex;flex-wrap:wrap;gap:5px;padding:8px 9px;border-top:1px solid var(--line)}
+.pmap-l,.pmap-a{font-size:11px;line-height:1.3;padding:3px 8px;border-radius:99px;background:var(--panel2);color:#d6d6e0;display:inline-flex;gap:5px;align-items:center}
+.pmap-l i{font-style:normal;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#14110a;background:var(--accent2);border-radius:99px;padding:1px 5px}
+.pmap-a i{font-style:normal;font-weight:800;font-size:9.5px;color:#14110a;background:#ffc24a;border-radius:99px;padding:1px 5px}
+.pmap.chiusa{opacity:.82}
+.pmap.nuova{animation:pcIn .55s var(--ease) both}
+@keyframes pcIn{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.plc{font-size:11px;color:var(--accent2);padding:4px 7px;border-radius:8px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc:active{background:var(--panel2)}
+.macts{flex-wrap:wrap}
+
+/* ---------- visore a tutto schermo ---------- */
+.pv{position:absolute;inset:0;z-index:36;display:none;flex-direction:column;background:#0b0b0f}
+.pv.on{display:flex;animation:fadeIn .22s both}
+.pv-bar{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 10px 9px;border-bottom:1px solid var(--line);background:rgba(13,13,17,.96);flex:none}
+.pv-bar .who b{font-family:var(--serif);font-size:17px}
+.pv-acc{flex:none;font-size:12px;font-weight:700;padding:7px 12px;border-radius:99px;border:1px solid #5a4520;color:var(--accent2);transition:background .2s,color .2s}
+.pv-acc.on{background:var(--accent);color:#1a1205;border-color:var(--accent)}
+.pv-tabs{display:flex;gap:6px;padding:8px 10px;flex:none;overflow-x:auto;border-bottom:1px solid var(--line)}
+.pv-tabs button{flex:none;font-size:12.5px;padding:6px 12px;border-radius:99px;background:var(--panel);border:1px solid var(--line);color:#d0d0da}
+.pv-tabs button.on{background:var(--accent);border-color:var(--accent);color:#1a1205;font-weight:700}
+.pv-map{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab}
+.pv-in{position:absolute;left:0;top:0;width:100%;transform-origin:0 0;will-change:transform}
+.pv-in.morbido{transition:transform .25s var(--ease)}
+.pv-zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+.pv-zoom button{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);font-size:21px;line-height:1;color:#fff}
+.pv-zoom button:active{background:rgba(224,168,63,.5)}
+.pv-hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:11px;color:#fff;background:rgba(0,0,0,.6);padding:5px 11px;border-radius:99px;transition:opacity .6s;pointer-events:none;white-space:nowrap}
+.pv-hint.via{opacity:0}
+.pv-info{flex:none;max-height:45%;overflow-y:auto;padding:12px 14px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--panel);border-radius:18px 18px 0 0;margin-top:-14px;position:relative;z-index:1;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+.pv-info h5{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:14px 0 7px}
+.pv-qui{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);cursor:pointer}
+.pv-qui>i{flex:none;width:12px;height:12px;border-radius:50%;background:#ff5a4a;box-shadow:0 0 0 4px rgba(255,90,74,.22);animation:blink 1.6s infinite}
+.pv-qui b{display:block;font-size:14px}
+.pv-qui span{font-size:12px;color:var(--muted)}
+.pv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pv-chips button{font-size:12.5px;padding:6px 10px;border-radius:99px;background:var(--panel2);border:1px solid #5a4520;color:#f1e3bf;display:inline-flex;gap:6px;align-items:center;text-align:left}
+.pv-chips i{font-style:normal;font-weight:800;font-size:10px;color:#14110a;background:#ffc24a;border-radius:99px;padding:1px 6px}
+.pv-pers{display:flex;flex-direction:column;gap:6px}
+.pv-pers button{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:12px;background:var(--panel2);text-align:left}
+.pv-pers i,.pv-chi i{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:12px;color:#14110a}
+.pv-pers b{font-size:13.5px}
+.pv-pers span{margin-left:auto;font-size:12px;color:var(--muted);text-align:right}
+.pv-gr{font-size:11.5px;color:var(--muted);margin:10px 0 5px}
+.pv-list{display:flex;flex-wrap:wrap;gap:5px}
+.pv-list button{font-size:12.5px;padding:6px 10px 6px 6px;border-radius:10px;background:var(--panel2);color:#b9b9c6;display:inline-flex;gap:7px;align-items:center;border:1px solid transparent}
+.pv-list button.ok{color:var(--text);border-color:#3a3a48}
+.pv-list em{font-style:normal;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:6px;display:grid;place-items:center;background:#2c2c38;color:#9a9aab}
+.pv-list button.ok em{background:var(--accent);color:#1a1205}
+.pv-sel-h{display:flex;gap:11px;align-items:center}
+.pv-ic{flex:none;width:42px;height:42px;border-radius:13px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;color:var(--accent2)}
+.pv-ic svg{width:24px;height:24px}
+.pv-sel-h div{flex:1;min-width:0}
+.pv-sel-h b{display:block;font-family:var(--serif);font-size:19px;line-height:1.15}
+.pv-sel-h span{font-size:12px;color:var(--muted)}
+.pv-no{flex:none;width:34px;height:34px;border-radius:50%;background:var(--panel2);color:var(--muted);font-size:14px}
+.pv-sel p{font-size:13.5px;line-height:1.5;color:#d6d6de;margin-top:10px}
+.pv-sel p.pv-acn{color:#ffc24a;font-weight:600}
+.pv-chi{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.pv-chi span{display:inline-flex;gap:6px;align-items:center}
+.pv-chi em{font-size:11.5px;color:var(--muted);font-style:normal}
+.pv-btn{display:flex;gap:8px;margin-top:14px}
+.pv-b{flex:1;padding:12px 6px;border-radius:13px;background:var(--panel2);border:1px solid var(--line);font-size:13.5px;font-weight:600;white-space:nowrap}
+.pv-b:active{transform:scale(.97)}
+.pv-b.oro{background:var(--accent);border-color:var(--accent);color:#1a1205;font-weight:800}
+
+/* ---------- documenti: i testi scritti come fogli veri ---------- */
+.docu{display:block;margin:10px 0 8px;white-space:normal}
+.docu:first-child{margin-top:2px}
+.docu-l{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0 0 7px 2px;font-weight:600}
+.docu-b{display:block;position:relative;padding:15px 16px 14px;border-radius:3px;color:#2a2318;background:#f3ead4;box-shadow:0 10px 22px rgba(0,0,0,.5);font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;animation:docIn .5s var(--ease) both}
+.msg.streaming .docu-b,body.fx-low .docu-b{animation:none}
+@keyframes docIn{from{opacity:0;transform:translateY(8px) rotate(-3deg) scale(.97)}}
+.docu-t{display:block;white-space:pre-line}
+.docu-f{display:block;text-align:right;margin-top:8px}
+.d-biglietto .docu-b{transform:rotate(-1.2deg);margin:2px 3px 0;font-family:LMano,'Segoe Print','Comic Sans MS',cursive;font-size:17px;line-height:1.6;color:#1d2a44;
+  background:linear-gradient(90deg,transparent calc(50% - 1px),rgba(90,70,30,.17) 50%,transparent calc(50% + 1px)),linear-gradient(0deg,transparent calc(50% - 1px),rgba(90,70,30,.17) 50%,transparent calc(50% + 1px)),radial-gradient(120% 90% at 30% 20%,#fbf4e1,#e9ddbe)}
+.d-biglietto.maiusc .docu-b{letter-spacing:.03em;font-size:15.5px;line-height:1.75}
+.d-lettera .docu-b{font-family:LInstrument,Georgia,serif;font-style:italic;font-size:17.5px;line-height:26px;padding:20px 18px 16px 22px;color:#2b2233;background:repeating-linear-gradient(0deg,transparent 0 25px,rgba(60,80,120,.13) 25px 26px),#f6efdc;border-left:3px solid rgba(160,40,30,.38)}
+.d-lettera .docu-f{font-family:LMano,cursive;font-style:normal;font-size:19px}
+.d-sms .docu-b{background:#15161c;border:1px solid #2c2d38;border-radius:22px;padding:10px 12px 9px;color:#fff}
+.d-sms .docu-b::before{content:"";display:block;width:38px;height:4px;border-radius:9px;background:#3a3b48;margin:0 auto 11px}
+.d-sms .docu-t{display:inline-block;background:#2f6fed;color:#fff;border-radius:17px 17px 17px 5px;padding:9px 13px;font-size:14.5px;line-height:1.4;max-width:94%}
+.d-sms .docu-b::after{content:"adesso · consegnato";display:block;font-size:10px;color:#7d7e8c;margin-top:5px;padding-left:6px}
+.d-sms .docu-f{text-align:left;font-size:11.5px;color:#9a9bab;margin:6px 0 0 6px}
+.d-telegramma .docu-b{font-family:LMono,'Courier New',monospace;font-size:13px;letter-spacing:.04em;line-height:1.75;background:#e9d9a6;color:#2a2010;border:1px solid #a89250;padding:38px 14px 14px}
+.d-telegramma .docu-b::before{content:"TELEGRAMMA";position:absolute;left:0;right:0;top:0;padding:7px 14px;font-size:11px;letter-spacing:.3em;border-bottom:2px solid #2a2010;background:rgba(0,0,0,.07)}
+.d-giornale .docu-b{background:#e8e2d2;color:#161411;padding:11px 14px 14px;font-family:LCrimson,Georgia,serif;font-weight:700;font-size:21px;line-height:1.16;border-top:5px double #161411}
+.d-giornale .docu-b::before{content:"ULTIMA ORA · EDIZIONE STRAORDINARIA";display:block;font-family:Inter,sans-serif;font-size:8.5px;letter-spacing:.22em;font-weight:700;border-bottom:1px solid #161411;padding-bottom:6px;margin-bottom:9px}
+.d-giornale .docu-b::after{content:"";display:block;height:27px;margin-top:11px;background:repeating-linear-gradient(0deg,rgba(22,20,17,.34) 0 1.5px,transparent 1.5px 6px);-webkit-mask:linear-gradient(90deg,#000 0 30%,transparent 30% 35%,#000 35% 65%,transparent 65% 70%,#000 70%);mask:linear-gradient(90deg,#000 0 30%,transparent 30% 35%,#000 35% 65%,transparent 65% 70%,#000 70%)}
+.d-atto .docu-b{background:#f4f1e8;color:#1c1c1c;font-family:LMono,'Courier New',monospace;font-size:12.5px;line-height:1.65;padding:16px 16px 20px;border:1px solid #bdb7a4;border-top:14px solid #cfc8b2}
+.d-atto .docu-b::after{content:"VISTO";position:absolute;right:12px;bottom:9px;width:52px;height:52px;border-radius:50%;border:2.5px solid rgba(170,40,30,.55);color:rgba(170,40,30,.65);font:800 9.5px Inter,sans-serif;letter-spacing:.14em;display:grid;place-items:center;transform:rotate(-16deg)}
+.d-atto .docu-t{padding-right:40px}
+.d-cartello .docu-b{background:linear-gradient(180deg,#22402f,#152a1f);color:#f4f0e2;font-family:LShoulders,'Arial Narrow',sans-serif;font-weight:700;font-size:20px;line-height:1.2;letter-spacing:.05em;text-transform:uppercase;text-align:center;border:3px solid #f4f0e2;box-shadow:0 0 0 3px #152a1f,0 10px 22px rgba(0,0,0,.5);border-radius:6px;padding:14px;margin:3px}
+.d-schermo .docu-b{background:#04100c repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);color:#6dffb0;font-family:LMono,'Courier New',monospace;font-size:13px;line-height:1.6;border:1px solid #1d4a38;border-radius:10px;padding:14px;text-shadow:0 0 8px rgba(109,255,176,.5)}
+.d-schermo .docu-t::after{content:"▍";animation:blink 1s steps(2) infinite;margin-left:2px}
+.d-diario .docu-b{font-family:LMano,cursive;font-size:17px;line-height:26px;color:#1d2a44;padding:13px 14px 13px 40px;background:linear-gradient(90deg,transparent 29px,rgba(200,60,50,.5) 29px 30px,transparent 30px),repeating-linear-gradient(0deg,transparent 0 25px,rgba(60,90,150,.24) 25px 26px),#f7f3e6}
+.d-pergamena .docu-b{font-family:LYoung,Georgia,serif;font-size:16px;line-height:1.5;color:#3a2410;background:radial-gradient(120% 100% at 50% 40%,#ecd9a8,#c6a465);border-radius:2px;padding:18px;box-shadow:0 10px 22px rgba(0,0,0,.5),inset 0 0 26px rgba(90,50,10,.45)}
+.d-pergamena .docu-f{font-style:italic}

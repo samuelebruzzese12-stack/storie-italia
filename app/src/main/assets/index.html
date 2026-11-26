@@ -422,6 +422,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="stylesheet" href="effetti.css">
+<link rel="stylesheet" href="scena.css">
 </head>
 <body>
 <div id="splash">
@@ -593,6 +594,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
     <button class="ico" data-back aria-label="Indietro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
     <div class="av" id="cAv">☕<i class="dot"></i></div>
     <div class="who"><b id="cTitleBar">Storia</b><span id="status">online</span></div>
+    <button class="ico" id="mapBtn" aria-label="Planimetria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></button>
     <button class="ico" id="memBtn" aria-label="Memoria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5v1a3 3 0 0 0 6 0V3.5"/><path d="M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5v1a3 3 0 0 1-6 0"/></svg></button>
     <button class="ico" id="regenBtn" aria-label="Rigenera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
     <button class="ico" id="moreBtn" aria-label="Voce, suoni e finale"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg></button>
@@ -677,6 +679,10 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 <script src="locandine.js"></script>
 <script src="locandine_vive.js"></script>
 <script src="locandine_regia.js"></script>
+<script src="planimetrie.js"></script>
+<script src="mappe.js"></script>
+<script src="mappe_2.js"></script>
+<script src="scena.js"></script>
 <script src="casi.js"></script>
 <script src="voce.js"></script>
 <script src="suoni.js"></script>
@@ -685,7 +691,7 @@ body.fx-low .fin.on,body.fx-low .fin *{animation:none!important}
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const VERSION = "3.0";
+const VERSION = "3.1";
 const LOCAL = !!window.AndroidAI;
 const G = window.GENERI || {};
 const BASE = window.STORIE || [];
@@ -971,7 +977,7 @@ PROTAGONISTA (la interpreta SOLO l'utente): ${Rz(s.you)} ${x.sex === "m" ? "È u
 
 PERSONAGGI:
 ${(s.chars || []).map(c => `- ${c.full || c.n} (${Rz(c.r)}): ${Rz(c.d)}`).join("\n")}
-Puoi introdurre altri personaggi realistici quando servono.
+Puoi introdurre altri personaggi realistici quando servono.${luoghiRule(s, x)}
 
 VERITÀ NASCOSTA (non rivelarla mai tutta insieme: falla scoprire poco a poco con indizi, scelte e conseguenze):
 ${Rz(s.secret || "Inventa tu un segreto coerente e appassionante, e fallo scoprire poco a poco.")}
@@ -986,8 +992,16 @@ REGOLE:
 - Le scelte di ${x.name} hanno conseguenze reali e coerenti. I personaggi hanno obiettivi propri, ricordano e reagiscono.
 - Rispetta SEMPRE la memoria e i fatti già successi: non contraddirli mai.
 - Niente violenza esplicita o descrizioni crude, niente contenuti sessuali espliciti, niente istruzioni reali pericolose (armi, droghe, veleni, hacking). Se l'utente insiste, fai deviare la storia restando nel personaggio.
+- I testi scritti che ${x.name} legge (biglietti, lettere, messaggi sul telefono, telegrammi, titoli di giornale, cartelli) vanno su una riga a parte, così: Biglietto: "testo" (oppure Lettera, Messaggio, Telegramma, Giornale, Cartello, Referto, Schermo).
 - Non uscire mai dal personaggio e non dire di essere un'AI. Eccezione: se l'utente scrive tra doppie parentesi ((così)), sta parlando con te fuori dalla storia: rispondi in breve fuori dalla storia, poi torna al racconto.${s.tema ? `
 - MUSICA: nei momenti più forti (un omicidio, un tradimento scoperto, un giuramento, un arresto, una vendetta compiuta, un bacio proibito, un addio) scrivi [MUSICA] su una riga da sola, subito prima della frase più drammatica: in quel momento parte la sigla della storia. Non più di una volta ogni tre risposte.` : ""}`;
+}
+// i luoghi della planimetria, così la storia usa gli stessi nomi che vede chi gioca
+// (sul telefono, con le storie che hanno già istruzioni lunghissime, in forma breve: il modello ha poco spazio)
+function luoghiRule(s, x){
+  const lungo = String(s.world || "").length + String(s.secret || "").length > 2700;
+  const t = window.SCENA ? SCENA.luoghi(s, x.name, LOCAL && lungo) : "";
+  return t ? "\n\n" + t : "";
 }
 function memText(m, x){
   if(!m || (!m.riassunto && !(m.fatti || []).length)) return "(nessun ricordo ancora: la storia è appena iniziata)";
@@ -1176,7 +1190,7 @@ function show(v, push = true){
   next.classList.add("on");
   next.querySelectorAll(".stagger").forEach(el => { el.classList.remove("stagger"); void el.offsetWidth; el.classList.add("stagger"); });
   current = v;
-  if(v !== "chat"){ stopVoice(); ambStop(); }
+  if(v !== "chat"){ stopVoice(); ambStop(); if(window.SCENA && SCENA.aperto()) SCENA.chiudi(); }
   $("tabs").classList.toggle("hide", !TAB_VIEWS.includes(v));
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.tab === v));
   if(v === "home") renderHome();
@@ -1193,7 +1207,7 @@ function sheetOpen(){ return $("sheet").classList.contains("on"); }
 function dlgOpen(){ return $("dlg").classList.contains("on"); }
 function finOpen(){ return $("finale").classList.contains("on"); }
 function locOpen(){ return $("locv").classList.contains("on"); }
-function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen() || finOpen() || locOpen()); }catch(e){} } }
+function syncBack(){ if(LOCAL && AndroidAI.setBackEnabled){ try{ AndroidAI.setBackEnabled(current !== "home" || sheetOpen() || dlgOpen() || finOpen() || locOpen() || !!(window.SCENA && SCENA.aperto())); }catch(e){} } }
 function openLocandina(id){
   const s = story(id); if(!s) return;
   $("locvP").style.backgroundImage = "";
@@ -1203,6 +1217,7 @@ function openLocandina(id){
 }
 function closeLocandina(){ $("locv").classList.remove("on"); $("locvP").innerHTML = ""; syncBack(); }
 window.__back = () => {
+  if(window.SCENA && SCENA.aperto()){ SCENA.chiudi(); return true; }
   if(locOpen()){ closeLocandina(); return true; }
   if(dlgOpen()){ $("dlg").classList.remove("on"); syncBack(); return true; }
   if(sheetOpen()){ closeSheet(); return true; }
@@ -1507,7 +1522,8 @@ function colorFor(name, s){
   const i = (s.chars || []).findIndex(c => { const a = (c.n || "").toLowerCase(), b = (c.full || "").toLowerCase(); return a === n || b === n || a.includes(n) || n.includes(a) || b.includes(n); });
   return i >= 0 ? COLORS[i % COLORS.length] : genre(s).a;
 }
-function fmt(t, s){
+function fmt(t, s){ return window.SCENA && settings.docu !== false ? SCENA.formatta(t, q => fmt0(q, s)) : fmt0(t, s); }
+function fmt0(t, s){
   let h = esc(t).replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
   h = h.replace(/(^|\n)([A-ZÀ-ÜÌ][\wÀ-ÿ'’.\- ]{0,28}):(?=\s*(?:&quot;|["“«]|<em>))/g, (m, a, b) => `${a}<span class="sp" style="color:${colorFor(b, s)}">${b}:</span>`);
   return h;
@@ -1521,15 +1537,18 @@ function aiRow(text, i){
   const spk = i >= 0 && voceOK() && !(m && m.rep) ? `<button class="spk${i === speakingIdx ? " on" : ""}" data-speak="${i}"><span class="ic">🔊</span><span class="eq"><i></i><i></i><i></i></span><span class="lb">${i === speakingIdx ? "Ferma" : "Ascolta"}</span></button>` : "";
   row.innerHTML = `<div class="av" style="${avStyle(s)}">${s.e}</div><div class="col"><div class="msg ai${m && m.md && FINAL[m.md] ? " fin" : ""}">${body}</div>${i >= 0 ? `<div class="macts">${spk}<button class="flagb" data-flag="${i}">⚑ Segnala</button></div>` : ""}</div>`;
   if(i >= 0 && i === speakingIdx) row.classList.add("speaking");
+  if(i >= 0 && window.SCENA && !(m && m.rep)) SCENA.decora(row, i);
   return row;
 }
-function meBubble(t){ const d = document.createElement("div"); d.className = "msg me"; d.innerHTML = fmt(t, story(st.sid)); return d; }
+function meBubble(t){ const d = document.createElement("div"); d.className = "msg me"; d.innerHTML = fmt0(t, story(st.sid)); return d; }
 function scrollEnd(){ const l = $("log"); l.scrollTop = l.scrollHeight; }
 function setStatus(t, typ){ const e = $("status"); e.textContent = t || (LOCAL ? "AI offline · pronta" : "online"); e.classList.toggle("typ", !!typ); if(window.FX) FX.typing(typ); }
 function renderChat(){
   const s = story(st.sid), log = $("log");
   $("cAv").innerHTML = `${s.e}<i class="dot"></i>`; $("cAv").setAttribute("style", avStyle(s));
   $("cTitleBar").textContent = resolve(s.t, st);
+  $("mapBtn").style.display = window.SCENA && SCENA.haMappa(s) ? "" : "none";
+  if(window.PIANTE && !fontScena){ const x0 = st; PIANTE.pronto().then(() => { fontScena = true; if(st === x0 && current === "chat" && !busy) renderChat(); }); }
   setStatus();
   log.innerHTML = "";
   const sc = document.createElement("div"); sc.className = "scene";
@@ -1701,6 +1720,7 @@ function memSheet(){
 
 /* ===================== VOCE NARRANTE ===================== */
 let speakingIdx = -1;
+let fontScena = false;
 const cap = t => { t = String(t || ""); return t ? t[0].toUpperCase() + t.slice(1) : ""; };
 function saveSettings(){ ls.set(K.settings, settings); }
 function voceOK(){ return !!(window.VOCE && VOCE.supported()); }
@@ -1781,6 +1801,9 @@ function chatMenu(){
       ${snd ? `<div class="li" data-m="amb">🎵 Suoni e sigle <span class="sw ${settings.amb ? "on" : ""}"></span></div>
       <div class="vol"><span>🔈</span><input type="range" id="ambRange" min="0" max="100" step="5" value="${Math.round(settings.ambVol * 100)}" aria-label="Volume dei suoni"><span>🔊</span></div>
       <p class="ambnow">In sottofondo: ${esc(SUONI.name(SUONI.sceneFor(s)))}</p>` : ""}
+      ${window.SCENA && SCENA.haMappa(s) ? `<div class="li" data-m="mappa">🗺️ Apri la planimetria</div>
+      <div class="li" data-m="mappe">📍 Planimetria sotto i messaggi <span class="sw ${settings.mappe !== false ? "on" : ""}"></span></div>` : ""}
+      <div class="li" data-m="docu">📝 Biglietti e messaggi come fogli veri <span class="sw ${settings.docu !== false ? "on" : ""}"></span></div>
       ${caseRow}
       <div class="li" data-m="fine">🏁 ${x.finale ? "Rivedi il finale" : "Concludi la storia"}</div>
     </div>`);
@@ -1790,6 +1813,9 @@ function chatMenu(){
     if(m === "voce"){ toggleVoce(); r.querySelector(".sw").classList.toggle("on", settings.voce); }
     else if(m === "rate"){ cycleRate(); r.querySelector(".r").textContent = cap(settings.voceRate); }
     else if(m === "amb"){ toggleAmb(); r.querySelector(".sw").classList.toggle("on", settings.amb); }
+    else if(m === "mappa"){ closeSheet(); setTimeout(() => SCENA.apri(), 280); }
+    else if(m === "mappe"){ settings.mappe = settings.mappe === false; saveSettings(); r.querySelector(".sw").classList.toggle("on", settings.mappe); renderChat(); }
+    else if(m === "docu"){ settings.docu = settings.docu === false; saveSettings(); r.querySelector(".sw").classList.toggle("on", settings.docu); renderChat(); }
     else if(m === "caso"){ closeSheet(); setTimeout(casoSheet, 280); }
     else if(m === "fine"){ closeSheet(); setTimeout(concludi, 280); }
   };
@@ -2184,6 +2210,11 @@ $("sendBtn").onclick = send;
 $("regenBtn").onclick = regen;
 $("memBtn").onclick = memSheet;
 $("moreBtn").onclick = chatMenu;
+$("mapBtn").onclick = () => { if(window.SCENA && st) SCENA.apri(); };
+if(window.SCENA) SCENA.init({ st:() => st, story, colori:COLORS, toast, indietro:syncBack,
+  attive:() => settings.mappe !== false, attiviDoc:() => settings.docu !== false, occupato:() => busy,
+  invia:t => { if(busy || !st) return; $("input").value = t; send(); },
+  scrivi:t => { const i = $("input"); i.value = t; autosize(); try{ i.focus(); i.setSelectionRange(t.length, t.length); }catch(e){} } });
 $("finClose").onclick = closeFinale;
 $("dPoster").onclick = () => { if(detailId) openLocandina(detailId); };
 $("locv").onclick = closeLocandina;
