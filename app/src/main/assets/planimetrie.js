@@ -968,13 +968,19 @@ body.fx-low .pv-an *{animation:none!important}`;
   }
   const LONTANO = /al telefono|per telefono|alla radio|via radio|in vivavoce|altoparlante|interfono|videochiamata|messaggio vocale|auricolare|al cellulare|ti chiama|squilla/;
   function nelTesto(m, frase){
+    // le frasi già lette non si rileggono: la chat viene ripercorsa a ogni nuovo messaggio
+    const gia = m._lette || (m._lette = new Map()), c0 = gia.get(frase);
+    if(c0) return c0;
     const trovati = [];
     const prova = obj => { if(!obj.re) return; obj.re.lastIndex = 0; let r; while((r = obj.re.exec(frase))){ const s = r.index + (frase[r.index] === " " ? 1 : 0); trovati.push({ id:obj.id, s, e:s + r[1].length, liv:!!obj.livello }); } };
     m.luoghi.forEach(prova); m.livelli.forEach(prova);
     trovati.sort((a, b) => (b.e - b.s) - (a.e - a.s) || a.s - b.s);
     const presi = [];
     trovati.forEach(t => { if(!presi.some(p => t.s < p.e && p.s < t.e)) presi.push(t); });
-    return presi.sort((a, b) => a.s - b.s);
+    presi.sort((a, b) => a.s - b.s);
+    if(gia.size > 5000) gia.clear();
+    gia.set(frase, presi);
+    return presi;
   }
   const frasi = t => String(t || "").replace(/\*/g, " ").split(/\n+/).reduce((out, riga) => { (riga.match(/[^.!?…]+[.!?…]*["”»]?/g) || []).forEach(q => { if(q.trim()) out.push(q.trim()); }); return out; }, []);
   // legge un messaggio: luoghi nominati, se parla di accessi o di mappe

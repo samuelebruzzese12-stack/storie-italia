@@ -143,7 +143,7 @@
       const dove = l.lv ? l.lv.n : (m.tav[l.ti].n || "");
       h += `<div class="pv-sel"><div class="pv-sel-h"><span class="pv-ic">${icona(l.ic)}</span><div><b>${esc(l.n)}</b><span>${esc(dove)}${l.chiuso ? " · chiuso al pubblico" : ""}${l.acc ? " · via di entrata" : ""}${stt.qui === l.id ? " · tu sei qui" : ""}</span></div><button class="pv-no" data-a="no" aria-label="Chiudi">✕</button></div>
         ${l.d ? `<p>${esc(l.d)}</p>` : ""}${l.acc && l.acc !== l.n ? `<p class="pv-acn">▲ ${esc(l.acc)}</p>` : ""}
-        ${qui.length ? `<div class="pv-chi">${qui.map(q => `<span><i style="background:${q.c}">${esc(q.s)}</i>${esc(q.n)}</span>`).join("")}<em>visti qui l'ultima volta</em></div>` : ""}
+        ${qui.length ? `<div class="pv-chi">${qui.map(q => `<span><i style="background:${q.c}">${esc(q.s)}</i>${esc(q.n)}</span>`).join("")}<em>${qui.length > 1 ? "l'ultima volta erano qui" : "l'ultima volta era qui"}</em></div>` : ""}
         <div class="pv-btn"><button class="pv-b oro" data-a="vai">🚶 Vai qui</button><button class="pv-b" data-a="oss">👁 Osserva</button><button class="pv-b" data-a="scr">✍️ Scrivi tu</button></div></div>`;
       $("pvInfo").innerHTML = h; $("pvInfo").scrollTop = 0;
       return;
